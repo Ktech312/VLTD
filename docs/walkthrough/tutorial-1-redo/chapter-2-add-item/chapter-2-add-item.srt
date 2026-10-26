@@ -1,0 +1,194 @@
+1
+00:00:00,000 --> 00:00:23,125
+Chapter 2: Add Item. The full form for one item: photos, name, category, costs
+and value. You need: one item, or a photo of it, and about 8 minutes. Required:
+Item name. Everything else is optional. Cost and value are separate. Empty means
+unknown. 0 means zero.
+
+2
+00:00:23,125 --> 00:00:33,125
+Step 1. Open Add Item. On Home or in your Vault, press ADD ITEM (top right of
+the card).
+
+3
+00:00:33,125 --> 00:00:48,000
+Step 2. The Add Item form. Photo on the left. Details on the right in five
+numbered sections. Only Item name has a star: it is the only required field.
+
+4
+00:00:48,000 --> 00:01:14,000
+Required and optional: What the form needs. Required: Item name (marked with a
+star). Optional: photos, brand, set or series, certification, grade, condition,
+notes. Optional: Universe, Category and Subcategory; location; purchase price;
+current value. Extra costs (Tax, Shipping, Fees) are added after saving, on the
+item page. Saving with no name does nothing. The cursor returns to Item name.
+
+5
+00:01:14,000 --> 00:01:29,250
+Step 3. Save needs an Item name. If you press Save to Vault with no name,
+nothing is saved and the cursor jumps back to Item name. Type a name and try
+again.
+
+6
+00:01:29,250 --> 00:01:41,875
+Step 4. Take a photo. Take photo opens the camera. Line the item up inside the
+corner brackets and press the round button. (Simulated: The viewfinder shows a
+test camera playing a synthetic, fictional toy picture. The browser's own camera
+permission prompt cannot be captured.)
+
+7
+00:01:41,875 --> 00:01:58,125
+Step 5. Keep the photo or retake it. Save keeps the photo. Retake throws it away
+and returns to the camera. Fine Tune lets you adjust it first. Drag the corners
+to crop. (Simulated: Test camera picture.)
+
+8
+00:01:58,125 --> 00:02:15,625
+Step 6. The photo is on your item. The photo appears as the Cover. Retake
+replaces it. Identify with AI is optional and depends on your account. Typing
+the details yourself always works.
+
+9
+00:02:15,625 --> 00:02:30,000
+Step 7. Name it (required) and add what you know. Type the Item name. Brand and
+Set / Series are optional but make the item easier to find later.
+
+10
+00:02:30,000 --> 00:02:52,875
+Step 8. Choose Universe, Category and Subcategory. Open section 2, Category.
+Pick a Universe first (here Pop Culture), then the Category (Toys & Figures)
+and, if one fits, a Subcategory. They are optional, and each list narrows to
+match the one before it.
+
+11
+00:02:52,875 --> 00:03:11,875
+Step 9. Purchase price is separate from value. Purchase price is what you paid.
+Current value is what you think it is worth now. Leave either one empty if you
+do not know it: empty means unknown, not zero.
+
+12
+00:03:11,875 --> 00:03:37,875
+Cost and value: Blank, zero and valuation. Blank = unknown. The item has no cost
+or value on record. 0 = zero. A gift, or a value you decided is nothing. An item
+with a purchase price but no valuation counts at its purchase price in your
+Vault total. The Vault says so. No value is invented or stored. Add a valuation
+whenever you know one. It replaces the stand-in.
+
+13
+00:03:37,875 --> 00:03:59,125
+Step 10. Saved: you land in your Vault. A short message confirms the save and
+you are taken to your Vault. Total value shows $38: the item has no valuation,
+so it counts at what you paid, and the card says so (1 of 1 at purchase cost).
+
+14
+00:03:59,125 --> 00:04:09,375
+Step 11. Open it and check. Open the item. The photo and the details you typed
+are all there.
+
+15
+00:04:09,375 --> 00:04:27,125
+Step 12. Purchase details live on the item. Extra costs are not on the Add Item
+form. Open the item and press the pencil on the Purchase panel (Edit purchase)
+to add Tax, Shipping and Fees.
+
+16
+00:04:27,125 --> 00:04:45,000
+Step 13. Add the extra costs. Purchase price is already filled in. Add Tax and
+Shipping. For Fees we typed 0 on purpose: there were none. 0 is a real answer,
+while an empty box means unknown.
+
+17
+00:04:45,000 --> 00:05:10,500
+Step 14. Extra costs saved. Press the check mark to save. Tax, Shipping and Fees
+are listed separately from the purchase price. Fees shows $0, which is different
+from the dashes left on Source and Order #. This panel rounds to whole dollars
+(Tax 3.50 reads $4); the exact amounts are stored.
+
+18
+00:05:10,500 --> 00:05:27,625
+Step 15. Cost and value stay separate. The cost basis adds the extras exactly:
+38.00 + 3.50 + 4.25 + 0 = $45.75. The item still has no valuation: nothing was
+invented for the value.
+
+19
+00:05:27,625 --> 00:05:41,625
+Step 16. Reload and check it stuck. Reload the page, or come back tomorrow: the
+photo, name, category and costs are exactly as you left them.
+
+20
+00:05:41,625 --> 00:06:03,000
+Step 17. Or upload a photo you already have. Upload opens your device's file
+picker (your photo library on a phone). The photo goes straight on as the Cover,
+with no crop step. Retake replaces it; the small x on the thumbnail removes it.
+(Simulated: The uploaded file is a synthetic, fictional comic cover.)
+
+21
+00:06:03,000 --> 00:06:22,500
+Step 18. The form remembers your last category. Heads up: the form keeps the
+Universe and Category from your last item to save you time. Change them whenever
+the new item is different, as we did here for a comic.
+
+22
+00:06:22,500 --> 00:06:38,750
+Step 19. A gift: type 0, not nothing. If an item cost you nothing, such as a
+gift, type 0 in Purchase price. Leaving the box empty would mean you do not know
+what it cost.
+
+23
+00:06:38,750 --> 00:06:55,500
+Step 20. Zero stays zero, blank stays unknown. On the gift item, Purchase price
+shows $0 (you said it was free). The other costs stay as dashes, because they
+were never entered.
+
+24
+00:06:55,500 --> 00:07:21,500
+Phone differences: Add Item on a phone. Same form, one column: photo first, then
+the five sections. Take photo opens the in-app camera. Take Real Photo opens
+your phone's camera app. Upload picks from your photo library. In our phone-size
+test the round camera button sits partly behind the tab bar. Tap its visible top
+edge, or use Upload or Take Real Photo. Scroll the form to reach the later
+sections.
+
+25
+00:07:21,500 --> 00:07:38,375
+Step 21. The Add Item form on a phone. On a phone the photo area comes first,
+and the five numbered sections follow below it. Scroll down for the rest. Only
+Item name is required.
+
+26
+00:07:38,375 --> 00:08:04,250
+Step 22. Take a photo. Take photo opens the camera and the round button
+captures. In this phone-size test the button sits partly behind the tab bar (see
+the highlight): tap its top edge. Take Real Photo opens your phone's own camera
+app instead, and Upload lets you pick a photo you already have. (Simulated: The
+viewfinder shows a test camera playing a synthetic, fictional picture. On a real
+phone the browser asks to allow the camera first; that prompt cannot be
+captured.)
+
+27
+00:08:04,250 --> 00:08:14,750
+Step 23. Keep or retake. Tap Save to keep the photo, or Retake to throw it away
+and shoot again. (Simulated: Test camera picture.)
+
+28
+00:08:14,750 --> 00:08:28,625
+Step 24. Type the name. Type the Item name. On a phone, the keyboard covers the
+lower half, so scroll the form to reach the other sections.
+
+29
+00:08:28,625 --> 00:08:44,750
+Step 25. Purchase price and current value. Open section 4, Value. Purchase price
+is what you paid. Current value stays empty if you do not know it: empty means
+unknown.
+
+30
+00:08:44,750 --> 00:08:53,875
+Step 26. Saved. Saving takes you to your Vault, where the new item is listed.
+
+31
+00:08:53,875 --> 00:09:19,875
+Chapter 2 recap: You added an item properly. ADD ITEM opens the form. Only Item
+name is required. Photos: take, keep or retake; or upload. Category is optional
+and the form remembers your last one. Purchase price and value are separate;
+blank is unknown, 0 is zero. Tax, Shipping and Fees are added on the item page.
+Reload the item: everything persists.

@@ -1,0 +1,281 @@
+[
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch1-intro",
+  "section": "",
+  "startMs": 0,
+  "endMs": 26000,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 1,
+  "key": "q-desktop/home-entry-points",
+  "section": "Open Quick Add",
+  "startMs": 26000,
+  "endMs": 36875,
+  "shot": "1.01-home-entry-points.jpg"
+ },
+ {
+  "type": "step",
+  "n": 2,
+  "key": "q-desktop/vault-entry-points",
+  "section": "Open Quick Add",
+  "startMs": 36875,
+  "endMs": 51500,
+  "shot": "1.02-vault-entry-points.jpg"
+ },
+ {
+  "type": "step",
+  "n": 3,
+  "key": "x-map/empty-vault-buttons",
+  "section": "Open Quick Add",
+  "startMs": 51500,
+  "endMs": 71625,
+  "shot": "1.03-empty-vault-buttons.jpg"
+ },
+ {
+  "type": "step",
+  "n": 4,
+  "key": "x-map/upload-from-device-menu",
+  "section": "Open Quick Add",
+  "startMs": 71625,
+  "endMs": 92500,
+  "shot": "1.04-upload-from-device-menu.jpg"
+ },
+ {
+  "type": "step",
+  "n": 5,
+  "key": "x-map/add-manually",
+  "section": "Open Quick Add",
+  "startMs": 92500,
+  "endMs": 115000,
+  "shot": "1.05-add-manually.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch1-camera-permission",
+  "section": "Camera and permission",
+  "startMs": 115000,
+  "endMs": 139000,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 6,
+  "key": "q-desktop/quick-add-open",
+  "section": "Camera and permission",
+  "startMs": 139000,
+  "endMs": 151750,
+  "shot": "1.06-quick-add-open.jpg"
+ },
+ {
+  "type": "step",
+  "n": 7,
+  "key": "x-denied/camera-blocked",
+  "section": "Camera and permission",
+  "startMs": 151750,
+  "endMs": 173625,
+  "shot": "1.07-camera-blocked.jpg"
+ },
+ {
+  "type": "step",
+  "n": 8,
+  "key": "q-desktop/quick-add-universe-menu",
+  "section": "Camera and permission",
+  "startMs": 173625,
+  "endMs": 188625,
+  "shot": "1.08-quick-add-universe-menu.jpg"
+ },
+ {
+  "type": "step",
+  "n": 9,
+  "key": "q-desktop/quick-add-category-menu",
+  "section": "Camera and permission",
+  "startMs": 188625,
+  "endMs": 197500,
+  "shot": "1.09-quick-add-category-menu.jpg"
+ },
+ {
+  "type": "step",
+  "n": 10,
+  "key": "q-desktop/photo-1-taken",
+  "section": "Take photos",
+  "startMs": 197500,
+  "endMs": 212625,
+  "shot": "1.10-photo-1-taken.jpg"
+ },
+ {
+  "type": "step",
+  "n": 11,
+  "key": "q-desktop/photo-4-taken",
+  "section": "Take photos",
+  "startMs": 212625,
+  "endMs": 227875,
+  "shot": "1.11-photo-4-taken.jpg"
+ },
+ {
+  "type": "step",
+  "n": 12,
+  "key": "q-desktop/review-your-drop",
+  "section": "Review, remove, correct",
+  "startMs": 227875,
+  "endMs": 238875,
+  "shot": "1.12-review-your-drop.jpg"
+ },
+ {
+  "type": "step",
+  "n": 13,
+  "key": "q-desktop/review-after-remove",
+  "section": "Review, remove, correct",
+  "startMs": 238875,
+  "endMs": 258125,
+  "shot": "1.13-review-after-remove.jpg"
+ },
+ {
+  "type": "step",
+  "n": 14,
+  "key": "q-desktop/review-correct-category",
+  "section": "Review, remove, correct",
+  "startMs": 258125,
+  "endMs": 276250,
+  "shot": "1.14-review-correct-category.jpg"
+ },
+ {
+  "type": "step",
+  "n": 15,
+  "key": "q-desktop/verify-names",
+  "section": "Name, AI (optional) and save",
+  "startMs": 276250,
+  "endMs": 288875,
+  "shot": "1.15-verify-names.jpg"
+ },
+ {
+  "type": "step",
+  "n": 16,
+  "key": "q-desktop/verify-cost",
+  "section": "Name, AI (optional) and save",
+  "startMs": 288875,
+  "endMs": 302125,
+  "shot": "1.16-verify-cost.jpg"
+ },
+ {
+  "type": "step",
+  "n": 17,
+  "key": "q-desktop/identify-with-ai",
+  "section": "Name, AI (optional) and save",
+  "startMs": 302125,
+  "endMs": 322500,
+  "shot": "1.17-identify-with-ai.jpg"
+ },
+ {
+  "type": "step",
+  "n": 18,
+  "key": "q-desktop/saved-in-vault",
+  "section": "Name, AI (optional) and save",
+  "startMs": 322500,
+  "endMs": 335875,
+  "shot": "1.18-saved-in-vault.jpg"
+ },
+ {
+  "type": "step",
+  "n": 19,
+  "key": "q-desktop/vault-new-items",
+  "section": "Find your items",
+  "startMs": 335875,
+  "endMs": 351125,
+  "shot": "1.19-vault-new-items.jpg"
+ },
+ {
+  "type": "step",
+  "n": 20,
+  "key": "q-desktop/vault-search",
+  "section": "Find your items",
+  "startMs": 351125,
+  "endMs": 362125,
+  "shot": "1.20-vault-search.jpg"
+ },
+ {
+  "type": "step",
+  "n": 21,
+  "key": "q-desktop/item-opened",
+  "section": "Find your items",
+  "startMs": 362125,
+  "endMs": 373250,
+  "shot": "1.21-item-opened.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch1-phone",
+  "section": "On a phone",
+  "startMs": 373250,
+  "endMs": 399250,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 22,
+  "key": "q-phone/home-bar",
+  "section": "On a phone",
+  "startMs": 399250,
+  "endMs": 418750,
+  "shot": "1.22-home-bar.jpg"
+ },
+ {
+  "type": "step",
+  "n": 23,
+  "key": "q-phone/quick-open",
+  "section": "On a phone",
+  "startMs": 418750,
+  "endMs": 432875,
+  "shot": "1.23-quick-open.jpg"
+ },
+ {
+  "type": "step",
+  "n": 24,
+  "key": "q-phone/four-taken",
+  "section": "On a phone",
+  "startMs": 432875,
+  "endMs": 447375,
+  "shot": "1.24-four-taken.jpg"
+ },
+ {
+  "type": "step",
+  "n": 25,
+  "key": "q-phone/review",
+  "section": "On a phone",
+  "startMs": 447375,
+  "endMs": 460875,
+  "shot": "1.25-review.jpg"
+ },
+ {
+  "type": "step",
+  "n": 26,
+  "key": "q-phone/verify",
+  "section": "On a phone",
+  "startMs": 460875,
+  "endMs": 477750,
+  "shot": "1.26-verify.jpg"
+ },
+ {
+  "type": "step",
+  "n": 27,
+  "key": "q-phone/vault",
+  "section": "On a phone",
+  "startMs": 477750,
+  "endMs": 488000,
+  "shot": "1.27-vault.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch1-outro",
+  "section": "On a phone",
+  "startMs": 488000,
+  "endMs": 512625,
+  "shot": null
+ }
+]

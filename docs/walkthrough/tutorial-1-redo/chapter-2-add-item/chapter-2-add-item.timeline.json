@@ -1,0 +1,281 @@
+[
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch2-intro",
+  "section": "",
+  "startMs": 0,
+  "endMs": 23125,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 1,
+  "key": "a-desktop/home-add-item",
+  "section": "Open the form",
+  "startMs": 23125,
+  "endMs": 33125,
+  "shot": "2.01-home-add-item.jpg"
+ },
+ {
+  "type": "step",
+  "n": 2,
+  "key": "a-desktop/form-overview",
+  "section": "Open the form",
+  "startMs": 33125,
+  "endMs": 48000,
+  "shot": "2.02-form-overview.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch2-required",
+  "section": "Open the form",
+  "startMs": 48000,
+  "endMs": 74000,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 3,
+  "key": "a-desktop/name-required",
+  "section": "Open the form",
+  "startMs": 74000,
+  "endMs": 89250,
+  "shot": "2.03-name-required.jpg"
+ },
+ {
+  "type": "step",
+  "n": 4,
+  "key": "a-desktop/camera-dialog",
+  "section": "Photo: capture, keep or discard",
+  "startMs": 89250,
+  "endMs": 101875,
+  "shot": "2.04-camera-dialog.jpg"
+ },
+ {
+  "type": "step",
+  "n": 5,
+  "key": "a-desktop/crop-editor",
+  "section": "Photo: capture, keep or discard",
+  "startMs": 101875,
+  "endMs": 118125,
+  "shot": "2.05-crop-editor.jpg"
+ },
+ {
+  "type": "step",
+  "n": 6,
+  "key": "a-desktop/photo-added",
+  "section": "Photo: capture, keep or discard",
+  "startMs": 118125,
+  "endMs": 135625,
+  "shot": "2.06-photo-added.jpg"
+ },
+ {
+  "type": "step",
+  "n": 7,
+  "key": "a-desktop/name-and-optional",
+  "section": "Title and details",
+  "startMs": 135625,
+  "endMs": 150000,
+  "shot": "2.07-name-and-optional.jpg"
+ },
+ {
+  "type": "step",
+  "n": 8,
+  "key": "a-desktop/category",
+  "section": "Title and details",
+  "startMs": 150000,
+  "endMs": 172875,
+  "shot": "2.08-category.jpg"
+ },
+ {
+  "type": "step",
+  "n": 9,
+  "key": "a-desktop/value-purchase-price",
+  "section": "Purchase price and value",
+  "startMs": 172875,
+  "endMs": 191875,
+  "shot": "2.09-value-purchase-price.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch2-zero-blank",
+  "section": "Purchase price and value",
+  "startMs": 191875,
+  "endMs": 217875,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 10,
+  "key": "a-desktop/vault-after-save",
+  "section": "Save and check",
+  "startMs": 217875,
+  "endMs": 239125,
+  "shot": "2.10-vault-after-save.jpg"
+ },
+ {
+  "type": "step",
+  "n": 11,
+  "key": "a-desktop/item-saved",
+  "section": "Save and check",
+  "startMs": 239125,
+  "endMs": 249375,
+  "shot": "2.11-item-saved.jpg"
+ },
+ {
+  "type": "step",
+  "n": 12,
+  "key": "a-desktop/item-purchase-panel",
+  "section": "Extra costs",
+  "startMs": 249375,
+  "endMs": 267125,
+  "shot": "2.12-item-purchase-panel.jpg"
+ },
+ {
+  "type": "step",
+  "n": 13,
+  "key": "a-desktop/purchase-editor",
+  "section": "Extra costs",
+  "startMs": 267125,
+  "endMs": 285000,
+  "shot": "2.13-purchase-editor.jpg"
+ },
+ {
+  "type": "step",
+  "n": 14,
+  "key": "a-desktop/purchase-saved",
+  "section": "Extra costs",
+  "startMs": 285000,
+  "endMs": 310500,
+  "shot": "2.14-purchase-saved.jpg"
+ },
+ {
+  "type": "step",
+  "n": 15,
+  "key": "a-desktop/item-cost-basis",
+  "section": "Extra costs",
+  "startMs": 310500,
+  "endMs": 327625,
+  "shot": "2.15-item-cost-basis.jpg"
+ },
+ {
+  "type": "step",
+  "n": 16,
+  "key": "a-desktop/persisted-after-reload",
+  "section": "Extra costs",
+  "startMs": 327625,
+  "endMs": 341625,
+  "shot": "2.16-persisted-after-reload.jpg"
+ },
+ {
+  "type": "step",
+  "n": 17,
+  "key": "a-desktop/upload-added",
+  "section": "Upload a photo, and a zero price",
+  "startMs": 341625,
+  "endMs": 363000,
+  "shot": "2.17-upload-added.jpg"
+ },
+ {
+  "type": "step",
+  "n": 18,
+  "key": "a-desktop/category-remembered",
+  "section": "Upload a photo, and a zero price",
+  "startMs": 363000,
+  "endMs": 382500,
+  "shot": "2.18-category-remembered.jpg"
+ },
+ {
+  "type": "step",
+  "n": 19,
+  "key": "a-desktop/zero-price",
+  "section": "Upload a photo, and a zero price",
+  "startMs": 382500,
+  "endMs": 398750,
+  "shot": "2.19-zero-price.jpg"
+ },
+ {
+  "type": "step",
+  "n": 20,
+  "key": "a-desktop/zero-vs-blank",
+  "section": "Upload a photo, and a zero price",
+  "startMs": 398750,
+  "endMs": 415500,
+  "shot": "2.20-zero-vs-blank.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch2-phone",
+  "section": "On a phone",
+  "startMs": 415500,
+  "endMs": 441500,
+  "shot": null
+ },
+ {
+  "type": "step",
+  "n": 21,
+  "key": "a-phone/form",
+  "section": "On a phone",
+  "startMs": 441500,
+  "endMs": 458375,
+  "shot": "2.21-form.jpg"
+ },
+ {
+  "type": "step",
+  "n": 22,
+  "key": "a-phone/camera",
+  "section": "On a phone",
+  "startMs": 458375,
+  "endMs": 484250,
+  "shot": "2.22-camera.jpg"
+ },
+ {
+  "type": "step",
+  "n": 23,
+  "key": "a-phone/keep",
+  "section": "On a phone",
+  "startMs": 484250,
+  "endMs": 494750,
+  "shot": "2.23-keep.jpg"
+ },
+ {
+  "type": "step",
+  "n": 24,
+  "key": "a-phone/named",
+  "section": "On a phone",
+  "startMs": 494750,
+  "endMs": 508625,
+  "shot": "2.24-named.jpg"
+ },
+ {
+  "type": "step",
+  "n": 25,
+  "key": "a-phone/value",
+  "section": "On a phone",
+  "startMs": 508625,
+  "endMs": 524750,
+  "shot": "2.25-value.jpg"
+ },
+ {
+  "type": "step",
+  "n": 26,
+  "key": "a-phone/saved",
+  "section": "On a phone",
+  "startMs": 524750,
+  "endMs": 533875,
+  "shot": "2.26-saved.jpg"
+ },
+ {
+  "type": "card",
+  "n": null,
+  "key": "ch2-outro",
+  "section": "On a phone",
+  "startMs": 533875,
+  "endMs": 559875,
+  "shot": null
+ }
+]

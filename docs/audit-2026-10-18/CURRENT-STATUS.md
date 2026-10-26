@@ -26,6 +26,11 @@ This replaces the conflicting session updates. If another status file disagrees,
 | **AI scan routes closed** (`/api/ai/analyze-item`, `/api/ai/analyze-coa`): verified sign-in, profile membership, existing monthly allowance reserved before the provider is called (item, single and certificate scans), image checked from its bytes, browser-side charge removed, duplicate requests spend once (full once SQL package 10 is run), failed provider calls give the scan back (full mode) | `35af705` and the commit after it (see `repair-batch-19/CLOSEOUT.md`) | RB74 (21 live refusal checks), RB75 (browser), 44 simulated-provider tests, 35 in-Postgres SQL checks |
 | Batches 1 to 18 of the audit repair programme | see `LIVE-STATUS.md` | per-batch closeouts |
 
+## Added 2026-10-26 (see the closeout in the session; each item below links its evidence)
+- **SQL 10 applied** by the owner; production checks RB77 (database, 40 of 40), RB78 (real routes in full mode with a provider stand-in, 23 of 23), RB76 (owner-only, 27 of 27). See `repair-batch-19/CLOSEOUT.md`.
+- **Release-to-Wishlist handoff**: six defects fixed (`515c679`), 26 new tests, RB68 re-run on production 39 of 39. See `repair-batch-20/HANDOFF-VERIFICATION.md`. Open there: Remove vs Skip on a followed release; stale dates the source cannot correct.
+- **Awaiting owner review (nothing built or published):** the compact Wishlist layout proposal [wishlist-layout-proposal.html](../design/wishlist-layout-proposal.html); the card and toy release-source assessment [release-sources-assessment.md](../design/release-sources-assessment.md) (recommends Scryfall for Magic sets as the one first connection); the redone Tutorial 1 preview (Quick Add and Add Item) in `docs/walkthrough/tutorial-1-redo/`, with its findings in `FINDINGS.md` (none fixed).
+
 QA accounts used in this pass are dropped; production is at the baseline (3,477 vault items, 39 profiles, 47 exhibitions).
 
 ## The owner's actual authorization for the monthly Events refresh
