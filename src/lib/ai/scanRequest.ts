@@ -9,6 +9,7 @@ import { getStoredActiveProfileId } from "@/lib/auth";
 
 export type ScanRefusalCode =
   | "signin"
+  | "owner_only"
   | "not_member"
   | "profile_required"
   | "request_id_required"
@@ -27,7 +28,7 @@ export type ScanRefusalCode =
 
 export type ScanAllowance = { remaining: number; limit: number; used: number };
 
-/** A scan that was refused or failed, with the plain sentence to show the person. `limit`, `signin` and `not_member` mean "stop trying the rest of this batch". */
+/** A scan that was refused or failed, with the plain sentence to show the person. `limit`, `signin`, `owner_only` and `not_member` mean "stop trying the rest of this batch". */
 export class ScanRefusedError extends Error {
   code: ScanRefusalCode;
   allowance?: ScanAllowance;
@@ -40,7 +41,7 @@ export class ScanRefusedError extends Error {
 }
 
 /** True when nothing more in a batch should be sent: the allowance is spent, or the person is not signed in / not allowed. */
-export const stopsTheBatch = (err: unknown): err is ScanRefusedError => err instanceof ScanRefusedError && (err.code === "limit" || err.code === "signin" || err.code === "not_member" || err.code === "profile_required");
+export const stopsTheBatch = (err: unknown): err is ScanRefusedError => err instanceof ScanRefusedError && (err.code === "limit" || err.code === "signin" || err.code === "owner_only" || err.code === "not_member" || err.code === "profile_required");
 
 // The same photo sent twice while the first is still on its way (a double press) is ONE request: the second press gets the first one's answer.
 const inFlight = new Map<string, Promise<unknown>>();

@@ -90,11 +90,15 @@ async function main() {
       }
     }
   });
-  await test("static: the cron routes also refuse unless switched on, and the scan routes need a verified sign-in, a profile and a request id before the provider", () => {
+  await test("static: the cron routes also refuse unless switched on, and the scan routes need a verified sign-in as the OWNER, a profile and a request id before the provider", () => {
     for (const f of ["src/app/api/cron/refresh-events/route.ts", "src/app/api/cron/refresh-major-events/route.ts"]) assert.match(fs.readFileSync(f, "utf8"), /eventsRefreshEnabled\(\)/, f);
     assert.match(fs.readFileSync("src/app/api/cron/refresh-events-monthly/route.ts", "utf8"), /checkApproval\(/);
     const guard = fs.readFileSync("src/lib/server/scanGuard.ts", "utf8");
     assert.ok(guard.indexOf("auth.getUser(token)") < guard.indexOf("await reserve(") && guard.indexOf("await reserve(") < guard.indexOf("await run("), "sign-in, then the reservation, then the provider call");
+    const owner = guard.indexOf("owner_only");
+    assert.ok(guard.indexOf("auth.getUser(token)") < owner && owner < guard.indexOf("req.formData()") && owner < guard.indexOf("getServiceClient()") && owner < guard.indexOf("await reserve("), "the owner-only refusal comes right after the verified sign-in: before the form is read, before the service client, before any membership/allowance/reservation, before the provider");
+    assert.match(guard, /isOwnerEmail\(data\.user\?\.email\)/, "the owner is decided from the verified identity");
+    assert.match(guard, /email_confirmed_at/, "an unconfirmed address is not the owner");
   });
 
   // ───────── behaviour: nobody gets in without credentials, and nothing reaches out ─────────

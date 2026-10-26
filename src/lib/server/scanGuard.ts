@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getServiceClient } from "@/lib/serverAdmin";
+import { isOwnerEmail } from "@/lib/ownerAccess";
 
 // The gate in front of every paid AI scan (api/ai/analyze-item and api/ai/analyze-coa).
 //
@@ -197,15 +198,20 @@ export async function guardedScan(req: NextRequest, kind: ScanKind, run: (ctx: S
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!token) return refuse(401, "signin", "Sign in to use AI scans. If you are signed in, reload the page and try again.");
   let userId: string | null = null;
+  let ownerVerified = false;
   try {
     const verifier = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data, error } = await verifier.auth.getUser(token);
     userId = error ? null : data.user?.id ?? null;
+    // PRODUCT RULE: only the owner's account has AI access. Decided from the identity Supabase just verified (a confirmed email), never from anything the browser sends.
+    ownerVerified = !error && Boolean(data.user?.email_confirmed_at) && isOwnerEmail(data.user?.email);
     if (error && /fetch failed|network|timeout|ECONN|ENOTFOUND/i.test(error.message)) return refuse(503, "unavailable", "AI scanning is temporarily unavailable. Fill the details in by hand for now.");
   } catch {
     return refuse(503, "unavailable", "AI scanning is temporarily unavailable. Fill the details in by hand for now.");
   }
   if (!userId) return refuse(401, "signin", "Your sign-in has expired. Sign in again to use AI scans.");
+  // Everyone else is refused here: before the form is read, before any membership or allowance lookup, before anything is reserved, before the provider.
+  if (!ownerVerified) return refuse(403, "owner_only", "AI scans are not available on this account.");
 
   // the request itself
   let form: FormData;

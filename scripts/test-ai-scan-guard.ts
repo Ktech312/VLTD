@@ -20,7 +20,18 @@ const BOB = "00000000-0000-0000-0000-0000000000b2";
 const PA = "11111111-1111-1111-1111-111111111111";
 const PB = "22222222-2222-2222-2222-222222222222";
 const R = (n: number) => `aaaaaaaa-0000-4000-8000-${String(n).padStart(12, "0")}`;
-const TOKENS: Record<string, string> = { "tok-alice": ALICE, "tok-bob": BOB };
+const CAROL = "00000000-0000-0000-0000-0000000000c3";
+const DAVE = "00000000-0000-0000-0000-0000000000d4";
+const PC = "33333333-3333-3333-3333-333333333333";
+const PD = "44444444-4444-4444-4444-444444444444";
+const TOKENS: Record<string, string> = { "tok-alice": ALICE, "tok-bob": BOB, "tok-carol": CAROL, "tok-dave": DAVE };
+// Alice is the owner (the one account with AI access). Bob is an ordinary signed-in account. Carol's address only LOOKS like the owner's. Dave has the owner's address but it was never confirmed.
+const IDENTITY: Record<string, { email: string; confirmed: boolean }> = {
+  [ALICE]: { email: "eck1679@gmail.com", confirmed: true },
+  [BOB]: { email: "bob@example.com", confirmed: true },
+  [CAROL]: { email: "eck1679@gmail.com.example.net", confirmed: true },
+  [DAVE]: { email: "eck1679@gmail.com", confirmed: false },
+};
 
 // ───────────────────────── test images built from bytes ─────────────────────────
 const pad = (b: number[], n = 400) => { while (b.length < n) b.push(0); return new Uint8Array(b); };
@@ -50,8 +61,8 @@ let world: World;
 function freshWorld(): World {
   return {
     mode: "full",
-    profiles: new Map([[PA, { limit: 3, used: 0, resets: "2026-11-24" }], [PB, { limit: 3, used: 0, resets: "2026-11-24" }]]),
-    members: new Set([`${ALICE}:${PA}`, `${BOB}:${PB}`]),
+    profiles: new Map([[PA, { limit: 3, used: 0, resets: "2026-11-24" }], [PB, { limit: 3, used: 0, resets: "2026-11-24" }], [PC, { limit: 3, used: 0, resets: "2026-11-24" }], [PD, { limit: 3, used: 0, resets: "2026-11-24" }]]),
+    members: new Set([`${ALICE}:${PA}`, `${BOB}:${PB}`, `${CAROL}:${PC}`, `${DAVE}:${PD}`]),
     ledger: new Map(),
     ai: "ok",
     authDown: false,
@@ -72,7 +83,7 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     if (world.authDown) throw new TypeError("fetch failed");
     const token = (headers.get("authorization") ?? "").replace(/^Bearer /, "");
     const uid = TOKENS[token];
-    return uid ? json(200, { id: uid, aud: "authenticated", email: `${uid}@test` }) : json(401, { msg: "invalid JWT", code: 401 });
+    return uid ? json(200, { id: uid, aud: "authenticated", email: IDENTITY[uid].email, ...(IDENTITY[uid].confirmed ? { email_confirmed_at: "2026-01-01T00:00:00Z" } : {}) }) : json(401, { msg: "invalid JWT", code: 401 });
   }
   const callerOf = () => {
     const bearer = (headers.get("authorization") ?? "").replace(/^Bearer /, "");
@@ -259,12 +270,12 @@ async function main() {
       noPaidCall();
       assert.deepEqual([world.calls.reserve, world.calls.consume], [0, 0]);
     });
-    await test(`${label}: a signed-in person using someone ELSE'S profile is refused, spends nothing, and the provider is not called`, async () => {
-      const res = await post(handler, scanRequest(path, { token: "tok-bob", profileId: PA }));
+    await test(`${label}: the owner using someone ELSE'S profile is refused, spends nothing, and the provider is not called`, async () => {
+      const res = await post(handler, scanRequest(path, { token: "tok-alice", profileId: PB }));
       assert.equal(res.status, 403);
       assert.equal(res.body.code, "not_member");
       noPaidCall();
-      assert.equal(spentOn(PA), 0, "the owner's allowance is untouched");
+      assert.equal(spentOn(PB), 0, "the other profile's allowance is untouched");
       assert.equal(world.ledger.size, 0);
     });
     await test(`${label}: no profile, a made-up profile, or no request id is refused before anything is reserved`, async () => {
@@ -410,7 +421,7 @@ async function main() {
     await test(`${label} (before the SQL is run): sign-in, profile, image and allowance are enforced with the existing atomic consume_bulk_scan, before the provider call`, async () => {
       world.mode = "basic";
       const anon = await post(handler, scanRequest(path, { token: null }));
-      const stranger = await post(handler, scanRequest(path, { token: "tok-bob", profileId: PA, requestId: R(80) }));
+      const stranger = await post(handler, scanRequest(path, { token: "tok-alice", profileId: PB, requestId: R(80) }));
       const badImage = await post(handler, scanRequest(path, { bytes: text(), requestId: R(81) }));
       assert.deepEqual([anon.status, stranger.status, badImage.status], [401, 403, 415]);
       noPaidCall();
@@ -505,15 +516,77 @@ async function main() {
       assert.equal(spentOn(PA), 1);
     });
     await test(`${label}: the verified token decides who is asking: a request that CLAIMS to be another user (extra form fields) is still refused for a profile that user's token does not belong to`, async () => {
-      const req = scanRequest(path, { token: "tok-bob", profileId: PA, requestId: R(930) });
+      const req = scanRequest(path, { token: "tok-alice", profileId: PB, requestId: R(930) });
       const form = await req.formData();
-      form.append("userId", ALICE); form.append("user", ALICE); form.append("p_user", ALICE); form.append("user_id", ALICE);
-      const res = await post(handler, new NextRequest(`http://localhost${path}`, { method: "POST", body: form, headers: { authorization: "Bearer tok-bob" } }));
+      form.append("userId", BOB); form.append("user", BOB); form.append("p_user", BOB); form.append("user_id", BOB);
+      const res = await post(handler, new NextRequest(`http://localhost${path}`, { method: "POST", body: form, headers: { authorization: "Bearer tok-alice" } }));
       assert.equal(res.status, 403);
+      assert.equal(res.body.code, "not_member");
       noPaidCall();
-      assert.equal(spentOn(PA), 0);
+      assert.equal(spentOn(PB), 0);
     });
   }
+
+  // ───────── PRODUCT RULE: only the owner's account has AI access ─────────
+  for (const mode of ["full", "basic"] as const) {
+    for (const [label, handler, path] of [["item scan", item, ITEM], ["certificate scan", coa, COA]] as const) {
+      await test(`${label} (${mode} mode): another signed-in account that is a REAL member of its profile, with a positive allowance, is refused and makes ZERO provider calls`, async () => {
+        world.mode = mode;
+        assert.ok(world.profiles.get(PB)!.limit - world.profiles.get(PB)!.used > 0, "the other account really has allowance left");
+        const own = await post(handler, scanRequest(path, { token: "tok-bob", profileId: PB, requestId: R(1000) }));
+        assert.equal(own.status, 403);
+        assert.equal(own.body.code, "owner_only");
+        const theirs = await post(handler, scanRequest(path, { token: "tok-bob", profileId: PA, requestId: R(1001) }));
+        assert.equal(theirs.status, 403);
+        assert.equal(theirs.body.code, "owner_only");
+        noPaidCall();
+        assert.deepEqual([world.calls.reserve, world.calls.consume, world.calls.status, world.calls.members, world.calls.complete, world.calls.usageLog], [0, 0, 0, 0, 0, 0], "refused before any membership, allowance or reservation lookup");
+        assert.equal(spentOn(PB), 0);
+        assert.equal(spentOn(PA), 0);
+        assert.equal(world.ledger.size, 0);
+      });
+    }
+  }
+  await test("the owner rule is decided from the verified identity only: claims in the request, look-alike addresses and an unconfirmed owner address all fail, with zero provider calls and nothing reserved", async () => {
+    for (const mode of ["full", "basic"] as const) {
+      world.mode = mode;
+      for (const [handler, path] of [[item, ITEM], [coa, COA]] as const) {
+        // a non-owner who CLAIMS to be the owner in the form and in headers
+        const req = scanRequest(path, { token: "tok-bob", profileId: PB, requestId: R(1100) });
+        const form = await req.formData();
+        for (const k of ["email", "owner", "isOwner", "role", "userId", "user_id", "p_user"]) form.append(k, k === "email" ? "eck1679@gmail.com" : k === "userId" || k === "user_id" || k === "p_user" ? ALICE : "owner");
+        const claimed = await post(handler, new NextRequest(`http://localhost${path}`, { method: "POST", body: form, headers: { authorization: "Bearer tok-bob", "x-owner": "1", "x-user-email": "eck1679@gmail.com" } }));
+        assert.equal(claimed.status, 403);
+        assert.equal(claimed.body.code, "owner_only");
+        // an address that only looks like the owner's, a real member of its profile with allowance
+        const lookalike = await post(handler, scanRequest(path, { token: "tok-carol", profileId: PC, requestId: R(1101) }));
+        assert.deepEqual([lookalike.status, lookalike.body.code], [403, "owner_only"]);
+        // the owner's address, never confirmed
+        const unconfirmed = await post(handler, scanRequest(path, { token: "tok-dave", profileId: PD, requestId: R(1102) }));
+        assert.deepEqual([unconfirmed.status, unconfirmed.body.code], [403, "owner_only"]);
+      }
+    }
+    noPaidCall();
+    assert.deepEqual([world.calls.reserve, world.calls.consume, world.calls.status, world.calls.members, world.calls.complete], [0, 0, 0, 0, 0]);
+    assert.equal(world.ledger.size, 0);
+    for (const p of [PA, PB, PC, PD]) assert.equal(spentOn(p), 0);
+  });
+  await test("the owner rule comes right after sign-in: no sign-in is still 'sign in', and a non-owner is refused the same way even for a malformed request (nothing about the request is read)", async () => {
+    const anon = await post(item, scanRequest(ITEM, { token: null }));
+    assert.equal(anon.status, 401);
+    const bad = await post(item, scanRequest(ITEM, { token: "tok-bob", profileId: "not-a-uuid", requestId: null, bytes: text() }));
+    assert.deepEqual([bad.status, bad.body.code], [403, "owner_only"]);
+    noPaidCall();
+  });
+  await test("the owner still works end to end in both modes (the rule only narrows access): the provider is called once and the allowance moves once", async () => {
+    for (const mode of ["full", "basic"] as const) {
+      world = freshWorld(); world.mode = mode; __resetBasicDedupe();
+      const res = await post(item, scanRequest(ITEM, { token: "tok-alice", profileId: PA, requestId: R(1200) }));
+      assert.equal(res.status, 200, mode);
+      assert.equal(world.calls.anthropic, 1);
+      assert.equal(spentOn(PA), 1);
+    }
+  });
 
   await test("both scan kinds draw from the SAME existing monthly allowance (an item scan and a certificate scan are one scan each)", async () => {
     world.profiles.get(PA)!.used = 1;
