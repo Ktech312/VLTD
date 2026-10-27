@@ -12,8 +12,8 @@ const HME = require(SCRATCH + "/enc/node_modules/h264-mp4-encoder");
 const WORK = SCRATCH + "/work-merged";
 const LOGO = "C:/Users/EK/VLTD/.claude/worktrees/quizzical-hamilton-a45b28/public/brand/logo/vltd-logo-platinum.png";
 const MODE = process.argv[2], OUT = process.argv[3];
-if (!["desktop", "phone", "promo"].includes(MODE) || !OUT) { console.error("usage: node build-cuts.cjs <desktop|phone|promo> <outDir>"); process.exit(2); }
-const PORTRAIT = MODE !== "desktop";
+if (!["desktop", "phone", "promo", "addsample"].includes(MODE) || !OUT) { console.error("usage: node build-cuts.cjs <desktop|phone|promo> <outDir>"); process.exit(2); }
+const PORTRAIT = MODE === "phone" || MODE === "promo";
 const W = PORTRAIT ? 1080 : 1920, H = PORTRAIT ? 1920 : 1080, FPS = 12, IMG_H = 760, BAR_H = 1080 - IMG_H;
 const FONT = "Segoe UI, Arial, Helvetica, sans-serif";
 const RING = "#22d3ee";
@@ -95,7 +95,15 @@ const PROMO = [
   { img: Q + "vault-new-items", ring: null, title: "Organized in your Vault", caption: "Every item, with its photo.", dur: 3.6 },
   { end: { line1: "Quick Add", line2: "Photograph. Review. Save.", cta: "vltd.app" }, title: "Try Quick Add", caption: "vltd.app", dur: 3.2 },
 ];
-const beats = MODE === "desktop" ? DESKTOP_ALL : MODE === "phone" ? PHONE_HOWTO : PROMO;
+// Add Item voice-sample footage (16 s, existing v2 captures): Home -> Add Item -> form; timed so both voice options fit the same cuts
+const ADD_SAMPLE = [
+  { img: "a-desktop/home-add-item", ring: 0, section: "Open Add Item", title: "Start on Home", caption: "Add Item is in the top card on Home.", dur: 3.6 },
+  { img: "a-desktop/home-add-item", ring: 0, fx: "press", section: "Open Add Item", title: "Select Add Item", caption: "Select it. The form opens.", dur: 2.0 },
+  { img: "a-desktop/form-overview", ring: 0, section: "The Add Item form", title: "Item name is required", caption: "It is the only required field.", dur: 3.2 },
+  { img: "a-desktop/form-overview", ring: 1, section: "The Add Item form", title: "Add a photo and details", caption: "Add a photo, then fill in what you know.", dur: 3.2 },
+  { img: "a-desktop/vault-after-save", ring: null, section: "Save", title: "Saved to your Vault", caption: "After you save, you land in your Vault.", dur: 4.0 },
+];
+const beats = MODE === "addsample" ? ADD_SAMPLE : MODE === "desktop" ? DESKTOP_ALL : MODE === "phone" ? PHONE_HOWTO : PROMO;
 
 const words = (s) => String(s).trim().split(/\s+/).filter(Boolean).length;
 for (const b of beats) {
@@ -111,7 +119,7 @@ for (const b of beats) {
 const CAMERA = rectOf([450, 0, 540, 900]), REVIEW = rectOf([450, 8, 540, 520]), VERIFY = rectOf([450, 8, 540, 620]);
 const EXTRA = { [Q + "quick-add-open"]: CAMERA, [Q + "quick-add-universe-menu"]: CAMERA, [Q + "quick-add-category-menu"]: CAMERA, [Q + "photo-1-taken"]: CAMERA, [Q + "photo-4-taken"]: CAMERA, [Q + "review-your-drop"]: REVIEW, [Q + "review-after-remove"]: REVIEW, [Q + "review-correct-category"]: REVIEW, [Q + "verify-names"]: VERIFY, [Q + "verify-cost"]: VERIFY };
 const FULL = new Set([Q + "item-opened"]);
-const CROPS = { [Q + "home-entry-points"]: { x: 185, y: 0, w: 1070, h: 1070 / (1920 / IMG_H) } };
+const CROPS = { [Q + "home-entry-points"]: { x: 185, y: 0, w: 1070, h: 1070 / (1920 / IMG_H) }, "a-desktop/home-add-item": { x: 185, y: 0, w: 1070, h: 1070 / (1920 / IMG_H) } };
 const rectsByImg = {};
 for (const b of beats) if (b.img && b.rect) (rectsByImg[b.img] = rectsByImg[b.img] || []).push(b.rect);
 

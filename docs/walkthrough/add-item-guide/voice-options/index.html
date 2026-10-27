@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add Item voice options</title><style>
+:root{color-scheme:dark;--bg:#0b1117;--card:#111a22;--ink:#e8eef5;--mute:#93a4b4;--line:#223140;--accent:#22d3ee}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#f4f7fa;--card:#ffffff;--ink:#14202b;--mute:#53667a;--line:#d5dee7;--accent:#0b7f95}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Segoe UI",Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 72px}h1{font-size:28px;margin:0 0 6px}h2{font-size:20px;margin:30px 0 8px}p{max-width:70ch}.mute{color:var(--mute);font-size:14px}
+video{width:100%;aspect-ratio:16/9;border-radius:12px;background:#000;display:block}audio{width:100%;margin-top:8px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}.cut{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 12px;font-size:13px;color:var(--mute);margin:0 6px 6px 0}
+a{color:var(--accent)}ul{padding-left:1.2em;max-width:76ch}li{margin:5px 0}code{font-size:13px;word-break:break-all}
+</style></head><body><main>
+<h1>Add Item: two voice options</h1>
+<p><span class="pill">Made with Clipchamp's free text to speech</span><span class="pill">Same 16 s of footage, same words</span><span class="pill">Local files, nothing published</span></p>
+<p>Both options say exactly the same sentences over the same existing Home-to-Add Item footage. Only the voice differs. Press play on each and tell me which to use for the full guide (A, B, or "try other voices").</p>
+<div class="grid">
+<div class="cut"><h2 style="margin-top:0">Option A: Ada Multilingual</h2><p class="mute" style="margin:0 0 8px">Clipchamp lists it as: cheerful, warm, gentle, friendly (female).</p>
+<video controls preload="metadata" poster="add-item-voice-sample-thumbnail.jpg"><source src="add-item-voice-sample-A-ada.mp4" type="video/mp4"></video>
+<audio controls preload="none" src="voice-A-ada-multilingual.m4a"></audio>
+<p class="mute"><a href="add-item-voice-sample-A-ada.mp4">video (mp4)</a> · <a href="voice-A-ada-multilingual.m4a">voice only (m4a)</a></p></div>
+<div class="cut"><h2 style="margin-top:0">Option B: Adam Multilingual</h2><p class="mute" style="margin:0 0 8px">Clipchamp lists it as: warm, engaging, deep (male).</p>
+<video controls preload="metadata" poster="add-item-voice-sample-thumbnail.jpg"><source src="add-item-voice-sample-B-adam.mp4" type="video/mp4"></video>
+<audio controls preload="none" src="voice-B-adam-multilingual.m4a"></audio>
+<p class="mute"><a href="add-item-voice-sample-B-adam.mp4">video (mp4)</a> · <a href="voice-B-adam-multilingual.m4a">voice only (m4a)</a></p></div>
+</div>
+<h2>What they say</h2>
+<p>"Start on Home. Select Add Item. The Add Item form opens. Item name is the only required field. Add a photo, choose a category, and fill in what you know. Then save it to your Vault."</p>
+<p class="mute">Scenes: Home with Add Item highlighted, the button pressed, the form opening, Item name, the photo buttons, then the saved item in the Vault. Captions are burned in; <a href="add-item-voice-sample.srt">.srt</a> and <a href="add-item-voice-sample.vtt">.vtt</a> are alongside.</p>
+<h2>How these were made, and what was checked</h2>
+<ul>
+<li>Voices came from Clipchamp's text to speech in your signed-in Clipchamp account: no upgrade prompt, no paid feature, no app credits, no "Create a video with AI". Each voice was exported with Clipchamp's "Audio-only" option (.m4a). "Store in the cloud" was left off. No Windows voice was used.</li>
+<li>The footage is existing verified Add Item screenshots (v2) with the same highlight style as the approved Quick Add video. The only edit to the audio was a 0.8-second silent lead-in so the voice starts just after the picture; no trimming, no loudness processing, no filters.</li>
+<li>Measured, not heard (I cannot listen): neither file clips (peaks -7.4 dBFS for A and -6.3 dBFS for B, zero clipped samples), and the video versions have the same peaks and step sizes as Clipchamp's own files, so my step added nothing. Option A has many fast steps in the waveform clustered on S and T sounds (normal for sibilants, but it is the one to listen to closely for harshness); Option B has none above 0.2 of full scale. Please listen with headphones for popping, because that is the thing I cannot judge.</li>
+<li>Both run about 13 seconds of speech in a 15.9-second video. A full guide would use sentence-by-sentence clips, so every narration section stays individually editable.</li>
+</ul>
+<h2>Left behind in your Clipchamp account</h2>
+<p>A draft project named "Video Project" (it only holds the text-to-speech clip). I did not delete it. The two exported files are also in your Downloads folder (<code>voice-A-ada-multilingual.m4a</code>, <code>voice-B-adam-multilingual.m4a</code>).</p>
+</main></body></html>
