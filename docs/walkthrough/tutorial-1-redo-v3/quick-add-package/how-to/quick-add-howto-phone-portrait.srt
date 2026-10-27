@@ -1,0 +1,73 @@
+1
+00:00:00,000 --> 00:00:06,000
+Tutorial 1: Quick Add on a phone. Start on Home. Quick Add
+is in the bar near the bottom of Home.
+
+2
+00:00:06,000 --> 00:00:09,417
+Tap Quick Add. Tap it. The camera opens.
+
+3
+00:00:09,417 --> 00:00:17,417
+First time only: Allow the camera. Your phone asks to use
+the camera. Choose Allow. It may say While using the app. If
+you chose Block, allow the camera in your browser's site
+settings, then reopen Quick Add.
+
+4
+00:00:17,417 --> 00:00:21,917
+Universe. Choose the type of collectible. This is optional.
+
+5
+00:00:21,917 --> 00:00:26,417
+Category. Narrow it down if you want. Also optional.
+
+6
+00:00:26,417 --> 00:00:30,917
+Take the photo. Tap the round button to photograph an item.
+
+7
+00:00:30,917 --> 00:00:36,084
+One photo per item. Repeat for each item. When you are done,
+tap Finished.
+
+8
+00:00:36,084 --> 00:00:41,501
+Or use the small picture. The small picture at the bottom
+left opens the review too.
+
+9
+00:00:41,501 --> 00:00:47,584
+Check your photos. Every photo is listed. Scroll to find a
+bad shot and tap Remove.
+
+10
+00:00:47,584 --> 00:00:54,251
+Fix a category. Item 3 is a toy, but it says TCG. Change its
+Universe and Category here.
+
+11
+00:00:54,251 --> 00:01:00,334
+Check the category. Each item has its own Universe and
+Category. Fix any that are wrong.
+
+12
+00:01:00,334 --> 00:01:07,334
+Name each item. Type a name for each item. An item with no
+name is saved as Untitled Item.
+
+13
+00:01:07,334 --> 00:01:11,251
+Save. Tap Save 3 items to Vault.
+
+14
+00:01:11,251 --> 00:01:17,668
+Saved. You land in your Vault. Items now shows 3. Scroll
+down to see them.
+
+15
+00:01:17,668 --> 00:01:25,668
+Recap: You used Quick Add. Open Quick Add from Home. One
+photo per item, then Finished. Remove bad photos, fix
+categories, name your items. Save, then find them in your
+Vault.

@@ -1,0 +1,46 @@
+{
+ "combined": {
+  "file": "how-to/quick-add-howto-combined-landscape.mp4",
+  "orientation": "landscape 16:9",
+  "duration": "2:26",
+  "seconds": 145.7,
+  "width": 1920,
+  "height": 1080,
+  "audio": false,
+  "mb": 8.7,
+  "sha256": "6f594da85acc354faae1c57ed2a041cb2ba069fbda303736ce06921a84e6febb"
+ },
+ "desktop": {
+  "file": "how-to/quick-add-howto-desktop-landscape.mp4",
+  "orientation": "landscape 16:9",
+  "duration": "1:58",
+  "seconds": 118.2,
+  "width": 1920,
+  "height": 1080,
+  "audio": false,
+  "mb": 7.16,
+  "sha256": "c18458f348c518b138baf028889ff4fa88f1510b86b186d5f50ba9963855b44e"
+ },
+ "phone": {
+  "file": "how-to/quick-add-howto-phone-portrait.mp4",
+  "orientation": "portrait 9:16",
+  "duration": "1:26",
+  "seconds": 85.7,
+  "width": 1080,
+  "height": 1920,
+  "audio": false,
+  "mb": 4.49,
+  "sha256": "d89a2fff93fa21af950cc1a623affd31f06a9fd6e7f2f7ecfef161eb9f461cce"
+ },
+ "promo": {
+  "file": "promo/quick-add-promo-portrait.mp4",
+  "orientation": "portrait 9:16",
+  "duration": "0:23",
+  "seconds": 22.8,
+  "width": 1080,
+  "height": 1920,
+  "audio": false,
+  "mb": 1.77,
+  "sha256": "52a2635cd3f92870e79a62f0951bc55927494486bab0fe37e712297373f6596d"
+ }
+}
