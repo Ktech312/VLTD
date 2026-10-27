@@ -1,0 +1,24 @@
+1
+00:00:00,000 --> 00:00:03,000
+Start on Home. Add Item is in the top card on Home.
+
+2
+00:00:03,000 --> 00:00:05,083
+Select Add Item. Select it. The form opens.
+
+3
+00:00:05,083 --> 00:00:07,916
+The Add Item form. The form opens, ready for a new item.
+
+4
+00:00:07,916 --> 00:00:11,249
+Item name is required. It is the only required field.
+
+5
+00:00:11,249 --> 00:00:15,916
+Add a photo and details. Add a photo, then fill in what you
+know.
+
+6
+00:00:15,916 --> 00:00:20,166
+Saved to your Vault. After you save, you land in your Vault.

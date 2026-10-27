@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add Item voice options, round 2</title><style>
+:root{color-scheme:dark;--bg:#0b1117;--card:#111a22;--ink:#e8eef5;--mute:#93a4b4;--line:#223140;--accent:#22d3ee}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#f4f7fa;--card:#ffffff;--ink:#14202b;--mute:#53667a;--line:#d5dee7;--accent:#0b7f95}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Segoe UI",Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 72px}h1{font-size:28px;margin:0 0 6px}h2{font-size:20px;margin:30px 0 8px}p{max-width:70ch}.mute{color:var(--mute);font-size:14px}
+video{width:100%;aspect-ratio:16/9;border-radius:12px;background:#000;display:block}audio{width:100%;margin-top:8px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}.cut{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 12px;font-size:13px;color:var(--mute);margin:0 6px 6px 0}
+a{color:var(--accent)}ul{padding-left:1.2em;max-width:76ch}li{margin:5px 0}code{font-size:13px;word-break:break-all}
+</style></head><body><main>
+<h1>Add Item voice options, round 2</h1>
+<p><span class="pill">Slower pace (0.85x)</span><span class="pill">Each page turns after its sentence</span><span class="pill">Clipchamp free text to speech</span><span class="pill">Local files, nothing published</span></p>
+<p>You said the first samples were too quick and the narration finished before the page moved. Three things changed: the voice is slower, there is a clear pause between sentences, and the pictures are now timed to the voice, so each page turns in the pause right after its sentence ends. Same words, same footage; only the voice differs. Tell me which one to use (A, B or C), or ask for other voices.</p>
+<div class="grid">
+<div class="cut"><h2 style="margin-top:0">A: Ava Multilingual</h2><p class="mute" style="margin:0 0 8px">Clipchamp: pleasant, friendly, caring (female). 20 s.</p>
+<video controls preload="metadata" poster="add-item-voice-sample-thumbnail.jpg"><source src="add-item-voice-sample-A-ava.mp4" type="video/mp4"></video>
+<audio controls preload="none" src="voice2-A-ava-multilingual-slow.m4a"></audio>
+<p class="mute"><a href="add-item-voice-sample-A-ava.mp4">video</a> · <a href="voice2-A-ava-multilingual-slow.m4a">voice only</a> · <a href="add-item-voice-sample-A.srt">.srt</a> · <a href="add-item-voice-sample-A.vtt">.vtt</a></p></div>
+<div class="cut"><h2 style="margin-top:0">B: Brian Multilingual</h2><p class="mute" style="margin:0 0 8px">Clipchamp: sincere, calm, approachable (male). 20 s.</p>
+<video controls preload="metadata" poster="add-item-voice-sample-thumbnail.jpg"><source src="add-item-voice-sample-B-brian.mp4" type="video/mp4"></video>
+<audio controls preload="none" src="voice2-B-brian-multilingual-slow.m4a"></audio>
+<p class="mute"><a href="add-item-voice-sample-B-brian.mp4">video</a> · <a href="voice2-B-brian-multilingual-slow.m4a">voice only</a> · <a href="add-item-voice-sample-B.srt">.srt</a> · <a href="add-item-voice-sample-B.vtt">.vtt</a></p></div>
+<div class="cut"><h2 style="margin-top:0">C: Andrew Multilingual</h2><p class="mute" style="margin:0 0 8px">Clipchamp: confident, casual, warm (male). 19 s.</p>
+<video controls preload="metadata" poster="add-item-voice-sample-thumbnail.jpg"><source src="add-item-voice-sample-C-andrew.mp4" type="video/mp4"></video>
+<audio controls preload="none" src="voice2-C-andrew-multilingual-slow.m4a"></audio>
+<p class="mute"><a href="add-item-voice-sample-C-andrew.mp4">video</a> · <a href="voice2-C-andrew-multilingual-slow.m4a">voice only</a> · <a href="add-item-voice-sample-C.srt">.srt</a> · <a href="add-item-voice-sample-C.vtt">.vtt</a></p></div>
+</div>
+<h2>What they say</h2>
+<p>"Start on Home. Select Add Item. The Add Item form opens. Item name is the only required field. Add a photo, choose a category, and fill in what you know. Then save it to your Vault."</p>
+<h2>What changed from round 1</h2>
+<ul>
+<li><strong>Pace:</strong> Clipchamp's pace slider set to about 0.85x (it runs 0.5x to 2x; the default was 1x). Voices run about 16 seconds for the same words; before it was 13.</li>
+<li><strong>Pauses:</strong> a pause was added between sentences, about 0.7 seconds each.</li>
+<li><strong>Timing:</strong> each scene is sized to its own sentence. The page changes about 0.35 seconds after a sentence ends, inside the pause, and a second and a half of picture comes before the first word. Checked by comparing the video's scene changes with the gaps in the audio, for all three files. The last scene stays up for two seconds after the final word.</li>
+<li><strong>Voices:</strong> three of Clipchamp's newer "Multilingual" voices (Ava, Brian, Andrew), chosen for calm, clear, approachable tone from Clipchamp's own descriptions. I cannot judge which sounds most natural by ear.</li>
+<li><strong>Still no processing:</strong> the audio is Clipchamp's file exactly, delayed by 1.5 seconds of silence; no trimming, no loudness changes. Measured: no clipping (peaks about -5 to -7 dBFS), and the largest sample-to-sample step is 0.12 to 0.20 of full scale, smoother than round 1's Ada (0.41).</li>
+</ul>
+<h2>Still on your account</h2>
+<p>Clipchamp now has two draft projects, "Video Project" and "Video Project 1", holding only text-to-speech clips. I left them in place. All exports went to your Downloads folder (<code>voice2-*.m4a</code>) with "Store in the cloud" off.</p>
+<p class="mute">Round 1 is kept for the record in <code>../voice-options/</code>.</p>
+</main></body></html>

@@ -1,0 +1,2 @@
+# Add Item voice options, round 2 (local, not published)
+Open `index.html`. Three Clipchamp free text-to-speech voices (Ava, Brian, Andrew Multilingual) at about 0.85x pace with pauses between sentences, over the same existing Home-to-Add Item footage, each timed so the page turns just after its sentence ends. `timing.json` has the scene lengths. Build: `../../tutorial-1-redo-v3/_build/make-voice-samples.cjs <voicesDir> <outDir>`.

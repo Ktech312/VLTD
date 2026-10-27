@@ -1,0 +1,41 @@
+{
+ "A": {
+  "name": "ava",
+  "voiceSeconds": 16.6,
+  "videoSeconds": 20.1,
+  "sceneSeconds": [
+   2.97,
+   2.06,
+   2.8,
+   3.33,
+   4.69,
+   4.23
+  ]
+ },
+ "B": {
+  "name": "brian",
+  "voiceSeconds": 16.9,
+  "videoSeconds": 20.4,
+  "sceneSeconds": [
+   3.05,
+   2.08,
+   2.63,
+   3.41,
+   4.82,
+   4.43
+  ]
+ },
+ "C": {
+  "name": "andrew",
+  "voiceSeconds": 15.7,
+  "videoSeconds": 19.2,
+  "sceneSeconds": [
+   2.79,
+   2.02,
+   2.41,
+   3.52,
+   4.62,
+   3.86
+  ]
+ }
+}

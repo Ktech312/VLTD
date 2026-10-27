@@ -98,11 +98,14 @@ const PROMO = [
 // Add Item voice-sample footage (16 s, existing v2 captures): Home -> Add Item -> form; timed so both voice options fit the same cuts
 const ADD_SAMPLE = [
   { img: "a-desktop/home-add-item", ring: 0, section: "Open Add Item", title: "Start on Home", caption: "Add Item is in the top card on Home.", dur: 3.6 },
-  { img: "a-desktop/home-add-item", ring: 0, fx: "press", section: "Open Add Item", title: "Select Add Item", caption: "Select it. The form opens.", dur: 2.0 },
+  { img: "a-desktop/home-add-item", ring: 0, fx: "press", section: "Open Add Item", title: "Select Add Item", caption: "Select it. The form opens.", dur: 2.4 },
+  { img: "a-desktop/form-overview", ring: null, section: "The Add Item form", title: "The Add Item form", caption: "The form opens, ready for a new item.", dur: 3.0 },
   { img: "a-desktop/form-overview", ring: 0, section: "The Add Item form", title: "Item name is required", caption: "It is the only required field.", dur: 3.2 },
-  { img: "a-desktop/form-overview", ring: 1, section: "The Add Item form", title: "Add a photo and details", caption: "Add a photo, then fill in what you know.", dur: 3.2 },
+  { img: "a-desktop/form-overview", ring: 1, section: "The Add Item form", title: "Add a photo and details", caption: "Add a photo, then fill in what you know.", dur: 4.0 },
   { img: "a-desktop/vault-after-save", ring: null, section: "Save", title: "Saved to your Vault", caption: "After you save, you land in your Vault.", dur: 4.0 },
 ];
+// durations can be overridden (seconds, one per beat) so each scene turns just after its sentence ends
+if (process.env.ADD_DURS) { const d = JSON.parse(process.env.ADD_DURS); ADD_SAMPLE.forEach((b, k) => { b.dur = d[k]; }); }
 const beats = MODE === "addsample" ? ADD_SAMPLE : MODE === "desktop" ? DESKTOP_ALL : MODE === "phone" ? PHONE_HOWTO : PROMO;
 
 const words = (s) => String(s).trim().split(/\s+/).filter(Boolean).length;
