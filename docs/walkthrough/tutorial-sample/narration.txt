@@ -1,0 +1,6 @@
+[0.0s] Quick Add opens your camera. Set up first, then shoot.
+[5.0s] (control 1) Choose the type of collectible you're adding.
+[9.2s] (control 2) Choose a category if you want to narrow it further.
+[14.0s] (control 3) Tap here to photograph your item. Repeat for each additional item.
+[21.0s] (control 4) When you're done taking photos, select Finished to review them.
+[25.3s] Here you can check your photos, and the choices you made.

@@ -1,0 +1,86 @@
+{
+ "total": 29.09607709750567,
+ "scenes": [
+  {
+   "k": "intro",
+   "shot": "idle",
+   "t0": 0,
+   "t1": 4.96,
+   "vo": "Quick Add opens your camera. Set up first, then shoot.",
+   "voSeconds": 4.36,
+   "badge": null
+  },
+  {
+   "k": "1A",
+   "shot": "idle",
+   "t0": 4.96,
+   "t1": 7.72,
+   "vo": "Choose the type of collectible you're adding.",
+   "voSeconds": 2.16,
+   "badge": 1
+  },
+  {
+   "k": "1B",
+   "shot": "menu-universe",
+   "t0": 7.72,
+   "t1": 9.22,
+   "vo": null,
+   "voSeconds": null,
+   "badge": 1
+  },
+  {
+   "k": "2A",
+   "shot": "after-universe",
+   "t0": 9.22,
+   "t1": 12.48,
+   "vo": "Choose a category if you want to narrow it further.",
+   "voSeconds": 2.66,
+   "badge": 2
+  },
+  {
+   "k": "2B",
+   "shot": "menu-category",
+   "t0": 12.48,
+   "t1": 13.98,
+   "vo": null,
+   "voSeconds": null,
+   "badge": 2
+  },
+  {
+   "k": "3A",
+   "shot": "after-category",
+   "t0": 13.98,
+   "t1": 18.99,
+   "vo": "Tap here to photograph your item. Repeat for each additional item.",
+   "voSeconds": 4.42,
+   "badge": 3
+  },
+  {
+   "k": "3C",
+   "shot": "after-photo",
+   "t0": 18.99,
+   "t1": 20.99,
+   "vo": null,
+   "voSeconds": null,
+   "badge": 3
+  },
+  {
+   "k": "4A",
+   "shot": "after-photo",
+   "t0": 20.99,
+   "t1": 25.29,
+   "vo": "When you're done taking photos, select Finished to review them.",
+   "voSeconds": 3.69,
+   "badge": 4
+  },
+  {
+   "k": "4C",
+   "shot": "review",
+   "t0": 25.29,
+   "t1": 29.1,
+   "vo": "Here you can check your photos, and the choices you made.",
+   "voSeconds": 3.21,
+   "badge": null
+  }
+ ]
+}

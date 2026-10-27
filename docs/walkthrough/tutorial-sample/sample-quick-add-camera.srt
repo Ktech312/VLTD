@@ -1,0 +1,23 @@
+1
+00:00:00,100 --> 00:00:04,760
+Quick Add opens your camera. Set up first, then shoot.
+
+2
+00:00:05,060 --> 00:00:07,519
+Choose the type of collectible you're adding.
+
+3
+00:00:09,319 --> 00:00:12,277
+Choose a category if you want to narrow it further.
+
+4
+00:00:14,077 --> 00:00:18,795
+Tap here to photograph your item. Repeat for each additional item.
+
+5
+00:00:21,095 --> 00:00:25,089
+When you're done taking photos, select Finished to review them.
+
+6
+00:00:25,389 --> 00:00:28,896
+Here you can check your photos, and the choices you made.
