@@ -2,6 +2,7 @@
 // Same screenshots (v2's verified capture set, "work-merged"), same caption bar and ring styling; the changes are the Home-first opening,
 // shorter holds, shorter captions, ONE highlight at a time (ring slides from control to control), and no audio track.
 //   node build-v3.cjs <outDir>
+// Corrected after review (five edits): title over Home instead of an opening card; phone Verify picture replaced (toy correctly classed); "Photo captured"; AI card removed; no production labels in the frames.
 // Screenshot-based video made from real captures of the deployed app with synthetic data. Not a screen recording of a person using the app.
 const fs = require("fs");
 const path = require("path");
@@ -26,6 +27,13 @@ const rectOf = (m) => ({ x: m[0], y: m[1], w: m[2], h: m[3] });
 const manifests = {};
 for (const dir of fs.readdirSync(WORK)) { const f = path.join(WORK, dir, "manifest.json"); if (!fs.existsSync(f)) continue; const m = JSON.parse(fs.readFileSync(f, "utf8")); for (const s of m.steps) manifests[`${m.scene}/${s.id}`] = { ...s, scene: m.scene, phone: m.phone, W: m.W, H: m.H, DSF: m.DSF, dir: path.join(WORK, dir) }; }
 
+// The phone "Name, then save" picture is replaced by a new capture (capture-phone-verify.cjs): item 3 (the toy) is classed Pop Culture / Toys & Figures, as taught in the review step.
+const FIXDIR = SCRATCH + "/work-fix/q-phone-fix";
+{
+  const fm = JSON.parse(fs.readFileSync(path.join(FIXDIR, "manifest.json"), "utf8")); const st = fm.steps.find((x) => x.id === "verify");
+  if (!st || st.verified === false || st.marks.length !== 2) throw new Error("replacement phone verify capture missing or unverified");
+  manifests["q-phone/verify"] = { ...st, scene: "q-phone", phone: fm.phone, W: fm.W, H: fm.H, DSF: fm.DSF, dir: FIXDIR };
+}
 // Save button on the Verify sheet (desktop). Measured from the live app's DOM in a one-off capture (rect [466,563,508,44], same position as in v2's verify-cost shot, where the button is visible).
 const SAVE_DESKTOP = rectOf([466, 563, 508, 44]);
 // The three new items as one row in the Vault (union of the three marked cards in v2's vault-new-items).
@@ -34,9 +42,7 @@ const VAULT_ROW = rectOf([44, 535, 574, 281]);
 // ---- the edit: beats, in order. ring = index into v2's marked controls, or an explicit rect; num = the number shown on the ring (camera set-up order only)
 const Q = "q-desktop/", P = "q-phone/";
 const beats = [
-  { card: { kicker: "Tutorial 1", title: "Quick Add", lines: ["Add several items fast: take photos, review, name, save.", "About 5 minutes. You type the details yourself.", "Made from screenshots of the live app, with sample items and a test camera."] }, dur: 6, section: "Start" },
-
-  { img: Q + "home-entry-points", ring: 0, section: "Open Quick Add", title: "Start on Home", caption: "Quick Add is in the top card on Home." },
+  { img: Q + "home-entry-points", ring: 0, intro: { kicker: "Tutorial 1", title: "Quick Add", sub: "Take photos, review, name, save." }, section: "Open Quick Add", title: "Start on Home", caption: "Quick Add is in the top card on Home.", dur: 6 },
   { img: Q + "home-entry-points", ring: 0, fx: "press", section: "Open Quick Add", title: "Select Quick Add", caption: "Select it. The camera opens.", dur: 3.2 },
   { card: { kicker: "First time only", title: "Allow the camera", lines: ["Your browser asks to use the camera. Choose Allow.", "On a phone it may say While using the app."] }, dur: 5, section: "Open Quick Add" },
   { img: "x-denied/camera-blocked", ring: 0, section: "Open Quick Add", title: "If you chose Block", caption: "Quick Add says so. Allow the camera in your browser's site settings, then reopen it." },
@@ -47,7 +53,7 @@ const beats = [
   { img: Q + "quick-add-open", ring: 3, num: 2, section: "Set up, then shoot", title: "Category", caption: "Narrow it down if you want." },
   { img: Q + "quick-add-category-menu", ring: 0, section: "Set up, then shoot", title: "Pick a category", caption: "Also optional. You can still shoot without one.", dur: 4 },
   { img: Q + "quick-add-open", ring: 0, num: 3, section: "Set up, then shoot", title: "Take the photo", caption: "Tap the round button to photograph your item." },
-  { img: Q + "photo-1-taken", ring: 1, section: "Set up, then shoot", title: "Your photo is saved", caption: "The counter goes up. The photo appears bottom left." },
+  { img: Q + "photo-1-taken", ring: 1, section: "Set up, then shoot", title: "Photo captured", caption: "The counter goes up. The photo appears bottom left." },
   { img: Q + "photo-4-taken", ring: 0, num: 4, section: "Set up, then shoot", title: "One photo per item", caption: "Repeat for each item. When you are done, select Finished." },
 
   { img: Q + "review-your-drop", ring: 0, section: "Review", title: "Check your photos", caption: "Every photo is listed. Remove the accidental one." },
@@ -57,14 +63,13 @@ const beats = [
   { img: Q + "verify-names", ring: 1, section: "Name and save", title: "Name each item", caption: "Type a name for each item." },
   { img: Q + "verify-names", ring: 2, section: "Name and save", title: "Name each item", caption: "An item with no name is saved as Untitled Item." },
   { img: Q + "verify-cost", ring: 0, section: "Name and save", title: "Add what you know", caption: "Cost is what you paid. Leave it empty if unknown. Empty is not zero." },
-  { card: { kicker: "Optional", title: "Identify with AI", lines: ["Some accounts have an Identify with AI button on this sheet.", "It never runs unless you press it, and it counts against your allowance.", "No button on your screen? Your account does not have AI. Type the details yourself."] }, dur: 8, section: "Name and save" },
   { img: Q + "verify-cost", ring: SAVE_DESKTOP, section: "Name and save", title: "Save", caption: "Select Save 3 items to Vault." },
   { img: Q + "saved-in-vault", ring: null, section: "Find your items", title: "Saved", caption: "A message confirms the save, and you land in your Vault." },
   { img: Q + "vault-new-items", ring: VAULT_ROW, section: "Find your items", title: "Your new items", caption: "All three are in the Vault, each with its photo." },
   { img: Q + "vault-search", ring: 0, section: "Find your items", title: "Find an item later", caption: "Type part of its name in the search box." },
   { img: Q + "item-opened", ring: 1, section: "Find your items", title: "Open it to check", caption: "The photo and details are exactly as you saved them." },
 
-  { card: { kicker: "On a phone", title: "Same steps, new layout", lines: ["Quick Add sits in a bar near the bottom of Home.", "Recorded in a phone-sized test browser."] }, dur: 4.5, section: "On a phone" },
+  { card: { kicker: "On a phone", title: "Same steps, new layout", lines: ["Quick Add sits in a bar near the bottom of Home."] }, dur: 4, section: "On a phone" },
   { img: P + "home-bar", ring: 0, section: "On a phone", title: "Quick Add on a phone", caption: "Find Quick Add in the bar at the bottom of Home." },
   { img: P + "quick-open", ring: 1, section: "On a phone", title: "The camera fills the screen", caption: "Finished is at the top right." },
   { img: P + "four-taken", ring: 0, section: "On a phone", title: "Review your photos", caption: "Tap Finished, or the small picture at the bottom left." },
@@ -157,10 +162,19 @@ function ringSvg(im, rect, alpha, num, ripple) {
   return out;
 }
 function tag(text, x, y, anchor = "start") { const w = text.length * 13 + 28; const rx = anchor === "end" ? x - w : x; return `<rect x="${rx}" y="${y}" width="${w}" height="38" rx="19" fill="#06121a" fill-opacity=".82" stroke="#2b3a48"/><text x="${rx + w / 2}" y="${y + 26}" font-family="${FONT}" font-size="21" font-weight="600" fill="#cfe3f1" text-anchor="middle">${esc(text)}</text>`; }
-const footer = `Screenshots of the live app with sample items · ${LABEL}`;
+// opening title over the Home screen (fades out); a = 0..1
+function introSvg(a) {
+  if (!a || a <= 0 || !CUR_INTRO) return "";
+  const c = CUR_INTRO; const cx = W / 2, y0 = 128, w = 880, h = 214;
+  return `<g opacity="${a.toFixed(2)}"><rect x="${cx - w / 2}" y="${y0}" width="${w}" height="${h}" rx="26" fill="#06121a" fill-opacity=".9" stroke="#2b3a48" stroke-width="2"/><rect x="${cx - w / 2}" y="${y0}" width="${w}" height="6" rx="3" fill="${RING}"/>` +
+    `<text x="${cx}" y="${y0 + 56}" font-family="${FONT}" font-size="26" font-weight="700" fill="${RING}" letter-spacing="3" text-anchor="middle">${esc(c.kicker.toUpperCase())}</text>` +
+    `<text x="${cx}" y="${y0 + 134}" font-family="${FONT}" font-size="80" font-weight="800" fill="#f4f8fb" text-anchor="middle">${esc(c.title)}</text>` +
+    `<text x="${cx}" y="${y0 + 184}" font-family="${FONT}" font-size="34" fill="#d3dee8" text-anchor="middle">${esc(c.sub)}</text></g>`;
+}
+let CUR_INTRO = null;
 
 async function composeShot(b, st) {
-  const s = b.s; const im = await imageFor(b.img, s); const layers = [];
+  const s = b.s; CUR_INTRO = b.intro || null; const im = await imageFor(b.img, s); const layers = [];
   const sec = b.section ? b.section.toUpperCase() : "";
   if (im.kind === "phone" || im.kind === "panel") {
     layers.push({ input: im.frame }); layers.push({ input: im.rounded, left: im.region.x, top: im.top });
@@ -170,8 +184,7 @@ async function composeShot(b, st) {
     let y = 150;
     wrap(b.title, Math.max(18, Math.floor((W - textX - 60) / 30))).forEach((l) => { svg += `<text x="${textX}" y="${y + 40}" font-family="${FONT}" font-size="62" font-weight="700" fill="#f1f6fa">${esc(l)}</text>`; y += 74; });
     y += 20; wrap(b.caption, maxChars).slice(0, 8).forEach((l) => { svg += `<text x="${textX}" y="${y + 30}" font-family="${FONT}" font-size="40" fill="#d3dee8">${esc(l)}</text>`; y += 54; });
-    svg += tag(s.phone ? "PHONE VIEW (phone-size test browser)" : "DESKTOP", W - 40, 40, "end");
-    svg += `<text x="${W - 40}" y="${H - 22}" font-family="${FONT}" font-size="19" fill="#6f8294" text-anchor="end">${esc(footer)}</text></svg>`;
+    svg += tag(s.phone ? "PHONE" : "DESKTOP", W - 40, 40, "end") + introSvg(st.intro) + "</svg>";
     layers.push({ input: Buffer.from(svg) });
   } else {
     layers.push({ input: im.img, left: im.kind === "full" ? im.ox : 0, top: 0 });
@@ -180,7 +193,7 @@ async function composeShot(b, st) {
     let y = 54; svg += `<text x="60" y="${y}" font-family="${FONT}" font-size="24" font-weight="700" fill="${RING}" letter-spacing="2">${esc(sec)}</text>`; y += 64;
     wrap(b.title, 70).forEach((l) => { svg += `<text x="60" y="${y}" font-family="${FONT}" font-size="50" font-weight="700" fill="#f1f6fa">${esc(l)}</text>`; y += 58; });
     wrap(b.caption, 100).slice(0, 3).forEach((l) => { svg += `<text x="60" y="${y}" font-family="${FONT}" font-size="36" fill="#d3dee8">${esc(l)}</text>`; y += 46; });
-    svg += `<text x="${W - 40}" y="54" font-family="${FONT}" font-size="19" fill="#6f8294" text-anchor="end">${esc(footer)}</text></g></svg>`;
+    svg += `</g>${introSvg(st.intro)}</svg>`;
     layers.push({ input: Buffer.from(svg) });
   }
   return sharp({ create: { width: W, height: H, channels: 4, background: "#080c10" } }).composite(layers);
@@ -211,6 +224,16 @@ const lerpRect = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) 
       if (prev) for (let i = 1; i <= 4; i++) emit(blend(prev, last, i / 5));
       emit(last);
     } else {
+      if (b.intro) {
+        let lastKey = null, f = null;
+        for (let i = 0; i < target; i++) {
+          const t = i / FPS; const fade = smooth((t - 2.5) / 0.5);
+          const ia = +(1 - fade).toFixed(2), ra = +fade.toFixed(2); const key = ia + "/" + ra;
+          if (key !== lastKey) { f = await rawOf(await composeShot(b, { num: b.num, ripple: 0, rect: b.rect, alpha: ra, intro: ia })); lastKey = key; }
+          emit(f);
+        }
+        last = await rawOf(await composeShot(b, { num: b.num, ripple: 0, rect: b.rect, alpha: 1 }));
+      } else {
       const sameImg = prevB && prevB.img === b.img && prevB.rect && b.rect && !b.card;
       const base = { num: b.num, ripple: 0 };
       if (sameImg && b.fx === "press") {
@@ -227,6 +250,7 @@ const lerpRect = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) 
         if (b.rect) for (let i = 1; i <= 5; i++) emit(await rawOf(await composeShot(b, { ...base, rect: b.rect, alpha: smooth(i / 5) })));
         last = await rawOf(await composeShot(b, { ...base, rect: b.rect, alpha: 1 }));
       }
+      }
       // numbered still of the final frame
       shotNo += 1; const name = `${String(shotNo).padStart(2, "0")}-${b.img.split("/")[1]}${b.num ? "-ring" + b.num : ""}${b.fx ? "-press" : ""}.jpg`;
       fs.writeFileSync(path.join(OUT, "screenshots", name), await sharp(Buffer.from(last.buffer), { raw: { width: W, height: H, channels: 4 } }).jpeg({ quality: 86 }).toBuffer());
@@ -235,7 +259,7 @@ const lerpRect = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) 
     while (count < target) emit(last);
     const startMs = tMs; tMs += Math.round(count / FPS * 1000);
     prev = last; prevB = b.card ? null : b;
-    const text = b.card ? `${b.card.kicker}: ${b.card.title}. ${b.card.lines.join(" ")}` : `${b.title}. ${b.caption}`;
+    const text = b.card ? `${b.card.kicker}: ${b.card.title}. ${b.card.lines.join(" ")}` : `${b.intro ? b.intro.kicker + ": " + b.intro.title + ". " : ""}${b.title}. ${b.caption}`;
     cues.push({ startMs, endMs: tMs, text });
     index.push({ n: bi + 1, section: b.section, type: b.card ? "card" : "shot", image: b.img || null, title: b.card ? b.card.title : b.title, caption: b.card ? b.card.lines.join(" ") : b.caption, startMs, endMs: tMs, still: b.shot || null, ring: b.rect ? b.rect : null, num: b.num || null, fx: b.fx || null });
     process.stdout.write(`\r${bi + 1}/${beats.length} beats, ${(tMs / 1000).toFixed(0)} s   `);

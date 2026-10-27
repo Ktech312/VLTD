@@ -27,25 +27,35 @@ td.t{color:var(--accent);font-weight:700;white-space:nowrap}td.n{color:var(--mut
 ul,ol{padding-left:1.2em;max-width:72ch}li{margin:5px 0}
 `;
 const body = `<main>
-<h1>Quick Add walkthrough, revised (v3)</h1>
-<p><span class="pill">Edit of v2, not a restart</span><span class="pill">${mmss(total)} (v2 was 8:40)</span><span class="pill">Captions only, no audio</span><span class="pill">Nothing published</span></p>
+<h1>Quick Add walkthrough, corrected (v3)</h1>
+<p><span class="pill">Corrected after review</span><span class="pill">Edit of v2, not a restart</span><span class="pill">${mmss(total)} (v2 was 8:40)</span><span class="pill">Captions only, no audio</span><span class="pill">Nothing published</span></p>
 <video controls preload="metadata" poster="quick-add-v3-thumbnail.jpg"><source src="quick-add-v3.mp4" type="video/mp4">Your browser cannot play this video. The scene table is below.</video>
-<p class="mute">Disclosure: screenshots of the live app with sample items, plus a test camera that shows fictional cards. It is not a recording of a person using the app, and the browser's camera-permission prompt cannot be captured, so that is shown as a card. The phone part was recorded in a phone-sized test browser.</p>
+<p class="mute">Disclosure: screenshots of the live app with sample items, plus a test camera that shows fictional cards. It is not a recording of a person using the app, and the browser's camera-permission prompt cannot be captured, so that is shown as a card. The phone part was recorded in a phone-sized test browser. These notes are kept here and in the verification record, not inside the video frames.</p>
+
+<h2>Five corrections after your review</h2>
+<ol>
+<li><strong>Home at 0:00.</strong> The six-second title card is gone. The video opens on Home, with "Tutorial 1: Quick Add" shown briefly over the page (about 3 seconds, then it fades and the Quick Add highlight comes in).</li>
+<li><strong>Phone "Name, then save" corrected.</strong> Only that picture was replaced, with a new capture where item 3 (the toy) reads Pop Culture / Toys &amp; Figures, as in the category-fix lesson. It was captured from the live app with a synthetic collector; nothing was saved to the Vault, and the collector was removed afterwards.</li>
+<li><strong>"Your photo is saved" is now "Photo captured."</strong> The photo is not saved to the Vault at that point. "Save" now only means the final save.</li>
+<li><strong>AI card removed.</strong> The 8-second Identify with AI card is gone from this walkthrough. The account-specific AI explanation stays in the written guide (it is not in the video).</li>
+<li><strong>Production labels removed from the frames.</strong> No "phone-size test browser" tag and no screenshot footer. Frames carry only a simple DESKTOP or PHONE label. The disclosure is on this page and in VERIFICATION.md. The phone intro card no longer says "recorded in a phone-sized test browser" either.</li>
+</ol>
+<p class="mute">Everything else is as in the version you reviewed: same order, same captures, same moving highlight, captions only. Nothing in the app changed; Add Item is still paused.</p>
 
 <h2>Journey, in order</h2>
-<p>Home, the Quick Add button (highlighted, then pressed), the camera, Universe, Category, the round button, Finished, review and remove, fix a category, name the items, Save, the saved items in the Vault, open one. Then 28 seconds on what is different on a phone.</p>
+<p>Home (with the title shown briefly), the Quick Add button (highlighted, then pressed), the camera, Universe, Category, the round button, Finished, review and remove, fix a category, name the items, Save, the saved items in the Vault, open one. Then 28 seconds on what is different on a phone.</p>
 
 <h2>Exactly what changed from v2</h2>
 <ol>
-<li><strong>Starts on Home.</strong> The first screen after the title card is Home with the Quick Add button highlighted (nav tabs in view so it reads as Home). The button is then pressed with a ripple, and the camera follows. v2 showed the same Home screenshot but with both buttons ringed at once, and it came after a long intro.</li>
+<li><strong>Starts on Home.</strong> The video opens on Home with the Quick Add button highlighted (nav tabs in view so it reads as Home), with the tutorial title shown briefly over it. The button is then pressed with a ripple, and the camera follows. v2 showed the same Home screenshot but with both buttons ringed at once, and it came after a long intro.</li>
 <li><strong>One highlight at a time.</strong> v2 drew every ring on a screen together with numbers. Now only the control being taught is lit, the rest of the screen is dimmed, and the ring slides to the next control on the same screen. The numbers 1 to 4 are used only for the camera set-up order (Universe 1, Category 2, shutter 3, Finished 4). Each is followed by the screen it produces. This is the camera sample's highlight style.</li>
-<li><strong>Holds shortened.</strong> v2 held each screen 8 to 26 seconds. Now a screen is held for the time to read its caption plus about 2 seconds: 3.2 to 6.7 seconds per screen (the shortest is the button press), and 4.5 to 8 seconds for the five cards. The video went from 8:40 to ${mmss(total)}.</li>
+<li><strong>Holds shortened.</strong> v2 held each screen 8 to 26 seconds. Now a screen is held for the time to read its caption plus about 2 seconds: 3.2 to 6.7 seconds per screen (the shortest is the button press), and 4 to 8 seconds for the three cards. The video went from 8:40 to ${mmss(total)}.</li>
 <li><strong>Captions simplified.</strong> One short sentence per screen, 15 words or fewer (26 of 27 are 14 or fewer); the step counter and the long second line are gone.</li>
 <li><strong>Save is now highlighted.</strong> Same Verify screenshot as v2 (the button is visible there); the ring position was measured from the live app's page layout.</li>
 <li><strong>Screens left out of this video (still in v2):</strong> Vault entry points, the four empty-Vault starting points, Upload from device, Add manually, and the phone review screen. They are not part of the Home to saved-item path.</li>
-<li><strong>Kept from v2 and shortened:</strong> camera permission (one card), the blocked-camera message, review and remove, category fix, names, cost, the optional Identify with AI card, Vault search, open item, phone differences (5 screens), recap.</li>
+<li><strong>Kept from v2 and shortened:</strong> camera permission (one card), the blocked-camera message, review and remove, category fix, names, cost, Vault search, open item, phone differences (5 screens), recap.</li>
 <li><strong>Framing:</strong> camera and dialog screens now show the whole camera column or the whole dialog, so nothing is cut off. Home is cropped to the nav tabs plus the top card.</li>
-<li><strong>No audio.</strong> This file has no audio track. The yellow production notes (the "Simulated" lines and the "Explanation card" label) are removed from the picture; the disclosure is in the first card and on this page. A small grey line at the bottom of every screen says it is screenshots of the live app.</li>
+<li><strong>No audio.</strong> This file has no audio track. The yellow production notes (the "Simulated" lines and the "Explanation card" label) are removed from the picture; the disclosure is on this page and in the verification record, not in the frames.</li>
 <li><strong>Smoother ring movement:</strong> 12 frames per second instead of 8.</li>
 <li><strong>New screens captured: none.</strong> Every picture is one of v2's verified screenshots.</li>
 </ol>

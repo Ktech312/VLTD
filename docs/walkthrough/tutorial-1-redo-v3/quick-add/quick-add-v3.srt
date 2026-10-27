@@ -1,138 +1,125 @@
 1
 00:00:00,000 --> 00:00:06,000
-Tutorial 1: Quick Add. Add several items fast: take photos, review, name, save.
-About 5 minutes. You type the details yourself. Made from screenshots of the
-live app, with sample items and a test camera.
+Tutorial 1: Quick Add. Start on Home. Quick Add is in the top card on Home.
 
 2
-00:00:06,000 --> 00:00:10,833
-Start on Home. Quick Add is in the top card on Home.
-
-3
-00:00:10,833 --> 00:00:14,000
+00:00:06,000 --> 00:00:09,167
 Select Quick Add. Select it. The camera opens.
 
-4
-00:00:14,000 --> 00:00:19,000
+3
+00:00:09,167 --> 00:00:14,167
 First time only: Allow the camera. Your browser asks to use the camera. Choose
 Allow. On a phone it may say While using the app.
 
-5
-00:00:19,000 --> 00:00:25,667
+4
+00:00:14,167 --> 00:00:20,834
 If you chose Block. Quick Add says so. Allow the camera in your browser's site
 settings, then reopen it.
 
-6
-00:00:25,667 --> 00:00:29,500
+5
+00:00:20,834 --> 00:00:24,667
 Quick Add is a camera. Set up first, then shoot.
 
-7
-00:00:29,500 --> 00:00:33,333
+6
+00:00:24,667 --> 00:00:28,500
 Universe. Choose the type of collectible.
 
-8
-00:00:33,333 --> 00:00:37,833
+7
+00:00:28,500 --> 00:00:33,000
 Pick one, such as Sports. This is optional. You can change it later.
 
-9
-00:00:37,833 --> 00:00:41,750
+8
+00:00:33,000 --> 00:00:36,917
 Category. Narrow it down if you want.
 
-10
-00:00:41,750 --> 00:00:45,750
+9
+00:00:36,917 --> 00:00:40,917
 Pick a category. Also optional. You can still shoot without one.
 
-11
-00:00:45,750 --> 00:00:50,250
+10
+00:00:40,917 --> 00:00:45,417
 Take the photo. Tap the round button to photograph your item.
 
-12
-00:00:50,250 --> 00:00:55,083
-Your photo is saved. The counter goes up. The photo appears bottom left.
+11
+00:00:45,417 --> 00:00:50,250
+Photo captured. The counter goes up. The photo appears bottom left.
 
-13
-00:00:55,083 --> 00:01:00,250
+12
+00:00:50,250 --> 00:00:55,417
 One photo per item. Repeat for each item. When you are done, select Finished.
 
-14
-00:01:00,250 --> 00:01:04,750
+13
+00:00:55,417 --> 00:00:59,917
 Check your photos. Every photo is listed. Remove the accidental one.
 
-15
-00:01:04,750 --> 00:01:09,250
+14
+00:00:59,917 --> 00:01:04,417
 Three items remain. Undo is there if you change your mind.
 
-16
-00:01:09,250 --> 00:01:15,000
+15
+00:01:04,417 --> 00:01:10,167
 Fix a category. Item 3 is a toy. Change its Category to Toys and Figures.
 
-17
-00:01:15,000 --> 00:01:18,917
+16
+00:01:10,167 --> 00:01:14,084
 Name each item. Type a name for each item.
 
-18
-00:01:18,917 --> 00:01:24,084
+17
+00:01:14,084 --> 00:01:19,251
 Name each item. An item with no name is saved as Untitled Item.
 
-19
-00:01:24,084 --> 00:01:30,501
+18
+00:01:19,251 --> 00:01:25,668
 Add what you know. Cost is what you paid. Leave it empty if unknown. Empty is
 not zero.
 
-20
-00:01:30,501 --> 00:01:38,501
-Optional: Identify with AI. Some accounts have an Identify with AI button on
-this sheet. It never runs unless you press it, and it counts against your
-allowance. No button on your screen? Your account does not have AI. Type the
-details yourself.
-
-21
-00:01:38,501 --> 00:01:42,418
+19
+00:01:25,668 --> 00:01:29,585
 Save. Select Save 3 items to Vault.
 
-22
-00:01:42,418 --> 00:01:47,835
+20
+00:01:29,585 --> 00:01:35,002
 Saved. A message confirms the save, and you land in your Vault.
 
-23
-00:01:47,835 --> 00:01:53,002
+21
+00:01:35,002 --> 00:01:40,169
 Your new items. All three are in the Vault, each with its photo.
 
-24
-00:01:53,002 --> 00:01:57,835
+22
+00:01:40,169 --> 00:01:45,002
 Find an item later. Type part of its name in the search box.
 
-25
-00:01:57,835 --> 00:02:03,002
+23
+00:01:45,002 --> 00:01:50,169
 Open it to check. The photo and details are exactly as you saved them.
 
-26
-00:02:03,002 --> 00:02:07,502
+24
+00:01:50,169 --> 00:01:54,169
 On a phone: Same steps, new layout. Quick Add sits in a bar near the bottom of
-Home. Recorded in a phone-sized test browser.
+Home.
 
-27
-00:02:07,502 --> 00:02:12,919
+25
+00:01:54,169 --> 00:01:59,586
 Quick Add on a phone. Find Quick Add in the bar at the bottom of Home.
 
-28
-00:02:12,919 --> 00:02:16,836
+26
+00:01:59,586 --> 00:02:03,503
 The camera fills the screen. Finished is at the top right.
 
-29
-00:02:16,836 --> 00:02:22,003
+27
+00:02:03,503 --> 00:02:08,670
 Review your photos. Tap Finished, or the small picture at the bottom left.
 
-30
-00:02:22,003 --> 00:02:26,836
+28
+00:02:08,670 --> 00:02:13,503
 Name, then save. Type a name for each item, then tap Save.
 
-31
-00:02:26,836 --> 00:02:31,003
+29
+00:02:13,503 --> 00:02:17,670
 Back in your Vault. Scroll down to see your new items.
 
-32
-00:02:31,003 --> 00:02:39,003
+30
+00:02:17,670 --> 00:02:25,670
 Recap: You used Quick Add. Open Quick Add from Home. One photo per item, then
 Finished. Remove bad photos, fix categories, name your items. Save, then find
 them in your Vault.
