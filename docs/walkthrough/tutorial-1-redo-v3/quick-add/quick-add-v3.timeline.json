@@ -1,0 +1,570 @@
+[
+ {
+  "n": 1,
+  "section": "Start",
+  "type": "card",
+  "image": null,
+  "title": "Quick Add",
+  "caption": "Add several items fast: take photos, review, name, save. About 5 minutes. You type the details yourself. Made from screenshots of the live app, with sample items and a test camera.",
+  "startMs": 0,
+  "endMs": 6000,
+  "still": null,
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 2,
+  "section": "Open Quick Add",
+  "type": "shot",
+  "image": "q-desktop/home-entry-points",
+  "title": "Start on Home",
+  "caption": "Quick Add is in the top card on Home.",
+  "startMs": 6000,
+  "endMs": 10833,
+  "still": "01-home-entry-points.jpg",
+  "ring": {
+   "x": 926.0625,
+   "y": 239,
+   "w": 89.15625,
+   "h": 36
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 3,
+  "section": "Open Quick Add",
+  "type": "shot",
+  "image": "q-desktop/home-entry-points",
+  "title": "Select Quick Add",
+  "caption": "Select it. The camera opens.",
+  "startMs": 10833,
+  "endMs": 14000,
+  "still": "02-home-entry-points-press.jpg",
+  "ring": {
+   "x": 926.0625,
+   "y": 239,
+   "w": 89.15625,
+   "h": 36
+  },
+  "num": null,
+  "fx": "press"
+ },
+ {
+  "n": 4,
+  "section": "Open Quick Add",
+  "type": "card",
+  "image": null,
+  "title": "Allow the camera",
+  "caption": "Your browser asks to use the camera. Choose Allow. On a phone it may say While using the app.",
+  "startMs": 14000,
+  "endMs": 19000,
+  "still": null,
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 5,
+  "section": "Open Quick Add",
+  "type": "shot",
+  "image": "x-denied/camera-blocked",
+  "title": "If you chose Block",
+  "caption": "Quick Add says so. Allow the camera in your browser's site settings, then reopen it.",
+  "startMs": 19000,
+  "endMs": 25667,
+  "still": "03-camera-blocked.jpg",
+  "ring": {
+   "x": 462,
+   "y": 328.65625,
+   "w": 516,
+   "h": 48
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 6,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-open",
+  "title": "Quick Add is a camera",
+  "caption": "Set up first, then shoot.",
+  "startMs": 25667,
+  "endMs": 29500,
+  "still": "04-quick-add-open.jpg",
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 7,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-open",
+  "title": "Universe",
+  "caption": "Choose the type of collectible.",
+  "startMs": 29500,
+  "endMs": 33333,
+  "still": "05-quick-add-open-ring1.jpg",
+  "ring": {
+   "x": 462,
+   "y": 12,
+   "w": 93,
+   "h": 28
+  },
+  "num": 1,
+  "fx": null
+ },
+ {
+  "n": 8,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-universe-menu",
+  "title": "Pick one, such as Sports",
+  "caption": "This is optional. You can change it later.",
+  "startMs": 33333,
+  "endMs": 37833,
+  "still": "06-quick-add-universe-menu.jpg",
+  "ring": {
+   "x": 466,
+   "y": 80,
+   "w": 182,
+   "h": 32
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 9,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-open",
+  "title": "Category",
+  "caption": "Narrow it down if you want.",
+  "startMs": 37833,
+  "endMs": 41750,
+  "still": "07-quick-add-open-ring2.jpg",
+  "ring": {
+   "x": 561,
+   "y": 12,
+   "w": 95.046875,
+   "h": 28
+  },
+  "num": 2,
+  "fx": null
+ },
+ {
+  "n": 10,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-category-menu",
+  "title": "Pick a category",
+  "caption": "Also optional. You can still shoot without one.",
+  "startMs": 41750,
+  "endMs": 45750,
+  "still": "08-quick-add-category-menu.jpg",
+  "ring": {
+   "x": 561,
+   "y": 12,
+   "w": 95.046875,
+   "h": 28
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 11,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/quick-add-open",
+  "title": "Take the photo",
+  "caption": "Tap the round button to photograph your item.",
+  "startMs": 45750,
+  "endMs": 50250,
+  "still": "09-quick-add-open-ring3.jpg",
+  "ring": {
+   "x": 686,
+   "y": 816,
+   "w": 68,
+   "h": 68
+  },
+  "num": 3,
+  "fx": null
+ },
+ {
+  "n": 12,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/photo-1-taken",
+  "title": "Your photo is saved",
+  "caption": "The counter goes up. The photo appears bottom left.",
+  "startMs": 50250,
+  "endMs": 55083,
+  "still": "10-photo-1-taken.jpg",
+  "ring": {
+   "x": 474,
+   "y": 818.25,
+   "w": 48,
+   "h": 63.5
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 13,
+  "section": "Set up, then shoot",
+  "type": "shot",
+  "image": "q-desktop/photo-4-taken",
+  "title": "One photo per item",
+  "caption": "Repeat for each item. When you are done, select Finished.",
+  "startMs": 55083,
+  "endMs": 60250,
+  "still": "11-photo-4-taken-ring4.jpg",
+  "ring": {
+   "x": 880.0625,
+   "y": 12,
+   "w": 97.9375,
+   "h": 28
+  },
+  "num": 4,
+  "fx": null
+ },
+ {
+  "n": 14,
+  "section": "Review",
+  "type": "shot",
+  "image": "q-desktop/review-your-drop",
+  "title": "Check your photos",
+  "caption": "Every photo is listed. Remove the accidental one.",
+  "startMs": 60250,
+  "endMs": 64750,
+  "still": "12-review-your-drop.jpg",
+  "ring": {
+   "x": 901.421875,
+   "y": 375,
+   "w": 66.578125,
+   "h": 28
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 15,
+  "section": "Review",
+  "type": "shot",
+  "image": "q-desktop/review-after-remove",
+  "title": "Three items remain",
+  "caption": "Undo is there if you change your mind.",
+  "startMs": 64750,
+  "endMs": 69250,
+  "still": "13-review-after-remove.jpg",
+  "ring": {
+   "x": 466,
+   "y": 450,
+   "w": 508,
+   "h": 44
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 16,
+  "section": "Review",
+  "type": "shot",
+  "image": "q-desktop/review-correct-category",
+  "title": "Fix a category",
+  "caption": "Item 3 is a toy. Change its Category to Toys and Figures.",
+  "startMs": 69250,
+  "endMs": 75000,
+  "still": "14-review-correct-category.jpg",
+  "ring": {
+   "x": 711.703125,
+   "y": 295,
+   "w": 177.71875,
+   "h": 36
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 17,
+  "section": "Name and save",
+  "type": "shot",
+  "image": "q-desktop/verify-names",
+  "title": "Name each item",
+  "caption": "Type a name for each item.",
+  "startMs": 75000,
+  "endMs": 78917,
+  "still": "15-verify-names.jpg",
+  "ring": {
+   "x": 528,
+   "y": 94.5,
+   "w": 438,
+   "h": 32
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 18,
+  "section": "Name and save",
+  "type": "shot",
+  "image": "q-desktop/verify-names",
+  "title": "Name each item",
+  "caption": "An item with no name is saved as Untitled Item.",
+  "startMs": 78917,
+  "endMs": 84084,
+  "still": "16-verify-names.jpg",
+  "ring": {
+   "x": 528,
+   "y": 335.5,
+   "w": 438,
+   "h": 32
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 19,
+  "section": "Name and save",
+  "type": "shot",
+  "image": "q-desktop/verify-cost",
+  "title": "Add what you know",
+  "caption": "Cost is what you paid. Leave it empty if unknown. Empty is not zero.",
+  "startMs": 84084,
+  "endMs": 90501,
+  "still": "17-verify-cost.jpg",
+  "ring": {
+   "x": 528,
+   "y": 188.5,
+   "w": 438,
+   "h": 32
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 20,
+  "section": "Name and save",
+  "type": "card",
+  "image": null,
+  "title": "Identify with AI",
+  "caption": "Some accounts have an Identify with AI button on this sheet. It never runs unless you press it, and it counts against your allowance. No button on your screen? Your account does not have AI. Type the details yourself.",
+  "startMs": 90501,
+  "endMs": 98501,
+  "still": null,
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 21,
+  "section": "Name and save",
+  "type": "shot",
+  "image": "q-desktop/verify-cost",
+  "title": "Save",
+  "caption": "Select Save 3 items to Vault.",
+  "startMs": 98501,
+  "endMs": 102418,
+  "still": "18-verify-cost.jpg",
+  "ring": {
+   "x": 466,
+   "y": 563,
+   "w": 508,
+   "h": 44
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 22,
+  "section": "Find your items",
+  "type": "shot",
+  "image": "q-desktop/saved-in-vault",
+  "title": "Saved",
+  "caption": "A message confirms the save, and you land in your Vault.",
+  "startMs": 102418,
+  "endMs": 107835,
+  "still": "19-saved-in-vault.jpg",
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 23,
+  "section": "Find your items",
+  "type": "shot",
+  "image": "q-desktop/vault-new-items",
+  "title": "Your new items",
+  "caption": "All three are in the Vault, each with its photo.",
+  "startMs": 107835,
+  "endMs": 113002,
+  "still": "20-vault-new-items.jpg",
+  "ring": {
+   "x": 44,
+   "y": 535,
+   "w": 574,
+   "h": 281
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 24,
+  "section": "Find your items",
+  "type": "shot",
+  "image": "q-desktop/vault-search",
+  "title": "Find an item later",
+  "caption": "Type part of its name in the search box.",
+  "startMs": 113002,
+  "endMs": 117835,
+  "still": "21-vault-search.jpg",
+  "ring": {
+   "x": 307.5625,
+   "y": 233,
+   "w": 180,
+   "h": 36
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 25,
+  "section": "Find your items",
+  "type": "shot",
+  "image": "q-desktop/item-opened",
+  "title": "Open it to check",
+  "caption": "The photo and details are exactly as you saved them.",
+  "startMs": 117835,
+  "endMs": 123002,
+  "still": "22-item-opened.jpg",
+  "ring": {
+   "x": 246,
+   "y": 408.5,
+   "w": 692,
+   "h": 519
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 26,
+  "section": "On a phone",
+  "type": "card",
+  "image": null,
+  "title": "Same steps, new layout",
+  "caption": "Quick Add sits in a bar near the bottom of Home. Recorded in a phone-sized test browser.",
+  "startMs": 123002,
+  "endMs": 127502,
+  "still": null,
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 27,
+  "section": "On a phone",
+  "type": "shot",
+  "image": "q-phone/home-bar",
+  "title": "Quick Add on a phone",
+  "caption": "Find Quick Add in the bar at the bottom of Home.",
+  "startMs": 127502,
+  "endMs": 132919,
+  "still": "23-home-bar.jpg",
+  "ring": {
+   "x": 23.0625,
+   "y": 703.25,
+   "w": 89.15625,
+   "h": 44
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 28,
+  "section": "On a phone",
+  "type": "shot",
+  "image": "q-phone/quick-open",
+  "title": "The camera fills the screen",
+  "caption": "Finished is at the top right.",
+  "startMs": 132919,
+  "endMs": 136836,
+  "still": "24-quick-open.jpg",
+  "ring": {
+   "x": 262.078125,
+   "y": 50,
+   "w": 77.921875,
+   "h": 28
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 29,
+  "section": "On a phone",
+  "type": "shot",
+  "image": "q-phone/four-taken",
+  "title": "Review your photos",
+  "caption": "Tap Finished, or the small picture at the bottom left.",
+  "startMs": 136836,
+  "endMs": 142003,
+  "still": "25-four-taken.jpg",
+  "ring": {
+   "x": 242.0625,
+   "y": 50,
+   "w": 97.9375,
+   "h": 28
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 30,
+  "section": "On a phone",
+  "type": "shot",
+  "image": "q-phone/verify",
+  "title": "Name, then save",
+  "caption": "Type a name for each item, then tap Save.",
+  "startMs": 142003,
+  "endMs": 146836,
+  "still": "26-verify.jpg",
+  "ring": {
+   "x": 24,
+   "y": 562.5,
+   "w": 342,
+   "h": 44
+  },
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 31,
+  "section": "On a phone",
+  "type": "shot",
+  "image": "q-phone/vault",
+  "title": "Back in your Vault",
+  "caption": "Scroll down to see your new items.",
+  "startMs": 146836,
+  "endMs": 151003,
+  "still": "27-vault.jpg",
+  "ring": null,
+  "num": null,
+  "fx": null
+ },
+ {
+  "n": 32,
+  "section": "Recap",
+  "type": "card",
+  "image": null,
+  "title": "You used Quick Add",
+  "caption": "Open Quick Add from Home. One photo per item, then Finished. Remove bad photos, fix categories, name your items. Save, then find them in your Vault.",
+  "startMs": 151003,
+  "endMs": 159003,
+  "still": null,
+  "ring": null,
+  "num": null,
+  "fx": null
+ }
+]
