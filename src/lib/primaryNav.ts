@@ -3,8 +3,9 @@ import type { AppIconName } from "@/components/ui/AppIcon";
 /**
  * Navigation has two arrangements that read this file:
  *  - DESKTOP (768px and wider, the top bar): Home, Vault, Exhibitions, Insights and a More menu (Discover, Events, VLT Lounge, Activity, Learn).
- *  - PHONE (under 768px, the bottom bar): Home, Vault, the round Add button in the middle, Exhibitions and More. PHONE_NAV below holds the three
- *    links; the Add button opens the add choices and More opens the same MORE_ITEMS menu as the desktop bar. Insights, Goals and Insurance are in the Vault bar.
+ *  - PHONE (under 768px, the bottom bar): PRIMARY_NAV below, unchanged while the phone arrangement is reviewed. Every destination in More is
+ *    still reachable on a phone (Discover and Lounge are tabs; Insights, Goals and Insurance are in the Vault bar; Events and Upcoming Comics
+ *    are sections on Discover; Learn is in the Lounge bar; Activity is on Home).
  * Saved and Watchlist are personal lists, reached from the Account menu and from the shortcuts beside Discover's search, so they highlight nothing.
  */
 export type PrimaryNavItem = {
@@ -17,11 +18,12 @@ export type PrimaryNavItem = {
   exactOnly?: boolean;
 };
 
-/** The phone bottom bar's three links: Home and Vault sit left of the round Add button, Exhibitions sits right of it, then More. */
-export const PHONE_NAV: PrimaryNavItem[] = [
+export const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: "Home", href: "/dashboard", icon: "dashboard", match: ["/dashboard"], exactOnly: true },
   { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/portfolio", "/goals", "/insurance"] },
   { label: "Exhibitions", href: "/museum", icon: "exhibitions", match: ["/museum"] },
+  { label: "Lounge", href: "/community-board", icon: "communityBoard", match: ["/community-board", "/learn"] },
+  { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/market", "/shop", "/upcoming", "/kickstarter", "/patreon", "/events"] },
 ];
 
 /** The desktop top bar's direct links. Insights is a direct link here (its page is still /portfolio and it is still in the Vault bar). */
