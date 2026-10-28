@@ -456,7 +456,7 @@ export default function ScanCropEditor({
     ? "fixed left-1/2 top-[max(0.5rem,env(safe-area-inset-top))] z-[220] w-[calc(100dvw-1rem)] max-w-3xl -translate-x-1/2 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
     : compact
       ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]"
-      : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4";
+      : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4";
   const viewportClassName = viewportFixed
     ? "relative flex h-[min(54dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
     : compact

@@ -117,7 +117,7 @@ function TermInput({ terms, onAdd, onRemove }: { terms: string[]; onAdd: (t: str
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
+    <div className="flex flex-wrap items-center gap-2 rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
       {terms.map((term) => (
         <span
           key={term}
@@ -180,7 +180,7 @@ function SaveHallModal({
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center">
       <button className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} aria-label="Close" />
-      <div className="relative z-10 w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-[color:var(--surface)] p-6 shadow-2xl ring-1 ring-[color:var(--border)]">
+      <div className="relative z-10 w-full max-w-sm rounded-t-3xl sm:rounded-[14px] bg-[color:var(--surface)] p-6 shadow-2xl ring-1 ring-[color:var(--border)]">
         <h3 className="text-lg font-black text-[color:var(--fg)]">Name this Hall</h3>
         <p className="mt-1 text-[13px] text-[color:var(--muted)]">
           {selectedCount} {selectedCount === 1 ? "item" : "items"} selected · private until you choose to share it
@@ -228,7 +228,7 @@ function SavedHallsList({ galleries }: { galleries: Gallery[] }) {
           <Link
             key={g.id}
             href={`/museum/${g.id}`}
-            className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] hover:opacity-80 transition-opacity"
+            className="flex items-center justify-between rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] hover:opacity-80 transition-opacity"
           >
             <div>
               <div className="text-sm font-bold text-[color:var(--fg)]">{g.title}</div>
@@ -470,7 +470,7 @@ export default function VaultHallsPage() {
           {!isEmptyVault && !hasSearch && <SavedHallsList galleries={galleries} />}
 
           {!isEmptyVault && !hasSearch && (
-            <div className="rounded-2xl bg-[color:var(--theme-elevated)] px-5 py-4 ring-1 ring-[color:var(--theme-border)]">
+            <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-5 py-4 ring-1 ring-[color:var(--theme-border)]">
               <p className="text-[13px] text-[color:var(--muted)]">
                 <span className="font-semibold text-[color:var(--fg)]">Type a search term above to start a new
                 Hall.</span>{" "}
@@ -482,7 +482,7 @@ export default function VaultHallsPage() {
           )}
 
           {!isEmptyVault && !hasSearch && untaggedCount > 0 && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[color:var(--surface)] px-5 py-3 ring-1 ring-[color:var(--border)]">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-[color:var(--surface)] px-5 py-3 ring-1 ring-[color:var(--border)]">
               <p className="text-[13px] text-[color:var(--muted)]">
                 <span className="font-semibold text-[color:var(--fg)]">{untaggedCount}</span> item
                 {untaggedCount === 1 ? "" : "s"} in your vault {untaggedCount === 1 ? "has" : "have"} no tags yet —

@@ -164,7 +164,7 @@ export default function ItemVisibilityToggle({
                 role="dialog"
                 aria-label="Hide item"
                 onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-[340px] rounded-2xl bg-[color:var(--surface-strong)] p-4 text-sm ring-1 ring-[color:var(--border)]"
+                className="w-full max-w-[340px] rounded-[14px] bg-[color:var(--surface-strong)] p-4 text-sm ring-1 ring-[color:var(--border)]"
               >
                 <div className="text-[color:var(--fg)]">
                   This item is in {confirmNames.length === 1 ? "Exhibit" : "Exhibits"}{" "}

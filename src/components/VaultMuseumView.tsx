@@ -71,7 +71,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
 
   return (
     <div
-      className="overflow-hidden rounded-[20px] ring-1 ring-[color:var(--border)]"
+      className="overflow-hidden rounded-[14px] ring-1 ring-[color:var(--border)]"
       style={{ background: "var(--surface)" }}
     >
       <div

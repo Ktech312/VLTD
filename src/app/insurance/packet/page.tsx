@@ -136,7 +136,7 @@ export default function InsurancePacketPage() {
     <main className="vltd-print-document px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
         {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
-        <div className="vltd-no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="vltd-no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <Link href="/insurance" className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)] max-md:min-h-11">
             ← Back to Insurance
           </Link>
@@ -179,7 +179,7 @@ export default function InsurancePacketPage() {
         </div>
 
         <section
-          className="rounded-[30px] p-5 sm:p-6"
+          className="rounded-[14px] p-5 sm:p-6"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
             border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.25))',
@@ -194,12 +194,12 @@ export default function InsurancePacketPage() {
           {notCounted ? <div className="mt-2 text-sm text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {exclusionsNote}</div> : null}
           {noEstimate ? <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
           <div className="mt-1 text-xs text-[color:var(--muted)]">{COST_NOTE}</div>
-          <div className="vltd-no-print mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="vltd-no-print mt-3 rounded-[14px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Use Open Printable Page to generate the PDF from a lightweight print-only route. Without images: 25 items per page. With images: 5 items per page.
           </div>
         </section>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-[color:var(--border)] bg-vault-card">
+        <div className="mt-6 overflow-x-auto rounded-[14px] border border-[color:var(--border)] bg-vault-card">
           <table className={includeImages ? "w-full border-collapse text-sm text-[color:var(--fg)]" : "w-full border-collapse text-sm text-[color:var(--fg)]"}>
             <thead>
               <tr className="border-b border-[color:var(--border)] text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">

@@ -208,7 +208,7 @@ function SurfaceCard({ children, className = "" }: { children: ReactNode; classN
   return (
     <div
       className={[
-        "rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
+        "rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className,
       ].join(" ")}
     >
@@ -218,7 +218,7 @@ function SurfaceCard({ children, className = "" }: { children: ReactNode; classN
 }
 
 function RowCard({ children }: { children: ReactNode }) {
-  return <div className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
+  return <div className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
 }
 
 function toMoney(value: number) {
@@ -323,7 +323,7 @@ export default function TextImportClient() {
                 "Rolex Submariner 16610 | 9250 | full set, serviced 2023 | 1",
               ].join("\n")}
               className={[
-                "mt-3 min-h-[340px] w-full rounded-[24px] bg-[color:var(--pill)] px-4 py-4 text-[15px] text-[color:var(--fg)]",
+                "mt-3 min-h-[340px] w-full rounded-[14px] bg-[color:var(--pill)] px-4 py-4 text-[15px] text-[color:var(--fg)]",
                 "ring-1 ring-[color:var(--border)] outline-none transition",
                 "placeholder:text-[color:var(--muted2)] focus:ring-[color:var(--pill-active-ring)]",
               ].join(" ")}
@@ -331,7 +331,7 @@ export default function TextImportClient() {
             />
 
             {status ? (
-              <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
                 {status}
               </div>
             ) : null}
@@ -444,7 +444,7 @@ export default function TextImportClient() {
                     <Link
                       key={item.id}
                       href={`/vault/item/${item.id}`}
-                      className="block rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                      className="block rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
                     >
                       <div className="truncate text-sm font-medium text-[color:var(--fg)]">{item.title}</div>
                       <div className="mt-1 text-xs text-[color:var(--muted)]">

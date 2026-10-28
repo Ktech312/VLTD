@@ -627,7 +627,7 @@ export default function MuseumPage() {
         {/* Insight cards hidden to match the redesigned Exhibitions layout */}
         {false ? (
           <section className="mt-6 grid gap-5 xl:grid-cols-3">
-            <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
                 STRONGEST EXHIBITION
               </div>
@@ -654,7 +654,7 @@ export default function MuseumPage() {
               ) : null}
             </div>
 
-            <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
                 MOST VIEWED
               </div>
@@ -678,7 +678,7 @@ export default function MuseumPage() {
               ) : null}
             </div>
 
-            <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
                 MOST VALUABLE
               </div>
@@ -706,7 +706,7 @@ export default function MuseumPage() {
 
         <section className="mt-1">
           {statusMessage ? (
-            <div className="mb-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            <div className="mb-4 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               {statusMessage}
             </div>
           ) : null}
@@ -719,7 +719,7 @@ export default function MuseumPage() {
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-64 animate-pulse rounded-[26px] border"
+                  className="h-64 animate-pulse rounded-[14px] border"
                   style={{
                     background: "var(--theme-card, rgba(15,25,45,0.85))",
                     borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
@@ -729,14 +729,14 @@ export default function MuseumPage() {
             </div>
           ) : galleries.length === 0 ? (
             <div
-              className="rounded-[26px] border p-8 text-center"
+              className="rounded-[14px] border p-8 text-center"
               style={{
                 background: "var(--theme-card, rgba(15,25,45,0.85))",
                 borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
               }}
             >
               <div
-                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px]"
                 style={{
                   background: "var(--theme-gold-subtle, rgba(203,208,213,0.10))",
                   border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
@@ -1109,7 +1109,7 @@ export default function MuseumPage() {
 
       {galleryPendingDelete ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Delete exhibition" className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Delete exhibition" className="w-full max-w-lg rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               DELETE EXHIBITION
             </div>
@@ -1151,7 +1151,7 @@ export default function MuseumPage() {
 
       {gallerySettings ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div ref={settingsDialogRef} role="dialog" aria-modal="true" aria-label="Exhibition status" className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={settingsDialogRef} role="dialog" aria-modal="true" aria-label="Exhibition status" className="w-full max-w-md rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               EXHIBITION STATUS
             </div>
@@ -1207,7 +1207,7 @@ export default function MuseumPage() {
 
       {showMuseumBetaModal ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div ref={betaDialogRef} role="dialog" aria-modal="true" aria-label="3D Gallery beta" className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={betaDialogRef} role="dialog" aria-modal="true" aria-label="3D Gallery beta" className="w-full max-w-md rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               3D GALLERY — BETA
             </div>

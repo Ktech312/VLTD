@@ -187,7 +187,7 @@ function PlaceBidPanel({
   if (item.auctionStatus !== "ACTIVE" || getAuctionCountdown(item.auctionEndsAt).expired) {
     return (
       <div
-        className="rounded-2xl p-4 text-center text-sm"
+        className="rounded-[14px] p-4 text-center text-sm"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--muted)" }}
       >
         This auction has ended.
@@ -198,7 +198,7 @@ function PlaceBidPanel({
   if (!userId) {
     return (
       <div
-        className="rounded-2xl p-4 text-center text-sm"
+        className="rounded-[14px] p-4 text-center text-sm"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       >
         <span style={{ color: "var(--muted)" }}>Sign in to place a bid — </span>
@@ -211,7 +211,7 @@ function PlaceBidPanel({
 
   return (
     <div
-      className="rounded-2xl p-4 flex flex-col gap-3"
+      className="rounded-[14px] p-4 flex flex-col gap-3"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
       <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
@@ -406,7 +406,7 @@ export default function AuctionItemPage() {
           <div className="flex flex-col gap-6">
             {/* Photo */}
             <div
-              className="relative rounded-2xl overflow-hidden aspect-square w-full max-w-lg mx-auto"
+              className="relative rounded-[14px] overflow-hidden aspect-square w-full max-w-lg mx-auto"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               {imageUrl ? (
@@ -423,7 +423,7 @@ export default function AuctionItemPage() {
 
             {/* Countdown card */}
             <div
-              className="rounded-2xl p-6 text-center"
+              className="rounded-[14px] p-6 text-center"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <div className="text-xs uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>
@@ -481,7 +481,7 @@ export default function AuctionItemPage() {
 
             {/* Bid stats */}
             <div
-              className="rounded-2xl p-4 grid grid-cols-2 gap-4"
+              className="rounded-[14px] p-4 grid grid-cols-2 gap-4"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <div>
@@ -516,7 +516,7 @@ export default function AuctionItemPage() {
             {/* Notes */}
             {item.notes && (
               <div
-                className="rounded-2xl p-4"
+                className="rounded-[14px] p-4"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
               >
                 <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--muted)" }}>
@@ -530,7 +530,7 @@ export default function AuctionItemPage() {
 
             {/* Bid history */}
             <div
-              className="rounded-2xl overflow-hidden"
+              className="rounded-[14px] overflow-hidden"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <div className="px-4 py-3 border-b border-[color:var(--border)] flex items-center justify-between">

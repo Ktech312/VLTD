@@ -86,7 +86,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
 
         <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
           {saved.length === 0 ? (
-            <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
+            <div className="rounded-[14px] bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
               No items remain in this drop.
             </div>
           ) : (
@@ -95,7 +95,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
                 key={item.id}
                 type="button"
                 onClick={() => router.push(`/vault/item/${item.id}`)}
-                className="flex w-full items-center gap-3 rounded-2xl bg-[color:var(--pill)] p-2.5 text-left ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                className="flex w-full items-center gap-3 rounded-[14px] bg-[color:var(--pill)] p-2.5 text-left ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
               >
                 {item.imageFrontUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -131,7 +131,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
               <button
                 type="button"
                 onClick={() => saved.forEach((item) => removeItem(item.id))}
-                className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-red-500/10 hover:text-red-400 hover:ring-red-400/30"
+                className="rounded-[14px] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-red-500/10 hover:text-red-400 hover:ring-red-400/30"
               >
                 Remove All
               </button>
@@ -139,7 +139,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
             <button
               type="button"
               onClick={finish}
-              className="flex-1 rounded-2xl py-3 text-sm font-bold"
+              className="flex-1 rounded-[14px] py-3 text-sm font-bold"
               style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
             >
               Done

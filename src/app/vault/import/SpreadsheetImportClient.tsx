@@ -70,7 +70,7 @@ function SurfaceCard({ children, className = "" }: { children: ReactNode; classN
   return (
     <div
       className={[
-        "min-w-0 max-w-full rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
+        "min-w-0 max-w-full rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className,
       ].join(" ")}
     >
@@ -80,7 +80,7 @@ function SurfaceCard({ children, className = "" }: { children: ReactNode; classN
 }
 
 function RowCard({ children }: { children: ReactNode }) {
-  return <div className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
+  return <div className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
 }
 
 function toMoney(value: number) {
@@ -484,7 +484,7 @@ export default function SpreadsheetImportClient() {
                   <PillButton key={option.value} variant={importPreset === option.value ? "active" : "default"} pressed={importPreset === option.value} onClick={() => handlePresetChange(option.value)}>{option.label}</PillButton>
                 ))}
               </div>
-              <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
                 {IMPORT_PRESET_OPTIONS.find((option) => option.value === importPreset)?.helper}
               </div>
             </div>
@@ -519,7 +519,7 @@ export default function SpreadsheetImportClient() {
                 "NBA-0001\tMichael Jordan\tUpper Deck\t23\t450\t1",
               ].join("\n")}
               className={[
-                "mt-4 min-h-[280px] w-full rounded-[24px] bg-[color:var(--pill)] px-4 py-4 text-[15px] text-[color:var(--fg)]",
+                "mt-4 min-h-[280px] w-full rounded-[14px] bg-[color:var(--pill)] px-4 py-4 text-[15px] text-[color:var(--fg)]",
                 "ring-1 ring-[color:var(--border)] outline-none transition",
                 "placeholder:text-[color:var(--muted2)] focus:ring-[color:var(--pill-active-ring)]",
               ].join(" ")}
@@ -535,13 +535,13 @@ export default function SpreadsheetImportClient() {
               <div role="status" className="mb-3 text-xs text-[color:var(--muted)]">Checking your account for existing items…</div>
             ) : null}
             {status ? (
-              <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
                 {status}
               </div>
             ) : null}
 
             {lastImportResult ? (
-              <div className="mt-3 rounded-[20px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                 <div className="text-sm font-semibold">
                   Imported {lastImportResult.count} item{lastImportResult.count === 1 ? "" : "s"} from {lastImportResult.sourceLabel}
                 </div>
@@ -778,7 +778,7 @@ export default function SpreadsheetImportClient() {
 
             <div className="mt-4 space-y-4">
               {source.sheets.map((sheet) => (
-                <div key={sheet.sheetName} className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+                <div key={sheet.sheetName} className="rounded-[14px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="mb-3">
                     <div className="text-sm font-semibold text-[color:var(--fg)]">{sheet.sheetName}</div>
                     <div className="mt-1 text-xs text-[color:var(--muted)]">{sheet.rows.length} source rows · {sheet.headers.length} detected columns</div>
@@ -879,7 +879,7 @@ export default function SpreadsheetImportClient() {
                     <Link
                       key={item.id}
                       href={`/vault/item/${item.id}`}
-                      className="block rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                      className="block rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
                     >
                       <div className="truncate text-sm font-medium text-[color:var(--fg)]">{item.title}</div>
                       <div className="mt-1 text-xs text-[color:var(--muted)]">{item.currentValue != null ? toMoney(Number(item.currentValue)) : "No estimate"}</div>

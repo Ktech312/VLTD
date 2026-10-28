@@ -429,7 +429,7 @@ export function OrganizeMoveMenu({
         role="dialog"
         aria-modal="true"
         aria-label="Move to position"
-        className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-sm sm:rounded-3xl"
+        className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-sm sm:rounded-[14px]"
         style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
       >
         <div className="flex justify-center pb-1 pt-3 sm:hidden">
@@ -497,7 +497,7 @@ export function OrganizeReplaceConfirm({ organizer }: { organizer: SlotOrganizer
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="vltd-replace-confirm-title"
-        className="relative w-full max-w-sm rounded-2xl p-5 ring-1"
+        className="relative w-full max-w-sm rounded-[14px] p-5 ring-1"
         style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
       >
         <div id="vltd-replace-confirm-title" className="text-sm font-black leading-5">

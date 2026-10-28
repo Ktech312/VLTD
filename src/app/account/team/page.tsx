@@ -147,13 +147,13 @@ export default function TeamPage() {
       ) : !profile ? (
         <div className="mt-6 text-sm text-[color:var(--muted)]">No active profile.</div>
       ) : profile.profile_type !== "business" ? (
-        <div className="mt-6 rounded-2xl bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
           Team members are for <b>business</b> profiles. Switch to a business profile to manage a team.
         </div>
       ) : (
         <>
           {canManage && (
-            <div className="mt-6 rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-[color:var(--muted2)]">Invite a member</div>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input
@@ -181,7 +181,7 @@ export default function TeamPage() {
               const s = ROLE_STYLE[m.role] ?? ROLE_STYLE.member;
               const isMe = m.email.toLowerCase() === myEmail.toLowerCase();
               return (
-                <div key={m.user_id} className="flex flex-wrap items-center gap-3 rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                <div key={m.user_id} className="flex flex-wrap items-center gap-3 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium" style={{ color: "var(--fg)" }}>
                       {m.email}{isMe ? " (you)" : ""}
@@ -205,7 +205,7 @@ export default function TeamPage() {
 
           {/* Danger zone — ownership transfer (owner only) */}
           {myRole === "owner" && (
-            <div className="mt-8 rounded-2xl p-4 ring-1" style={{ background: "rgba(248,113,113,0.05)", borderColor: "rgba(248,113,113,0.3)" }}>
+            <div className="mt-8 rounded-[14px] p-4 ring-1" style={{ background: "rgba(248,113,113,0.05)", borderColor: "rgba(248,113,113,0.3)" }}>
               <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#f87171" }}>Danger zone — transfer ownership</div>
               <p className="mt-1 text-xs text-[color:var(--muted)]">
                 Hand <b>{profile.display_name}</b> — its items, exhibits, team, and subscription — to another

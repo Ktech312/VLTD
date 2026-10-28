@@ -81,7 +81,7 @@ export default function MfaStepUp({ onVerified }: { onVerified: () => void }) {
 
   return (
     <div
-      className="mx-auto mt-16 w-full max-w-sm rounded-2xl p-6 ring-1 ring-[color:var(--border)]"
+      className="mx-auto mt-16 w-full max-w-sm rounded-[14px] p-6 ring-1 ring-[color:var(--border)]"
       style={{ background: "var(--surface, #111318)" }}
     >
       <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>

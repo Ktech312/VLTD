@@ -63,7 +63,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
+        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[14px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
         style={{ maxHeight: "calc(100dvh - var(--bottomnav-h, 86px) - 1.5rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -83,7 +83,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
         {/* Item list — ~5 visible, then scroll. Removed items sink to the bottom. */}
         <div className="overflow-y-auto px-3 py-3" style={{ maxHeight: "25rem" }}>
           {items.length === 0 ? (
-            <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
+            <div className="rounded-[14px] bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
               No items captured.
             </div>
           ) : (
@@ -91,7 +91,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
               {ordered.map(({ item, num, isRemoved }) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-2xl p-2.5 ring-1 transition"
+                  className="flex items-center gap-3 rounded-[14px] p-2.5 ring-1 transition"
                   style={{
                     background: isRemoved ? "rgba(239,68,68,0.06)" : "var(--pill, rgba(255,255,255,0.06))",
                     borderColor: isRemoved ? "rgba(239,68,68,0.28)" : "var(--border, rgba(255,255,255,0.1))",
@@ -204,7 +204,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
             type="button"
             onClick={() => onFinish(remaining.map((i) => i.id))}
             disabled={remaining.length === 0}
-            className="w-full rounded-2xl py-3 text-sm font-bold disabled:opacity-40"
+            className="w-full rounded-[14px] py-3 text-sm font-bold disabled:opacity-40"
             style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
           >
             {remaining.length > 0
@@ -229,14 +229,14 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
             <img
               src={preview.front}
               alt={preview.label}
-              className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
+              className="max-h-[75dvh] w-auto max-w-full rounded-[14px] object-contain shadow-2xl ring-1 ring-white/10"
             />
             {preview.back ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={preview.back}
                 alt={`${preview.label} back`}
-                className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
+                className="max-h-[75dvh] w-auto max-w-full rounded-[14px] object-contain shadow-2xl ring-1 ring-white/10"
               />
             ) : null}
           </div>

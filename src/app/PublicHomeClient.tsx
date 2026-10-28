@@ -163,7 +163,7 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
   return (
     <Link
       href={gallery.href}
-      className="group overflow-hidden rounded-2xl transition hover:-translate-y-1"
+      className="group overflow-hidden rounded-[14px] transition hover:-translate-y-1"
       style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(203,208,213,0.04)_34%,rgba(0,0,0,0.22)_100%)] p-3">
@@ -391,7 +391,7 @@ export default function PublicHomeClient() {
               </div>
 
               {launchAccess ? (
-                <div className="mx-auto mt-5 max-w-lg rounded-2xl border p-4 text-left lg:mx-0" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                <div className="mx-auto mt-5 max-w-lg rounded-[14px] border p-4 text-left lg:mx-0" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-sm font-black text-text-primary">First 50 collector accounts are free</div>
@@ -480,7 +480,7 @@ export default function PublicHomeClient() {
               </Link>
             </div>
           ) : waitlistStatus === "success" || waitlistStatus === "already" ? (
-            <div className="mt-6 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
+            <div className="mt-6 rounded-[14px] border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
               <div className="mb-2 flex justify-center">
                 <Glyph name="check" size={26} strokeWidth={2} style={{ color: "#4ade80" }} />
               </div>
@@ -526,7 +526,7 @@ export default function PublicHomeClient() {
           aria-label="Beta access agreement"
         >
           <div
-            className="w-full max-w-md rounded-[26px] p-6 sm:p-7"
+            className="w-full max-w-md rounded-[14px] p-6 sm:p-7"
             style={{
               background: 'var(--theme-elevated, rgba(12,18,30,0.98))',
               border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.28))',
@@ -548,7 +548,7 @@ export default function PublicHomeClient() {
               invitation and for product feedback.
             </p>
 
-            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-[14px] border p-3.5" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }}>
               <input
                 type="checkbox"
                 checked={consentAgreed}
@@ -617,7 +617,7 @@ export default function PublicHomeClient() {
           {HOW_IT_WORKS.map((step, i) => (
             <div
               key={step.n}
-              className="relative rounded-2xl p-5"
+              className="relative rounded-[14px] p-5"
               style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
             >
               <div
@@ -656,7 +656,7 @@ export default function PublicHomeClient() {
           {VAULT_UNIVERSES.map((universe) => (
             <div
               key={universe.title}
-              className="rounded-2xl p-5"
+              className="rounded-[14px] p-5"
               style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
             >
               <div className="flex items-start justify-between gap-3">
@@ -678,7 +678,7 @@ export default function PublicHomeClient() {
           ))}
           <Link
             href={launchAccess?.isOpen === false ? "#early-access" : "/signup"}
-            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(203,208,213,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(203,208,213,0.06)]"
+            className="flex min-h-[150px] flex-col items-center justify-center rounded-[14px] border border-dashed border-[rgba(203,208,213,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(203,208,213,0.06)]"
             style={{ background: 'var(--surface)' }}
           >
             <span className="text-2xl">+</span>
@@ -691,7 +691,7 @@ export default function PublicHomeClient() {
       {/* ── Scanner callout — Drop Mode ──────────────────────────── */}
       <section className="border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(203,208,213,0.22)', boxShadow: '0 0 60px rgba(203,208,213,0.06)' }}>
+          <div className="overflow-hidden rounded-[14px]" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(203,208,213,0.22)', boxShadow: '0 0 60px rgba(203,208,213,0.06)' }}>
             <div className="grid gap-0 lg:grid-cols-2">
               {/* Left — copy */}
               <div className="flex flex-col justify-center px-8 py-10 lg:py-14">

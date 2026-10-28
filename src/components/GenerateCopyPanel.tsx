@@ -115,7 +115,7 @@ export default function GenerateCopyPanel({
         onClick={handleGenerate}
         className={[
           fullWidth
-            ? "flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition"
+            ? "flex-1 flex items-center justify-center gap-1.5 rounded-[14px] py-3 text-sm font-bold transition"
             : "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition max-md:min-h-11",
           "hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]",
           className,
@@ -136,7 +136,7 @@ export default function GenerateCopyPanel({
   if (state === "generating") {
     return (
       <div
-        className={["rounded-2xl ring-1 px-4 py-3", className].join(" ")}
+        className={["rounded-[14px] ring-1 px-4 py-3", className].join(" ")}
         style={{ background: "var(--pill)", borderColor: "var(--border)" }}
       >
         <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function GenerateCopyPanel({
   if (state === "accepted") {
     return (
       <div
-        className={["rounded-2xl ring-1 px-4 py-3", className].join(" ")}
+        className={["rounded-[14px] ring-1 px-4 py-3", className].join(" ")}
         style={{
           background: "rgba(74,222,128,0.06)",
           borderColor: "rgba(74,222,128,0.25)",
@@ -172,7 +172,7 @@ export default function GenerateCopyPanel({
   // ── review ─────────────────────────────────────────────────────────────────
   return (
     <div
-      className={["rounded-2xl ring-1 overflow-hidden", className].join(" ")}
+      className={["rounded-[14px] ring-1 overflow-hidden", className].join(" ")}
       style={{
         background: "rgba(203,208,213,0.04)",
         borderColor: "rgba(203,208,213,0.25)",

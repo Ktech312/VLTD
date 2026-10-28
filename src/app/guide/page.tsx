@@ -240,7 +240,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
   return (
     <div
       id={feature.id}
-      className="scroll-mt-6 rounded-[28px] ring-1 overflow-hidden"
+      className="scroll-mt-6 rounded-[14px] ring-1 overflow-hidden"
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}
     >
       {/* Header */}
@@ -291,7 +291,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
           </div>
           <p className="text-sm leading-6" style={{ color: "var(--muted)" }}>{feature.why}</p>
           <div
-            className="mt-4 rounded-2xl px-4 py-3 ring-1"
+            className="mt-4 rounded-[14px] px-4 py-3 ring-1"
             style={{
               background: "rgba(203,208,213,0.06)",
               borderColor: "rgba(203,208,213,0.2)",
@@ -372,7 +372,7 @@ export default function GuidePage() {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
         {/* Quick index */}
         <div
-          className="mb-10 rounded-[24px] p-5 ring-1"
+          className="mb-10 rounded-[14px] p-5 ring-1"
           style={{ background: "var(--surface)", borderColor: "var(--border)" }}
         >
           <div className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "var(--muted2)" }}>
@@ -402,7 +402,7 @@ export default function GuidePage() {
 
         {/* Footer CTA */}
         <div
-          className="mt-12 rounded-[24px] px-6 py-8 text-center ring-1"
+          className="mt-12 rounded-[14px] px-6 py-8 text-center ring-1"
           style={{ background: "var(--surface)", borderColor: "var(--border)" }}
         >
           <div className="text-2xl font-black" style={{ color: "var(--fg)" }}>Built for collectors who mean it.</div>

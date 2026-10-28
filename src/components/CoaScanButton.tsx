@@ -104,7 +104,7 @@ export default function CoaScanButton({ onApply }: Props) {
 
       {/* Scanning state */}
       {phase === "scanning" && (
-        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)]">
+        <div className="mt-3 flex items-center gap-2 rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)]">
           <span
             className="h-2.5 w-2.5 animate-pulse rounded-full"
             style={{ background: "var(--theme-gold, #C8CDD2)" }}
@@ -115,7 +115,7 @@ export default function CoaScanButton({ onApply }: Props) {
 
       {/* Error state */}
       {phase === "error" && (
-        <div className="mt-3 rounded-2xl bg-[color:var(--theme-elevated)] p-4 ring-1 ring-red-500/20">
+        <div className="mt-3 rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-red-500/20">
           <p className="text-xs font-semibold text-red-400">{errorMsg || "Could not read certificate."}</p>
           <p className="mt-1 text-[11px] text-[color:var(--muted)]">Try a cleaner, brighter photo with less glare.</p>
           <button
@@ -130,7 +130,7 @@ export default function CoaScanButton({ onApply }: Props) {
 
       {/* Review panel */}
       {phase === "review" && result && (
-        <div className="mt-3 rounded-2xl bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+        <div className="mt-3 rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
           <div className="flex items-center justify-between gap-3">
             <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
               Certificate Scanned

@@ -115,7 +115,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
       }}
     >
       <div
-        className="h-full w-full overflow-hidden rounded-[28px] shadow-2xl"
+        className="h-full w-full overflow-hidden rounded-[14px] shadow-2xl"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       >
         {/* Image */}
@@ -136,7 +136,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
           {showSave && (
             <div className="absolute inset-0 flex items-center justify-center rounded-t-[28px]"
               style={{ background: "rgba(34,197,94,0.25)" }}>
-              <div className="rotate-[-15deg] rounded-2xl border-4 border-[rgb(34,197,94)] px-5 py-2 text-2xl font-black"
+              <div className="rotate-[-15deg] rounded-[14px] border-4 border-[rgb(34,197,94)] px-5 py-2 text-2xl font-black"
                 style={{ color: "rgb(34,197,94)" }}>
                 SAVE
               </div>
@@ -145,7 +145,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
           {showSkip && (
             <div className="absolute inset-0 flex items-center justify-center rounded-t-[28px]"
               style={{ background: "rgba(248,113,113,0.25)" }}>
-              <div className="rotate-[15deg] rounded-2xl border-4 border-[rgb(248,113,113)] px-5 py-2 text-2xl font-black"
+              <div className="rotate-[15deg] rounded-[14px] border-4 border-[rgb(248,113,113)] px-5 py-2 text-2xl font-black"
                 style={{ color: "rgb(248,113,113)" }}>
                 SKIP
               </div>
@@ -441,7 +441,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
           <>
             {/* Next card (behind) */}
             {cards[index + 1] && (
-              <div className="absolute inset-5 scale-[0.96] rounded-[28px] ring-1"
+              <div className="absolute inset-5 scale-[0.96] rounded-[14px] ring-1"
                 style={{ background: "var(--surface)", borderColor: "var(--border)", transformOrigin: "bottom center" }} />
             )}
             {/* Active card */}

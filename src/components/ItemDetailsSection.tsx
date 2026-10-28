@@ -254,7 +254,7 @@ export default function ItemDetailsSection({
     profile.source === "generic" ? "General details" : profile.source === "category" ? "Shared details for this category" : "";
 
   return (
-    <section className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" data-testid="item-details">
+    <section className="rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" data-testid="item-details">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">DETAILS</div>
         <button

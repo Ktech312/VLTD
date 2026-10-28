@@ -41,7 +41,7 @@ function SurfaceCard({
     <div
       id={id}
       className={[
-        "rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
+        "rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className,
       ].join(" ")}
     >
@@ -51,7 +51,7 @@ function SurfaceCard({
 }
 
 function RowCard({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
+  return <div className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">{children}</div>;
 }
 
 export default function VaultSyncPage() {
@@ -226,7 +226,7 @@ export default function VaultSyncPage() {
               </div>
 
               {status ? (
-                <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+                <div className="mt-3 rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
                   {status}
                 </div>
               ) : null}
@@ -252,13 +252,13 @@ export default function VaultSyncPage() {
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Add More</div>
               <div className="mt-4 grid gap-2">
-                <Link className="rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/capture">
+                <Link className="rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/capture">
                   Smart Scan camera
                 </Link>
-                <Link className="rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/vault/quick">
+                <Link className="rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/vault/quick">
                   Quick add
                 </Link>
-                <Link className="rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/vault/import">
+                <Link className="rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]" href="/vault/import">
                   Spreadsheet import
                 </Link>
               </div>
@@ -313,7 +313,7 @@ export default function VaultSyncPage() {
               <div className="text-sm text-[color:var(--muted)]">{reviewLoading ? "Checking…" : `${deviceOnlyItems.length} to review`}</div>
             </div>
 
-            {reviewStatus ? <div className="mt-4 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">{reviewStatus}</div> : null}
+            {reviewStatus ? <div className="mt-4 rounded-[14px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">{reviewStatus}</div> : null}
 
             <div className="mt-4 space-y-3">
               {!reviewLoading && deviceOnlyItems.length === 0 ? (
@@ -342,7 +342,7 @@ export default function VaultSyncPage() {
 
       {removeCandidate ? (
         <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4" onClick={(event) => { if (event.target === event.currentTarget) setRemoveCandidate(null); }}>
-          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Remove device-only record" className="w-full max-w-md rounded-[20px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Remove device-only record" className="w-full max-w-md rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
             <h2 className="text-lg font-semibold">Remove this local copy?</h2>
             <p className="mt-2 text-sm text-[color:var(--muted)]">“{removeCandidate.title || "Untitled item"}” is not in the cloud. This removes it only from this browser and cannot be undone here.</p>
             <div className="mt-5 flex justify-end gap-2">

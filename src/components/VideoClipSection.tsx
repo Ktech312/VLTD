@@ -104,7 +104,7 @@ export default function VideoClipSection({ item, userEmail, onSave }: Props) {
 
       {/* ── Has video: player + delete ── */}
       {existing?.url ? (
-        <div className="rounded-2xl overflow-hidden ring-1" style={{ borderColor: "var(--border)" }}>
+        <div className="rounded-[14px] overflow-hidden ring-1" style={{ borderColor: "var(--border)" }}>
           <video
             src={existing.url}
             muted
@@ -145,7 +145,7 @@ export default function VideoClipSection({ item, userEmail, onSave }: Props) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold ring-1 transition w-full justify-center"
+            className="flex items-center gap-2 rounded-[14px] px-4 py-3 text-sm font-semibold ring-1 transition w-full justify-center"
             style={{
               background: uploading ? "var(--pill)" : "transparent",
               color: uploading ? "var(--muted)" : "var(--fg)",

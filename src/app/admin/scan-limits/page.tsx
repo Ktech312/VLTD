@@ -184,7 +184,7 @@ export default function AdminScanLimitsPage() {
         </p>
 
         {/* Per-tier defaults */}
-        <div className="mt-5 rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-sm font-semibold">Monthly limit by plan</div>
           <div className="mt-3 grid gap-2">
             {SCAN_TIERS.map((tier) => {
@@ -261,7 +261,7 @@ export default function AdminScanLimitsPage() {
                 return (
                   <div
                     key={profile.id}
-                    className="flex flex-wrap items-center gap-3 rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]"
+                    className="flex flex-wrap items-center gap-3 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

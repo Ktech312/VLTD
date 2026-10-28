@@ -262,7 +262,7 @@ export default function MfaChallengeGate() {
       aria-modal="true"
       aria-label="Two-factor authentication required"
     >
-      <div className="w-full max-w-sm rounded-2xl p-6 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+      <div className="w-full max-w-sm rounded-[14px] p-6 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
           Two-factor authentication
         </div>

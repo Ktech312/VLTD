@@ -147,7 +147,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">{title}</div>
         {right}
@@ -264,7 +264,7 @@ function Donut({
             <Link
               key={r.label}
               href={r.href}
-              className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-black/25 transition"
+              className="flex items-center justify-between rounded-[14px] bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-black/25 transition"
             >
               <div className="text-sm">{r.label}</div>
               <div className="text-sm font-semibold">{fmtMoney(r.value)}</div>
@@ -272,7 +272,7 @@ function Donut({
           ) : (
             <div
               key={r.label}
-              className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)]"
+              className="flex items-center justify-between rounded-[14px] bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)]"
             >
               <div className="text-sm">{r.label}</div>
               <div className="text-sm font-semibold">{fmtMoney(r.value)}</div>
@@ -667,7 +667,7 @@ export function AnalyticsDashboard(props: {
         </div>
 
         {/* Controls */}
-        <div className="mt-6 flex flex-col gap-3 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 flex flex-col gap-3 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CONTROLS</div>
@@ -708,7 +708,7 @@ export function AnalyticsDashboard(props: {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search title, grade, notes, category…"
-                className="h-10 w-full md:w-[360px] rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="h-10 w-full md:w-[360px] rounded-[14px] bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
               />
 
               <PillSelect<ViewMode>
@@ -760,7 +760,7 @@ export function AnalyticsDashboard(props: {
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-black/25 transition"
+                  className="flex items-center justify-between rounded-[14px] bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-black/25 transition"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
@@ -777,7 +777,7 @@ export function AnalyticsDashboard(props: {
         </div>
 
         {/* History */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">HISTORY</div>
@@ -789,7 +789,7 @@ export function AnalyticsDashboard(props: {
             <div className="text-sm text-[color:var(--fg)] font-semibold">{fmtMoney(totals.value)}</div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+          <div className="mt-4 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             {historySeries.values.length >= 2 ? (
               <MiniLineChart values={historySeries.values} height={80} />
             ) : (
@@ -799,7 +799,7 @@ export function AnalyticsDashboard(props: {
         </div>
 
         {/* Breakdown */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">BREAKDOWN</div>
           <div className="mt-2 text-xl font-semibold">
             {scope === "all" ? "By universe" : scope === "universe" ? "By category" : scope === "category" ? "By subcategory" : "—"}
@@ -808,7 +808,7 @@ export function AnalyticsDashboard(props: {
             Metric: {rankMode === "value" ? "Value" : "Gain"} • Allocation: {allocMode === "dollars" ? "$" : "%"} (based on value)
           </div>
 
-          <div className="mt-5 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
+          <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
             {view === "donut" ? (
               <Donut
                 rows={breakdownRows.map((r: any) => ({ label: r.label, value: r.value, href: r.href }))}
@@ -821,7 +821,7 @@ export function AnalyticsDashboard(props: {
                     key={r.label}
                     href={r.href ?? "#"}
                     className={[
-                      "rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] transition",
+                      "rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] transition",
                       r.href ? "hover:bg-black/25" : "opacity-70 pointer-events-none",
                     ].join(" ")}
                   >
@@ -858,7 +858,7 @@ export function AnalyticsDashboard(props: {
                       key={r.label}
                       href={r.href ?? "#"}
                       className={[
-                        "rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] transition",
+                        "rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] transition",
                         r.href ? "hover:bg-black/25" : "opacity-70 pointer-events-none",
                       ].join(" ")}
                     >
@@ -894,12 +894,12 @@ export function AnalyticsDashboard(props: {
         </div>
 
         {/* Table */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">TABLE</div>
           <div className="mt-2 text-xl font-semibold">Items</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">Sorted by {rankMode === "value" ? "value" : "gain"}.</div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
+          <div className="mt-4 overflow-hidden rounded-[14px] ring-1 ring-[color:var(--border)]">
             <div className="grid grid-cols-12 gap-2 bg-[color:var(--surface)] px-4 py-3 text-xs text-[color:var(--fg)]">
               <div className="col-span-5">Item</div>
               <div className="col-span-3">Category</div>

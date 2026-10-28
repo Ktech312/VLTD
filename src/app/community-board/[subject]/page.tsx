@@ -42,7 +42,7 @@ function CollectorCard({ entry }: { entry: LeaderboardEntry }) {
 
   return (
     <div
-      className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]"
+      className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]"
       style={{
         background: "var(--surface)",
         boxShadow: entry.rank <= 3 ? "0 0 0 1px var(--theme-gold)" : undefined,

@@ -58,7 +58,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
       style={{ transform: `translateX(-50%) translateY(${visible ? "0px" : "80px"})`, opacity: visible ? 1 : 0 }}
     >
       <div
-        className="w-[calc(100vw-32px)] max-w-sm rounded-3xl p-4 shadow-2xl ring-1"
+        className="w-[calc(100vw-32px)] max-w-sm rounded-[14px] p-4 shadow-2xl ring-1"
         style={{ background: "var(--surface, #12121A)", borderColor: "rgba(203,208,213,0.28)" }}
       >
         {/* Header */}
@@ -79,12 +79,12 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
         {/* Actions */}
         <div className="mt-4 flex gap-2">
           <button type="button" onClick={handleShare}
-            className="flex-1 rounded-2xl py-2.5 text-sm font-bold"
+            className="flex-1 rounded-[14px] py-2.5 text-sm font-bold"
             style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}>
             Share Now
           </button>
           <button type="button" onClick={onDismiss}
-            className="rounded-2xl px-4 py-2.5 text-sm font-semibold ring-1"
+            className="rounded-[14px] px-4 py-2.5 text-sm font-semibold ring-1"
             style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
             Skip
           </button>

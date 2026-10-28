@@ -237,7 +237,7 @@ export default function ContentActionBar({
                     setMenuOpen(false);
                   }
                 }}
-                className="vltd-dark-surface absolute right-0 top-full z-40 mt-2 min-w-[190px] rounded-2xl p-1.5 text-sm shadow-[0_18px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/15"
+                className="vltd-dark-surface absolute right-0 top-full z-40 mt-2 min-w-[190px] rounded-[14px] p-1.5 text-sm shadow-[0_18px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/15"
                 style={{ background: "rgba(17,21,27,0.98)" }}
               >
                 <button

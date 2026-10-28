@@ -130,7 +130,7 @@ export default function VaultExportButton() {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 z-20 mt-2 w-52 rounded-2xl p-2 shadow-xl ring-1 ring-[color:var(--border)]"
+            className="absolute right-0 z-20 mt-2 w-52 rounded-[14px] p-2 shadow-xl ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
             <button

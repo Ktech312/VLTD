@@ -124,7 +124,7 @@ export default function ItemIntelligencePanel({
   const readiness = intelligence?.readiness ?? "Low";
 
   return (
-    <section className="vltd-panel-main rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="vltd-panel-main rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
         ITEM INTELLIGENCE
       </div>
@@ -159,7 +159,7 @@ export default function ItemIntelligencePanel({
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-        <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
+        <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
           <div className="text-sm font-semibold">Rank Signals</div>
 
           {intelligence ? (
@@ -194,7 +194,7 @@ export default function ItemIntelligencePanel({
           )}
         </div>
 
-        <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
+        <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
           <div className="text-sm font-semibold">Confidence Signals</div>
 
           <div className="mt-4 grid gap-3">

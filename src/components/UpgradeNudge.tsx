@@ -14,7 +14,7 @@ export default function UpgradeNudge({
 }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1"
+      className="flex flex-wrap items-center gap-3 rounded-[14px] px-4 py-3 ring-1"
       style={{ background: "rgba(203,208,213,0.10)", borderColor: "rgba(203,208,213,0.4)" }}
     >
       <span className="inline-flex" aria-hidden="true"><AppIcon name="sparkleAI" size={20} /></span>

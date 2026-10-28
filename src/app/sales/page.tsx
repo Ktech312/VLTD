@@ -80,7 +80,7 @@ function MiniSparkline({ sales }: { sales: SalesRow[] }) {
   const h = 36;
   const w = 100 / values.length;
   return (
-    <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+    <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
       <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: "var(--muted)" }}>
         Revenue — last {monthly.length}mo
       </div>
@@ -105,7 +105,7 @@ function MiniSparkline({ sales }: { sales: SalesRow[] }) {
 
 function StatPill({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+    <div className="flex flex-col gap-0.5 rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
       <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--muted)" }}>{label}</div>
       <div className="text-2xl font-black tabular-nums" style={{ color: accent ? "var(--theme-gold)" : "var(--fg)" }}>{value}</div>
       {sub && <div className="text-[11px]" style={{ color: "var(--muted)" }}>{sub}</div>}
@@ -125,7 +125,7 @@ function SaleCard({ row, imageUrl }: { row: SalesRow; imageUrl?: string }) {
   const sale = { title: row.item.title, universe: row.item.universe, categoryLabel: row.item.categoryLabel, soldAt: Number(row.item.soldAt) };
 
   return (
-    <div className="rounded-2xl ring-1 ring-[color:var(--border)] overflow-hidden transition hover:ring-[color:var(--theme-gold-border)]"
+    <div className="rounded-[14px] ring-1 ring-[color:var(--border)] overflow-hidden transition hover:ring-[color:var(--theme-gold-border)]"
       style={{ background: "var(--surface)" }}>
       <div className="flex items-stretch">
         {/* Thumbnail */}
@@ -371,7 +371,7 @@ export default function SalesHistoryPage() {
 
         {/* Empty state */}
         {sales.length === 0 && (
-          <div className="rounded-2xl p-10 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+          <div className="rounded-[14px] p-10 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="mb-3 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="tag" size={40} /></div>
             <h2 className="text-lg font-semibold mb-1">{soldOnSoldPage > 0 ? "Your sales are on the Sold page" : "No sales yet"}</h2>
             <p className="text-sm mb-5" style={{ color: "var(--muted)" }}>{soldOnSoldPage > 0 ? `${soldOnSoldPage} sold ${soldOnSoldPage === 1 ? "item" : "items"}, with revenue, profit and analytics, are listed there.` : "Mark vault items as sold to start tracking your P&L here."}</p>
@@ -394,7 +394,7 @@ export default function SalesHistoryPage() {
         )}
 
         {filtered.length === 0 && sales.length > 0 && (
-          <div className="rounded-2xl p-8 text-center ring-1 ring-[color:var(--border)] text-sm" style={{ background: "var(--surface)", color: "var(--muted)" }}>
+          <div className="rounded-[14px] p-8 text-center ring-1 ring-[color:var(--border)] text-sm" style={{ background: "var(--surface)", color: "var(--muted)" }}>
             No sales match your filter.
           </div>
         )}

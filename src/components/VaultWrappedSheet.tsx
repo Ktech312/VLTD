@@ -387,7 +387,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Collection recap"
-        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"
+        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"
         style={{ background: "var(--surface)" }}
       >
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -415,7 +415,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
               { label: "Value", value: fmtExact(stats.totalValue) },
               { label: "ROI", value: `${stats.gainPct >= 0 ? "+" : ""}${stats.gainPct.toFixed(0)}%` },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl p-3 text-center ring-1 ring-[color:var(--border)]"
+              <div key={s.label} className="rounded-[14px] p-3 text-center ring-1 ring-[color:var(--border)]"
                 style={{ background: "var(--pill)" }}>
                 <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>{s.label}</div>
                 <div className="mt-1 text-xl font-black" style={{ color: "var(--theme-gold, #C8CDD2)" }}>{s.value}</div>
@@ -424,7 +424,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
           </div>
 
           {stats.biggestGainer && (
-            <div className="rounded-2xl p-3 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+            <div className="rounded-[14px] p-3 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
               <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--muted)" }}>Biggest Gainer</div>
               <div className="text-sm font-bold line-clamp-1" style={{ color: "var(--fg)" }}>{stats.biggestGainer.title}</div>
               <div className="text-sm font-bold" style={{ color: "#4CAF82" }}>+{fmtExact(stats.biggestGainerGain)}</div>
@@ -433,7 +433,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
 
           {/* Preview */}
           {preview && (
-            <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "9/16" }}>
+            <div className="rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "9/16" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="Collection recap card" className="h-full w-full object-cover" />
             </div>

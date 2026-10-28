@@ -105,7 +105,7 @@ function FeaturedCard({ item, onClick }: { item: VaultItem; onClick?: (item: Vau
     <button
       type="button"
       onClick={onClick ? () => onClick(item) : undefined}
-      className="block w-full text-left relative overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
+      className="block w-full text-left relative overflow-hidden rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
     >
       <div className="aspect-[3/4] w-full overflow-hidden bg-[color:var(--pill)]">
         {imageUrl ? (
@@ -297,7 +297,7 @@ function GalleryCard({ gallery, profileId }: { gallery: PublicGallery; profileId
   return (
     <Link
       href={`/museum/${gallery.id}/guest`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
+      className="group flex flex-col overflow-hidden rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
     >
       <div className="relative h-[120px] overflow-hidden bg-[color:var(--pill)]">
         {gallery.coverImage ? (
@@ -515,7 +515,7 @@ export default function PublicVaultPage({
 
           {/* Stats bar */}
           {(items.length > 0 || galleries.length > 0 || followerCount > 0) && (
-            <div className="flex flex-wrap justify-center divide-x divide-[color:var(--border)] rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] overflow-hidden">
+            <div className="flex flex-wrap justify-center divide-x divide-[color:var(--border)] rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] overflow-hidden">
               {items.length > 0 && <Stat value={items.length} label={items.length === 1 ? "Item" : "Items"} />}
               {galleries.length > 0 && <Stat value={galleries.length} label={galleries.length === 1 ? "Exhibition" : "Exhibitions"} />}
               {universes.length > 0 && <Stat value={universes.length} label={universes.length === 1 ? "Universe" : "Universes"} />}
@@ -537,7 +537,7 @@ export default function PublicVaultPage({
 
         {/* ── Empty state ── */}
         {items.length === 0 && (
-          <div className="rounded-2xl bg-[color:var(--surface)] p-10 text-center ring-1 ring-[color:var(--border)] mb-10">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-10 text-center ring-1 ring-[color:var(--border)] mb-10">
             <div className="mb-3 flex justify-center"><Glyph name="box" size={36} /></div>
             <h2 className="text-lg font-semibold mb-1">Nothing public yet</h2>
             <p className="text-sm text-[color:var(--muted)] mb-5">
@@ -608,7 +608,7 @@ export default function PublicVaultPage({
         )}
 
         {/* ── Footer CTA ── */}
-        <div className="mb-12 rounded-2xl bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)]">
+        <div className="mb-12 rounded-[14px] bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[color:var(--theme-gold,#C8CDD2)] mb-1">VLTD</div>
           <h3 className="font-semibold mb-1">Track your collection</h3>
           <p className="text-sm text-[color:var(--muted)] mb-4">Vault, grade, value, and share your collectibles.</p>

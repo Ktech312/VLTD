@@ -86,7 +86,7 @@ function toSeedItemsFromDemo(): ModelItem[] {
 
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">{title}</div>
         {right}
@@ -243,7 +243,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
         </div>
 
         {/* Controls */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CONTROLS</div>
@@ -283,7 +283,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search title, grade, notes, subcategory…"
-              className="h-10 w-full md:w-[520px] rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="h-10 w-full md:w-[520px] rounded-[14px] bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
           </div>
         </div>
@@ -318,7 +318,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
         </div>
 
         {/* Subcategory breakdown (click to drill) */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">SUBCATEGORIES</div>
           <div className="mt-2 text-xl font-semibold">By subcategory (click to drill)</div>
 
@@ -329,7 +329,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
                 href={`/portfolio/universe/${encodeURIComponent(universe)}/category/${encodeURIComponent(
                   category
                 )}/subcategory/${encodeURIComponent(r.sub === "—" ? "NONE" : r.sub)}`}
-                className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
+                className="flex items-center justify-between rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{r.sub}</div>
@@ -346,7 +346,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
         </div>
 
         {/* Top 5 */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOP 5</div>
           <div className="mt-2 text-xl font-semibold">Top 5 items in this category</div>
 
@@ -356,7 +356,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
+                  className="flex items-center justify-between rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>

@@ -225,7 +225,7 @@ export default function ListingReadinessPanel({ item }: { item: VaultItem }) {
 
   return (
     <div
-      className="rounded-2xl ring-1"
+      className="rounded-[14px] ring-1"
       style={{ background: bgColor, borderColor }}
     >
       {/* Header row */}

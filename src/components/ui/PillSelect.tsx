@@ -414,7 +414,7 @@ function MobileSheet<T extends string>({
                   type="button"
                   onClick={() => onPick(o.value)}
                   className={[
-                    "w-full rounded-2xl px-4 py-3 text-left transition ring-1 ring-[color:var(--border)]",
+                    "w-full rounded-[14px] px-4 py-3 text-left transition ring-1 ring-[color:var(--border)]",
                     isSelected
                       ? "bg-[color:var(--pill)] text-[color:var(--fg)]"
                       : "bg-[color:var(--pill)] text-[color:var(--fg)] hover:bg-[color:var(--pill-hover)]",

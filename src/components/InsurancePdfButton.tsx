@@ -142,7 +142,7 @@ export default function InsurancePdfButton({
               type="button"
               onClick={handlePrint}
               disabled={printing || items.length === 0}
-              className="w-full rounded-2xl py-3 text-[14px] font-semibold disabled:opacity-50"
+              className="w-full rounded-[14px] py-3 text-[14px] font-semibold disabled:opacity-50"
               style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
             >
               {printing ? "Opening print dialog..." : "Generate PDF"}

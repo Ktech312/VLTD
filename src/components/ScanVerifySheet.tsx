@@ -103,7 +103,7 @@ export default function ScanVerifySheet({
       {/* No backdrop-tap-to-close here: these drafts cost AI scans, so only the
           ✕ or Save should leave — a stray tap must not discard the work. */}
       <div
-        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
+        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[14px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
         style={{ maxHeight: "calc(100dvh - var(--bottomnav-h, 86px) - 1.5rem)" }}
       >
         {/* Header */}
@@ -129,7 +129,7 @@ export default function ScanVerifySheet({
         {/* Draft list */}
         <div className="overflow-y-auto px-3 py-2.5" style={{ maxHeight: "30rem" }}>
           {drafts.length === 0 ? (
-            <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
+            <div className="rounded-[14px] bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
               Nothing left to add.
             </div>
           ) : (
@@ -312,7 +312,7 @@ export default function ScanVerifySheet({
             type="button"
             onClick={onSave}
             disabled={drafts.length === 0 || committing || scanningId !== null || drafts.some((d) => costCheck(d.purchasePrice, "Cost") || costCheck(d.currentValue, "Value"))}
-            className="w-full rounded-2xl py-3 text-sm font-bold disabled:opacity-40"
+            className="w-full rounded-[14px] py-3 text-sm font-bold disabled:opacity-40"
             style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
           >
             {committing
@@ -336,10 +336,10 @@ export default function ScanVerifySheet({
           <div className="text-xs font-medium text-white/70">{preview.label} — tap anywhere to close</div>
           <div className="flex max-h-[75dvh] items-center justify-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview.front} alt={preview.label} className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10" />
+            <img src={preview.front} alt={preview.label} className="max-h-[75dvh] w-auto max-w-full rounded-[14px] object-contain shadow-2xl ring-1 ring-white/10" />
             {preview.back ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview.back} alt={`${preview.label} back`} className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10" />
+              <img src={preview.back} alt={`${preview.label} back`} className="max-h-[75dvh] w-auto max-w-full rounded-[14px] object-contain shadow-2xl ring-1 ring-white/10" />
             ) : null}
           </div>
         </div>

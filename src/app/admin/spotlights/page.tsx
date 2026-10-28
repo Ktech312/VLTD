@@ -175,7 +175,7 @@ export default function AdminSpotlightsPage() {
         {/* Inline form */}
         {showForm && (
           <div
-            className="mb-6 rounded-[24px] p-5"
+            className="mb-6 rounded-[14px] p-5"
             style={{ background: "var(--theme-elevated)", border: "1px solid rgba(203,208,213,0.25)" }}
           >
             <h2 className="mb-4 text-base font-black" style={{ color: "var(--fg)" }}>
@@ -339,7 +339,7 @@ export default function AdminSpotlightsPage() {
         {loading ? (
           <div className="text-sm" style={{ color: "var(--muted)" }}>Loading…</div>
         ) : spotlights.length === 0 ? (
-          <div className="rounded-[24px] py-12 text-center text-sm" style={{ background: "var(--theme-card)", color: "var(--muted)", border: "1px solid var(--border)" }}>
+          <div className="rounded-[14px] py-12 text-center text-sm" style={{ background: "var(--theme-card)", color: "var(--muted)", border: "1px solid var(--border)" }}>
             No spotlights yet. Click "Add Spotlight" to create the first one.
           </div>
         ) : (
@@ -347,7 +347,7 @@ export default function AdminSpotlightsPage() {
             {spotlights.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center gap-4 rounded-[20px] px-4 py-3"
+                className="flex items-center gap-4 rounded-[14px] px-4 py-3"
                 style={{ background: "var(--theme-card)", border: s.is_featured ? "1px solid rgba(203,208,213,0.35)" : "1px solid var(--border)" }}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-xl"

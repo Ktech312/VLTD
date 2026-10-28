@@ -110,7 +110,7 @@ export default function PWAInstallBanner() {
   // Small floating pill — bottom-left, above the bottom nav. On phones the centered Sync status
   // pill sits just above the bar (SyncStatusPill: safe-area + 104px, up to 44px tall), so the prompt
   // clears it instead of drawing on top of it.
-  const pillPosition = "bottom-[calc(max(env(safe-area-inset-bottom,0px),0px)+156px)] md:bottom-3";
+  const pillPosition = "bottom-[calc(max(env(safe-area-inset-bottom,0px),0px)+136px)] md:bottom-3";
   const pillStyle: React.CSSProperties = {
     position: "fixed",
     left: 16,

@@ -97,8 +97,13 @@
   /* ✅ Reserve TopNav height so content never jumps */
   --topnav-h: 72px;
 
+  /* CORNER STANDARD (locked 2026-10-28 by EK): controls (pills, buttons, dropdown triggers) 6px; cards and panels 14px;
+     circles and avatars stay round. The shared pill recipe (PillButton) and .vltd-action-module use the control value. */
+  --radius-control: 6px;
+  --radius-card: 14px;
+
   /* Reserve BottomNav height so content clears it on mobile */
-  --bottomnav-h: 86px;
+  --bottomnav-h: 68px;
 
   /* ---------------------------------------------------------
      NAV / SHELL VARS
@@ -713,7 +718,7 @@ a:hover {
   box-shadow: inset 1px 0 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 /* Shared size for the branded Add Item control: 44px on touch/mobile, 36px on desktop, 8px corners (same as every pill). */
-.vltd-action-module--shared { height: 44px; border-radius: 8px; }
+.vltd-action-module--shared { height: 44px; border-radius: 6px; }
 .vltd-action-module--shared .vltd-action-module__plate { display: flex; align-items: center; padding: 0 14px; }
 .vltd-action-module--shared .vltd-action-module__block { min-width: 44px; padding: 0 12px; }
 @media (min-width: 768px) { .vltd-action-module--shared { height: 36px; } }
@@ -2600,7 +2605,7 @@ html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { d
 --------------------------------------------------------- */
 .vltd-glass-dock {
   position: relative;
-  border-radius: 24px;
+  border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
     rgba(20, 24, 30, 0.55);

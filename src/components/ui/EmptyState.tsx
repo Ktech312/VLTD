@@ -31,13 +31,13 @@ export function EmptyState({
   return (
     <div
       className={[
-        "rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
+        "rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className ?? "",
       ].join(" ")}
     >
       <div className="flex items-start gap-4">
         {icon ? (
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] text-xl">
+          <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] text-xl">
             {icon}
           </div>
         ) : null}

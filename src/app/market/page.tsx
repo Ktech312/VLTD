@@ -60,7 +60,7 @@ function MarketCard({ item }: { item: MarketItem }) {
   return (
     <Link
       href={item.sellerProfileId ? `/v/${encodeURIComponent(item.sellerProfileId)}` : "/market"}
-      className="group flex flex-col rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:shadow-lg"
+      className="group flex flex-col rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:shadow-lg"
       style={{ background: "var(--surface)" }}
     >
       {/* Photo */}

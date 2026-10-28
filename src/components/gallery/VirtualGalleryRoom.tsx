@@ -4308,7 +4308,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               />
               <div
-                className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-4xl sm:rounded-3xl"
+                className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-4xl sm:rounded-[14px]"
                 style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
               >
               {/* Drag handle — mobile bottom-sheet affordance only */}
@@ -4545,7 +4545,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               />
               <div
-                className="relative flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl ring-1 sm:rounded-3xl"
+                className="relative flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl ring-1 sm:rounded-[14px]"
                 style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
               >
                 <div className="flex justify-center pb-1 pt-3 sm:hidden">

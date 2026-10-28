@@ -497,7 +497,7 @@ export default function MuseumRoomPopup({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-2 px-4">
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-black/70 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-[14px] bg-black/70 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
           <span className="text-xs font-black uppercase tracking-[0.1em] text-white/70">
             Drag to look around · click a numbered position to add, move, or remove an item
           </span>

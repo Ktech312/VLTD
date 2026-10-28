@@ -89,7 +89,7 @@ function PreviewCard({
       type="button"
       onClick={onApply}
       className={[
-        "group w-full text-left rounded-3xl p-3.5 sm:p-4 transition",
+        "group w-full text-left rounded-[14px] p-3.5 sm:p-4 transition",
         "ring-1 shadow-[var(--shadow-soft)]",
         active
           ? "vltd-panel-main bg-[color:var(--surface)] ring-[color:var(--pill-active-ring)]"
@@ -123,7 +123,7 @@ function PreviewCard({
 
 function MiniShell() {
   return (
-    <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]">
+    <div className="rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)]">
       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[color:var(--surface)]/90 backdrop-blur">
         <div className="flex items-center gap-2 min-w-0">
           <div className="h-8 w-8 rounded-xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] overflow-hidden grid place-items-center">
@@ -142,7 +142,7 @@ function MiniShell() {
       </div>
 
       <div className="p-3 bg-[color:var(--bg)]">
-        <div className="rounded-2xl p-3 bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
+        <div className="rounded-[14px] p-3 bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[10px] tracking-widest text-[color:var(--muted2)]">PORTFOLIO</div>
@@ -203,7 +203,7 @@ export function ApplyStyleGallery() {
 
   return (
     <div className="grid gap-3">
-      <div className="vltd-panel-main rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+      <div className="vltd-panel-main rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">APPLY STYLE</div>
         <div className="mt-2 text-2xl sm:text-3xl font-semibold">Style Gallery</div>
         <div className="mt-2 text-sm text-[color:var(--muted)]">
@@ -231,7 +231,7 @@ export function ApplyStyleGallery() {
         ))}
       </div>
 
-      <div className="vltd-panel-soft rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+      <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
         <div className="text-sm font-semibold">Premium polish checklist (what we’ll do next)</div>
         <ul className="mt-2 text-sm text-[color:var(--muted)] list-disc pl-5 space-y-1">
           <li>Subtle motion everywhere: hover/press/focus transitions, skeleton loaders, route transitions tuned.</li>

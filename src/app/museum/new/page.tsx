@@ -129,7 +129,7 @@ export default function NewMuseumGalleryPage() {
           <PillButton href="/dashboard">Home</PillButton>
         </div>
 
-        <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:p-6">
+        <section className="relative overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:p-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative">
@@ -148,7 +148,7 @@ export default function NewMuseumGalleryPage() {
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TIER
                 </div>
@@ -158,7 +158,7 @@ export default function NewMuseumGalleryPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   CURRENT EXHIBITIONS
                 </div>
@@ -168,7 +168,7 @@ export default function NewMuseumGalleryPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   REMAINING
                 </div>
@@ -183,7 +183,7 @@ export default function NewMuseumGalleryPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
             EXHIBITION SETUP
           </div>
@@ -208,14 +208,14 @@ export default function NewMuseumGalleryPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Write a short curatorial description for this exhibition..."
-                className="w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="w-full rounded-[14px] bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
               />
             </div>
           </div>
         </section>
 
         <section className="mt-6 grid gap-5 lg:grid-cols-2">
-          <div className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               ACCESS
             </div>
@@ -225,7 +225,7 @@ export default function NewMuseumGalleryPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium">Who can see it</label>
                 {forcePublic ? (
-                  <div className="flex items-center gap-2 min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                  <div className="flex items-center gap-2 min-h-[46px] w-full rounded-[14px] bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                     <span className="text-sm text-[color:var(--fg)]">Public Exhibit</span>
                     <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
                       Free plan · <a href="/account/billing" className="underline">Upgrade</a> for private
@@ -245,7 +245,7 @@ export default function NewMuseumGalleryPage() {
                 )}
               </div>
 
-              <label className="flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+              <label className="flex items-start justify-between gap-4 rounded-[14px] bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                 <span>
                   <span className="block text-sm font-medium">18+ exhibition</span>
                   <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
@@ -262,7 +262,7 @@ export default function NewMuseumGalleryPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               PRESENTATION
             </div>
@@ -300,14 +300,14 @@ export default function NewMuseumGalleryPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
             CREATE
           </div>
           <h2 className="mt-2 text-xl font-semibold">Finish Setup</h2>
 
           {!canCreate ? (
-            <div className="mt-4 rounded-[20px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            <div className="mt-4 rounded-[14px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               You have reached your current exhibition limit for this profile.
             </div>
           ) : null}

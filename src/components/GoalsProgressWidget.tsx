@@ -19,7 +19,7 @@ export default function GoalsProgressWidget({
 
   return (
     <div
-      className="overflow-hidden rounded-2xl ring-1"
+      className="overflow-hidden rounded-[14px] ring-1"
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}
     >
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>

@@ -272,7 +272,7 @@ export default function AdminUsersPage() {
   if (!role) {
     return (
       <main className="px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
+        <div className="mx-auto max-w-3xl rounded-[14px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
           You don&apos;t have access to this page.
         </div>
       </main>
@@ -406,13 +406,13 @@ export default function AdminUsersPage() {
         </div>
 
         {status && (
-          <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="mt-4 rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
             {status}
           </div>
         )}
 
         {pending.length > 0 ? (
-          <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
+          <div className="mt-6 rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface)]">
             <div className="flex items-baseline justify-between gap-3 px-4 pt-3">
               <h2 className="text-sm font-bold">Pending sign-ups ({pending.length})</h2>
               <span className="text-xs text-[color:var(--muted)]">Signed up, but no profile yet, so not in the list below</span>
@@ -456,7 +456,7 @@ export default function AdminUsersPage() {
           </div>
         ) : null}
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-[color:var(--border)]">
+        <div className="mt-6 overflow-x-auto rounded-[14px] border border-[color:var(--border)]">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] text-[color:var(--muted2)]">
@@ -511,7 +511,7 @@ export default function AdminUsersPage() {
               />
             </button>
             {showSeed ? (
-              <div className="mt-2 overflow-x-auto rounded-2xl border border-[color:var(--border)]">
+              <div className="mt-2 overflow-x-auto rounded-[14px] border border-[color:var(--border)]">
                 <table className="w-full text-left text-sm">
                   <tbody>{seedRows.map(renderRow)}</tbody>
                 </table>

@@ -200,7 +200,7 @@ export default function BarcodeScanCamera({
             type="button"
             onClick={handleManualScan}
             disabled={!cameraReady || scanned}
-            className="flex flex-col items-center gap-0.5 rounded-2xl bg-black/50 px-3 py-2 ring-1 ring-white/20 backdrop-blur-sm disabled:opacity-40"
+            className="flex flex-col items-center gap-0.5 rounded-[14px] bg-black/50 px-3 py-2 ring-1 ring-white/20 backdrop-blur-sm disabled:opacity-40"
             title="Tap to scan now"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={manualFeedback === "none" ? "#ef4444" : "#C8CDD2"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

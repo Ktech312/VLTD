@@ -134,7 +134,7 @@ function AccordionSection({
 }) {
   return (
     <div
-      className="rounded-2xl border"
+      className="rounded-[14px] border"
       style={{
         borderColor: open
           ? "var(--theme-gold-border, rgba(203,208,213,0.35))"

@@ -35,7 +35,7 @@ type PillButtonProps = {
 };
 
 /**
- * The shared pill recipe (Revision 2): 36px tall on desktop, 44px on touch/mobile, 8px corners,
+ * The shared pill recipe (Revision 2): 36px tall on desktop, 44px on touch/mobile, 6px corners,
  * 12px side padding, 6px icon-to-label gap, 13px label at weight 500, 16px icons.
  * Anything that must look like a pill (menu triggers, local navigation, filter chips) takes its
  * classes from here so the geometry stays in one place.
@@ -56,7 +56,8 @@ export function pillClassName(variant: PillVariant = "default", disabled = false
   const base = [
     "inline-flex items-center justify-center gap-1.5",
     geometry,
-    "rounded-[8px]",
+    // Corner standard (locked 2026-10-28): controls 6px, cards and panels 14px, circles stay circles. Do not change without EK's say-so.
+    "rounded-[6px]",
     "whitespace-nowrap",
     "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0",
     "ring-1 transition select-none vltd-selectable",

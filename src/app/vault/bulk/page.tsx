@@ -406,7 +406,7 @@ export default function BulkUploadPage() {
           <section className="mt-5 flex flex-col gap-5">
             {/* Step 1: Universe, Category & Subcategory — picked ONCE for the whole batch */}
             <div
-              className="rounded-2xl border p-4"
+              className="rounded-[14px] border p-4"
               style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
             >
               <label className={LABEL_CLS}>Step 1 — Pick the Universe for this batch</label>
@@ -477,7 +477,7 @@ export default function BulkUploadPage() {
                   setDragOver(false);
                   addFiles(Array.from(e.dataTransfer.files));
                 }}
-                className="mt-2 flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-sm text-[color:var(--muted)] transition hover:text-text-primary"
+                className="mt-2 flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed px-4 py-6 text-sm text-[color:var(--muted)] transition hover:text-text-primary"
                 style={{
                   borderColor: dragOver
                     ? "var(--theme-gold, #C8CDD2)"
@@ -550,7 +550,7 @@ export default function BulkUploadPage() {
             {/* Step 3: choose how to fill details */}
             {drafts.length > 0 ? (
               <div
-                className="rounded-2xl border p-4"
+                className="rounded-[14px] border p-4"
                 style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
               >
                 <label className={LABEL_CLS}>Step 3 — Fill in details</label>
@@ -653,7 +653,7 @@ export default function BulkUploadPage() {
               {drafts.map((d) => (
                 <div
                   key={d.id}
-                  className="flex flex-wrap items-start gap-4 rounded-2xl border p-3 sm:flex-nowrap"
+                  className="flex flex-wrap items-start gap-4 rounded-[14px] border p-3 sm:flex-nowrap"
                   style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))", background: "var(--theme-card, rgba(15,25,45,0.5))" }}
                 >
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}>
@@ -716,11 +716,11 @@ export default function BulkUploadPage() {
             </div>
 
             {drafts.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed p-6 text-center text-sm text-[color:var(--muted)]" style={{ borderColor: "var(--border)" }}>
+              <div className="mt-4 rounded-[14px] border border-dashed p-6 text-center text-sm text-[color:var(--muted)]" style={{ borderColor: "var(--border)" }}>
                 Nothing left in this batch. <Link href="/vault" className="underline">Back to Vault</Link>
               </div>
             ) : (
-              <div className="sticky bottom-4 mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.25))", background: "var(--theme-elevated, rgba(20,32,55,0.92))" }}>
+              <div className="sticky bottom-4 mt-5 flex flex-wrap items-center gap-3 rounded-[14px] border p-3" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.25))", background: "var(--theme-elevated, rgba(20,32,55,0.92))" }}>
                 <button
                   type="button"
                   disabled={committing || scanningId !== null}

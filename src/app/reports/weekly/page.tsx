@@ -56,7 +56,7 @@ function universeLabel(value?: string) {
 
 function StatCard({ label, value, helper }: { label: string; value: string; helper?: string }) {
   return (
-    <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-[color:var(--fg)]">{value}</div>
       {helper ? <div className="mt-1 text-xs text-[color:var(--muted)]">{helper}</div> : null}
@@ -68,7 +68,7 @@ function ItemRow({ item, detail }: { item: VaultItem; detail: string }) {
   return (
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="block rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+      className="block rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -88,7 +88,7 @@ function ActionShortcut({ href, label, helper }: { href: string; label: string; 
   return (
     <Link
       href={href}
-      className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+      className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
     >
       <div className="text-sm font-semibold">{label}</div>
       <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">{helper}</div>
@@ -100,7 +100,7 @@ function HealthBar({ score }: { score: number }) {
   const color = score >= 80 ? "#4CAF50" : score >= 50 ? "#C8CDD2" : "#ef4444";
   const label = score >= 80 ? "Great shape" : score >= 50 ? "Needs work" : "Attention required";
   return (
-    <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Collection Health</div>
         <div className="text-xs text-[color:var(--muted)]">{label}</div>
@@ -274,7 +274,7 @@ export default function WeeklyVaultReportPage() {
         </div>
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-          <section className="rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <section className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">This Week</div>
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               <div>
@@ -284,7 +284,7 @@ export default function WeeklyVaultReportPage() {
                     <ItemRow key={item.id} item={item} detail={`Added value ${formatPrice(itemValue(item))}`} />
                   ))}
                   {report.newItems.length === 0 ? (
-                    <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                       No new vault items in the last 7 days.
                     </div>
                   ) : null}
@@ -298,7 +298,7 @@ export default function WeeklyVaultReportPage() {
                     <ItemRow key={item.id} item={item} detail={`Sold for ${formatPrice(clampMoney(item.soldPrice))}`} />
                   ))}
                   {report.soldItems.length === 0 ? (
-                    <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                       No sold items recorded yet.
                     </div>
                   ) : null}
@@ -307,11 +307,11 @@ export default function WeeklyVaultReportPage() {
             </div>
           </section>
 
-          <section className="rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <section className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Top Universes</div>
             <div className="mt-4 space-y-3">
               {report.byUniverse.map(([universe, data]) => (
-                <div key={universe} className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
+                <div key={universe} className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold">{universe}</div>
                     <div className="text-sm text-[color:var(--muted)]">{formatPrice(data.value)}</div>
@@ -320,7 +320,7 @@ export default function WeeklyVaultReportPage() {
                 </div>
               ))}
               {report.byUniverse.length === 0 ? (
-                <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                   No collection items yet.
                 </div>
               ) : null}
@@ -329,7 +329,7 @@ export default function WeeklyVaultReportPage() {
         </div>
 
         {report.staleValuations.length > 0 && (
-          <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <section className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Stale Valuations</div>
@@ -348,7 +348,7 @@ export default function WeeklyVaultReportPage() {
           </section>
         )}
 
-        <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sale & Sharing</div>
@@ -367,7 +367,7 @@ export default function WeeklyVaultReportPage() {
                   <ItemRow key={item.id} item={item} detail={`Asking ${formatPrice(Number(item.askingPrice ?? itemValue(item)))}`} />
                 ))}
                 {report.forSaleItems.length === 0 ? (
-                  <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                  <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                     No items are marked for sale.
                   </div>
                 ) : null}
@@ -381,7 +381,7 @@ export default function WeeklyVaultReportPage() {
                   <ItemRow key={item.id} item={item} detail="Visible through public vault links" />
                 ))}
                 {report.publicItems.length === 0 ? (
-                  <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                  <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                     No items are public. Shared vault links will be empty until you unlock items.
                   </div>
                 ) : null}
@@ -390,7 +390,7 @@ export default function WeeklyVaultReportPage() {
           </div>
         </section>
 
-        <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Action List</div>
@@ -429,7 +429,7 @@ export default function WeeklyVaultReportPage() {
               <Link
                 key={item.id}
                 href={`/vault/item/${encodeURIComponent(item.id)}`}
-                className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                className="rounded-[14px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
               >
                 <div className="truncate text-sm font-semibold">{item.title}</div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -442,7 +442,7 @@ export default function WeeklyVaultReportPage() {
               </Link>
             ))}
             {report.insuranceGaps.length === 0 ? (
-              <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                 No insurance readiness gaps found.
               </div>
             ) : null}

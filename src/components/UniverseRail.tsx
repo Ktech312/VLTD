@@ -115,7 +115,7 @@ export default function UniverseRail({
                 className={[
                   "snap-start",
                   // ✅ mobile tap target + comfortable pill sizing
-                  "inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-2xl px-4",
+                  "inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-[14px] px-4",
                   // ✅ prevent iOS zoom + nice density on desktop
                   "text-[16px] sm:text-sm font-medium ring-1 transition select-none active:scale-[0.98]",
                   // ✅ slightly larger hit area without changing visual height

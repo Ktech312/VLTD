@@ -98,7 +98,7 @@ export default function PrivacyIdentityCards() {
     <>
       <section className={sectionClass}>
         <div className={labelClass + " mb-4"}>Privacy</div>
-        <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+        <div className="flex items-start justify-between gap-4 rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
           <div className="flex-1">
             <div className="text-sm font-black text-text-primary">Public profile</div>
             <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
@@ -129,7 +129,7 @@ export default function PrivacyIdentityCards() {
                 const nextAge = computeAge(e.target.value);
                 if (nextAge === null || nextAge < 18) setAgeVerified(false);
               }}
-              className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+              className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
               style={{ background: "var(--theme-card)" }}
             />
             <span className="mt-1 block text-xs text-[color:var(--muted2)]">

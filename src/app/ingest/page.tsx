@@ -21,7 +21,7 @@ function Card({
   return (
     <Link
       href={href}
-      className="block rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:bg-[color:var(--surface-strong)]"
+      className="block rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:bg-[color:var(--surface-strong)]"
     >
       <div className="text-xl font-semibold">{title}</div>
       <div className="mt-2 text-sm text-[color:var(--muted)]">{desc}</div>

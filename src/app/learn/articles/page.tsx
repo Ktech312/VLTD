@@ -117,7 +117,7 @@ export default async function ArticlesPage() {
                 <Link
                   key={article._id}
                   href={`/learn/articles/${article.slug.current}`}
-                  className="group rounded-[22px] border border-[color:var(--border)] bg-vault-card overflow-hidden transition hover:border-[rgba(203,208,213,0.4)]"
+                  className="group rounded-[14px] border border-[color:var(--border)] bg-vault-card overflow-hidden transition hover:border-[rgba(203,208,213,0.4)]"
                   style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
                 >
                   {article.heroImage ? (

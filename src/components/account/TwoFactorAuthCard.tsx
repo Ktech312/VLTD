@@ -117,7 +117,7 @@ export default function TwoFactorAuthCard() {
   }
 
   return (
-    <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+    <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
       <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>
         Two-factor authentication
       </div>

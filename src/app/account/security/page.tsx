@@ -198,7 +198,7 @@ export default function SecurityPage() {
               <div className="rounded-xl px-4 py-2.5 text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--fg)" }}>{toast}</div>
             )}
 
-            <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Login credentials</div>
               {changingEmail ? (
                 <div className="border-b border-[color:var(--border)] py-3">
@@ -239,7 +239,7 @@ export default function SecurityPage() {
             <TwoFactorAuthCard />
 
             {TRUSTED_DEVICE_FEATURE_ENABLED && (
-            <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Trusted devices</div>
               <p className="mb-3 text-xs" style={{ color: "var(--muted)" }}>
                 Devices you chose to remember at the 2FA prompt skip the code for 30 days. Forget one here to require a fresh code there again.
@@ -269,7 +269,7 @@ export default function SecurityPage() {
             </div>
             )}
 
-            <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Active sessions</div>
               <div className="space-y-2">
                 {sessions.map((s) => (
@@ -288,7 +288,7 @@ export default function SecurityPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
+            <div className="rounded-[14px] p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#f87171" }}>Danger zone</div>
               <div className="flex items-center justify-between gap-4">
                 <div>

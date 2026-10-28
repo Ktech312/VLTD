@@ -1038,7 +1038,7 @@ export default function CameraCapturePanel({
               </div>
             ) : null}
 
-            <div className={isBackgroundRemoved || backgroundError ? "mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]" : "hidden"}>
+            <div className={isBackgroundRemoved || backgroundError ? "mt-2 rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]" : "hidden"}>
               {backgroundError ? (
                 <div className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
                   {backgroundError}
@@ -1357,7 +1357,7 @@ export default function CameraCapturePanel({
                     see barcodeLookup.ts / onLiveBarcodeScan. */}
                 {!cameraError && barcodeLookupState !== "idle" ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 top-14 flex max-w-[88%] items-start gap-2 -translate-x-1/2 rounded-2xl px-3 py-2 backdrop-blur"
+                    className="pointer-events-none absolute left-1/2 top-14 flex max-w-[88%] items-start gap-2 -translate-x-1/2 rounded-[14px] px-3 py-2 backdrop-blur"
                     style={{
                       background: barcodeLookupState === "found" ? "rgba(2,20,10,0.85)" : "rgba(0,0,0,0.72)",
                       border: barcodeLookupState === "found" ? "1px solid rgba(74,222,128,0.5)" : "1px solid rgba(255,255,255,0.16)",

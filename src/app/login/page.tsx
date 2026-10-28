@@ -132,7 +132,7 @@ function LoginInner() {
                 <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">Enter your code</h1>
                 <p className="mt-2 text-base text-[color:var(--muted)]">Open your authenticator app and enter the 6-digit code.</p>
 
-                {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                {error ? <div className="mt-5 rounded-[14px] border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
                 <div className="mt-8 grid gap-5">
                   <label className="block">
@@ -144,7 +144,7 @@ function LoginInner() {
                       inputMode="numeric"
                       maxLength={6}
                       autoFocus
-                      className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-center text-2xl tracking-[0.4em]"
+                      className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-center text-2xl tracking-[0.4em]"
                     />
                   </label>
                 </div>
@@ -174,12 +174,12 @@ function LoginInner() {
                 <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">Log in to your vault</h1>
                 <p className="mt-2 text-base text-[color:var(--muted)]">Get back into your vault.</p>
 
-                {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                {error ? <div className="mt-5 rounded-[14px] border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
                 <div className="mt-8 grid gap-5">
                   <label className="block">
                     <span className="text-base font-medium text-[color:var(--muted)]">Email</span>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                   </label>
 
                   <label className="block">
@@ -187,7 +187,7 @@ function LoginInner() {
                       <span className="text-base font-medium text-[color:var(--muted)]">Password</span>
                       <Link href="/forgot-password" className="text-sm font-medium text-[color:var(--muted2)] transition hover:text-[color:var(--fg)]">Forgot password?</Link>
                     </div>
-                    <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="••••••••" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                    <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="••••••••" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                   </label>
                 </div>
 

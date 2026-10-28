@@ -167,7 +167,7 @@ export default function GuestGalleryPage() {
     return (
       <main className="bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-text-primary">
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
+          <div className="rounded-[14px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
             <div className="text-[11px] tracking-[0.22em] text-white/55">EXHIBITION</div>
             <h1 className="mt-3 text-2xl font-semibold">Exhibition not found</h1>
             <p className="mt-3 text-sm text-white/70">

@@ -25,7 +25,7 @@ export function EmptyVault({
           </div>
         ) : null}
         <div
-          className="mt-8 rounded-3xl p-8 text-center"
+          className="mt-8 rounded-[14px] p-8 text-center"
           style={{
             background: "var(--theme-card, rgba(15,25,45,0.85))",
             border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",

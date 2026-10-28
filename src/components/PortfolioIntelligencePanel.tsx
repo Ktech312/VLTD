@@ -17,7 +17,7 @@ function Badge({
   sublabel?: string;
 }) {
   return (
-    <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+    <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
         {label}
       </div>
@@ -41,7 +41,7 @@ function ItemCard({
   value?: string;
 }) {
   return (
-    <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+    <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
         {eyebrow}
       </div>
@@ -80,7 +80,7 @@ export default function PortfolioIntelligencePanel({ metrics }: Props) {
           : "Under Pressure";
 
   return (
-    <section className="vltd-panel-main rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="vltd-panel-main rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
         PORTFOLIO INTELLIGENCE
       </div>
@@ -168,7 +168,7 @@ export default function PortfolioIntelligencePanel({ metrics }: Props) {
       </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
-        <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-sm font-semibold">Top Value Segments</div>
 
           {metrics.topValueSegments.length === 0 ? (
@@ -210,7 +210,7 @@ export default function PortfolioIntelligencePanel({ metrics }: Props) {
           )}
         </div>
 
-        <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-sm font-semibold">Top Acquisition Sources</div>
 
           {metrics.topSourceSegments.length === 0 ? (

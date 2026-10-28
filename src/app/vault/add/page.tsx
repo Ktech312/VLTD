@@ -2825,7 +2825,7 @@ export default function AddPage() {
 
         {selectedMediaImage ? (
           <div ref={photoDialogRef} className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Photo options" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedMediaImageId(""); }}>
-            <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+            <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-xl flex-col overflow-hidden rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
@@ -2868,7 +2868,7 @@ export default function AddPage() {
                 }}
               >
                 <div className="w-full max-w-3xl">
-                  <div className="flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+                  <div className="flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <div>
                         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EDIT PHOTO</div>

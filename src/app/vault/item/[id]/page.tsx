@@ -192,7 +192,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
         {action}
@@ -698,7 +698,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   if (!item) {
     return (
       <main className="bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-5xl rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
+        <div className="mx-auto max-w-5xl rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
           Item not found.
         </div>
       </main>
@@ -1205,7 +1205,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>
-            <div className="relative rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="relative rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               {/* Delete button — top-right */}
               <button
                 type="button"
@@ -1453,7 +1453,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+              <div className="mt-5 rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-[13px] font-semibold">Visibility</div>
@@ -1474,7 +1474,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+              <div className="mt-5 rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">MARKET</div>
                 <div className={"mt-3 text-[40px] font-semibold leading-none" + (hasExplicitValue(item) ? "" : " text-[color:var(--muted2)]")}>{hasExplicitValue(item) ? fmtMoney(effectiveMarketValue(item)) : hasRecordedCost(item) ? fmtMoney(totalCost(item)) : "Missing value"}</div>
                 {!hasExplicitValue(item) ? <div className="mt-1 text-xs text-[color:var(--muted)]">{hasRecordedCost(item) ? "At purchase cost. Not valued yet." : "No valuation and no purchase cost recorded."}</div> : null}
@@ -1497,7 +1497,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
 
               {item.status !== "SOLD" ? (
-                <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+                <div className="mt-5 rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-[13px] font-semibold">
@@ -1612,7 +1612,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           <ItemDetailsSection item={item} onSave={(patch) => persist({ ...item, ...patch })}>
             {(((item.edition && !editionShownAbove) || (item.variant && !variantShownAbove)) || item.printRun || item.isFirstEdition) && (
-              <div className="mt-4 rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="mt-4 rounded-[14px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
                   Edition / Variant
                 </div>
@@ -1814,7 +1814,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-item-title"
-            className="relative z-10 w-full max-w-sm rounded-[24px] p-6 ring-1"
+            className="relative z-10 w-full max-w-sm rounded-[14px] p-6 ring-1"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
             onClick={(e) => e.stopPropagation()}
           >

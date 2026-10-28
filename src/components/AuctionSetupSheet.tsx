@@ -181,7 +181,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
       />
 
       <div
-        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl"
+        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl"
         style={{ background: "var(--surface)" }}
       >
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -207,7 +207,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
           {/* Active state */}
           {isActive && endsAtLabel && (
             <div
-              className="rounded-2xl px-4 py-3 ring-1 ring-amber-400/30"
+              className="rounded-[14px] px-4 py-3 ring-1 ring-amber-400/30"
               style={{ background: "rgba(203,208,213,0.1)" }}
             >
               <div className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
@@ -410,7 +410,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
             role="dialog"
             aria-modal="true"
             aria-label="Cancel auction"
-            className="relative w-full max-w-sm rounded-2xl p-5 ring-1 ring-[color:var(--border)] shadow-2xl"
+            className="relative w-full max-w-sm rounded-[14px] p-5 ring-1 ring-[color:var(--border)] shadow-2xl"
             style={{ background: "var(--surface)" }}
           >
             <div className="text-base font-bold" style={{ color: "var(--fg)" }}>Cancel auction</div>

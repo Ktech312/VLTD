@@ -113,7 +113,7 @@ export default function BugReporter() {
         aria-label="Report a bug"
         title="Report a bug"
         data-site-chrome="true"
-        className="fixed right-4 bottom-24 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
+        className="fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the
           // `fixed` class with position:relative, which shoved this off-screen.
@@ -140,7 +140,7 @@ export default function BugReporter() {
           onClick={() => { setOpen(false); reset(); }}
         >
           <div
-            className="w-full max-w-md rounded-[24px] p-6"
+            className="w-full max-w-md rounded-[14px] p-6"
             onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--theme-elevated, rgba(12,18,30,0.98))",
@@ -157,7 +157,7 @@ export default function BugReporter() {
             </p>
 
             {state === "done" ? (
-              <div className="mt-5 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-4 py-5 text-center">
+              <div className="mt-5 rounded-[14px] border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-4 py-5 text-center">
                 <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>Thanks — your report was sent!</p>
               </div>
             ) : (
@@ -167,10 +167,10 @@ export default function BugReporter() {
                   onChange={(e) => setMessage(e.target.value)}
                   rows={4}
                   placeholder="What happened? What did you expect?"
-                  className="mt-4 w-full resize-none rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 py-3 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-4 w-full resize-none rounded-[14px] border border-[color:var(--border)] bg-vault-card px-4 py-3 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                 />
 
-                <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm text-[color:var(--muted)] transition hover:text-text-primary">
+                <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-[14px] border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm text-[color:var(--muted)] transition hover:text-text-primary">
                   <span className="truncate">{file ? file.name : "Attach a screenshot (optional)"}</span>
                   <input
                     ref={fileRef}

@@ -70,7 +70,7 @@ function slugifyUsername(value: string) {
 
 function accountTypeCardClass(active: boolean) {
   return [
-    "rounded-2xl border p-5 text-left transition cursor-pointer",
+    "rounded-[14px] border p-5 text-left transition cursor-pointer",
     active
       ? "border-[rgba(203,208,213,0.55)] bg-[rgba(203,208,213,0.10)] text-text-primary shadow-[0_0_0_1px_rgba(203,208,213,0.18)]"
       : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(203,208,213,0.35)] hover:bg-[rgba(203,208,213,0.06)] hover:text-text-primary",
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <main className="px-4 py-8 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-3xl rounded-[28px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
+        <div className="mx-auto max-w-3xl rounded-[14px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
           Loading…
         </div>
       </main>
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
             <StepIndicator step={step} total={TOTAL_STEPS} />
 
             {error && (
-              <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              <div className="mt-4 rounded-[14px] border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                 {error}
               </div>
             )}
@@ -459,7 +459,7 @@ export default function OnboardingPage() {
                       if (!username.trim()) setUsername(slugifyUsername(next));
                     }}
                     placeholder="e.g. Jordan Collector"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                    className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   />
                 </label>
 
@@ -470,7 +470,7 @@ export default function OnboardingPage() {
                     value={username}
                     onChange={(e) => setUsername(slugifyUsername(e.target.value))}
                     placeholder="e.g. jordan_collects"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                    className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   />
                   <div className="mt-1.5 text-xs text-[color:var(--muted2)]">
                     Public URL: vltd.app/@<span className="font-semibold text-[color:var(--muted)]">{slugifyUsername(username) || "username"}</span>
@@ -486,7 +486,7 @@ export default function OnboardingPage() {
             {/* ── Step 2: Optional business profile ── */}
             {step === 2 && (
               <div className="mt-6 space-y-5">
-                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3">
+                <div className="rounded-[14px] border border-emerald-400/30 bg-emerald-400/10 px-4 py-3">
                   <div className="text-sm font-black text-text-primary">Personal profile details complete</div>
                   <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
                     {displayName.trim()} · @{slugifyUsername(username)}. Saved to your account, so you can continue on another device.
@@ -513,7 +513,7 @@ export default function OnboardingPage() {
 
                 {/* Business details — shown only when adding a second profile */}
                 {addBusiness && (
-                  <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3">
+                  <div className="rounded-[14px] border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">Business details</div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block">
@@ -545,7 +545,7 @@ export default function OnboardingPage() {
                 )}
 
                 {/* Value props */}
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
+                <div className="rounded-[14px] border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-3">What you&apos;re unlocking</div>
                   <div className="grid grid-cols-2 gap-2">
                     {VALUE_PROPS.map(({ icon, text }) => (
@@ -646,7 +646,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Confirm summary */}
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
+                <div className="rounded-[14px] border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Setup summary</div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-[color:var(--border)]">

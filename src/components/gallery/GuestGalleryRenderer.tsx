@@ -249,7 +249,7 @@ export function GuestItemModal({
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
-        className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-white/10"
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[28px] sm:rounded-[14px] border border-white/10"
         style={{ background: "linear-gradient(180deg,rgba(20,24,30,0.98),rgba(10,12,16,0.99))" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -759,11 +759,11 @@ export default function GuestGalleryRenderer({
           ) : (
             <section
               className={[
-                "mt-3 mx-auto rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm",
+                "mt-3 mx-auto rounded-[14px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm",
                 GALLERY_STAGE_WIDTH_CLASS,
               ].join(" ")}
             >
-              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.96),rgba(10,12,16,0.94))] p-4">
+              <div className="rounded-[14px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.96),rgba(10,12,16,0.94))] p-4">
                 {embedded ? (
                   /* Compact 3-col grid in preview — event delegation for drag */
                   <div
@@ -816,7 +816,7 @@ export default function GuestGalleryRenderer({
 
           {displayItems.length === 0 ? (
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
-              <div className="rounded-[28px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
                 <div className="text-sm text-[color:var(--muted)]">
                   This exhibit does not currently contain any visible items.
                 </div>

@@ -113,7 +113,7 @@ export default function AdminBugsPage() {
   if (!role) {
     return (
       <main className="px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
+        <div className="mx-auto max-w-3xl rounded-[14px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
           You don&apos;t have access to this page.
         </div>
       </main>
@@ -162,19 +162,19 @@ export default function AdminBugsPage() {
         </div>
 
         {status && (
-          <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="mt-4 rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
             {status}
           </div>
         )}
 
         <div className="mt-6 space-y-3">
           {shown.length === 0 ? (
-            <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-8 text-center text-[color:var(--muted)]">
+            <div className="rounded-[14px] border border-[color:var(--border)] bg-vault-card p-8 text-center text-[color:var(--muted)]">
               No reports.
             </div>
           ) : (
             shown.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+              <div key={r.id} className="rounded-[14px] border border-[color:var(--border)] bg-vault-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-text-primary">{r.email || "Anonymous"}</div>

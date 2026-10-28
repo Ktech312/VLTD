@@ -865,7 +865,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
     <div className="flex flex-col gap-5">
       {/* Preview: always visible */}
       <div className="flex flex-col items-center gap-2" aria-live="polite">
-        <div className="relative flex w-full items-center justify-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", minHeight: 160 }}>
+        <div className="relative flex w-full items-center justify-center overflow-hidden rounded-[14px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", minHeight: 160 }}>
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -980,7 +980,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
 
       {/* Frame Studio link */}
       <Link href={`/vault/frames?id=${item.id}`}
-        className="flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
+        className="flex items-center justify-center gap-1.5 rounded-[14px] py-2.5 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
         style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
         <span className="inline-flex" aria-hidden="true"><AppIcon name="layers" size={14} /></span>
         <span>Open in Frame Studio</span>
@@ -1033,7 +1033,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
     <div className="flex flex-col gap-5">
       {/* Info */}
       {hasBoth ? (
-        <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+        <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>Paid</div>
@@ -1052,7 +1052,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl p-4 text-center text-sm ring-1 ring-[color:var(--border)]"
+        <div className="rounded-[14px] p-4 text-center text-sm ring-1 ring-[color:var(--border)]"
           style={{ background: "var(--pill)", color: "var(--muted)" }}>
           {!paid && !now
             ? "Add a purchase price and current value to generate this card."
@@ -1074,7 +1074,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
 
       {/* Preview */}
       {preview && (
-        <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
+        <div className="rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Then vs Now preview" className="h-full w-full object-cover" />
         </div>
@@ -1156,7 +1156,7 @@ function VideoTab({ item }: { item: VaultItem }) {
 
   if (!supported) {
     return (
-      <div className="rounded-2xl p-5 text-center text-sm ring-1 ring-[color:var(--border)]"
+      <div className="rounded-[14px] p-5 text-center text-sm ring-1 ring-[color:var(--border)]"
         style={{ background: "var(--pill)", color: "var(--muted)" }}>
         Video recording isn't supported in this browser. Try Chrome or Edge.
       </div>
@@ -1165,7 +1165,7 @@ function VideoTab({ item }: { item: VaultItem }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
         <div className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
           Creates a 5 second animated reveal — image fades in, gold line sweeps, title and value appear. Share directly or save to your device.
         </div>
@@ -1179,7 +1179,7 @@ function VideoTab({ item }: { item: VaultItem }) {
 
       {/* Video preview — plays once, replay button appears when done */}
       {videoUrl && (
-        <div className="relative rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
+        <div className="relative rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
           <video
             ref={videoRef}
             src={videoUrl}
@@ -1292,7 +1292,7 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
         <div className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
           Select up to 10 items. Each gets a 1:1 square card. On iPhone/Android, tap Share to post directly to Instagram, TikTok, or any app. On desktop the files download to your device.
         </div>
@@ -1374,7 +1374,7 @@ function PublicLinkRow({ item, shareUrl, onEnablePublic }: { item: VaultItem; sh
       ) : onEnablePublic ? (
         <div className="mt-2">
           <p className="mb-2 text-[11px]" style={{ color: "var(--muted)" }}>The picture above works as it is, even for a private item. Adding this item’s public link to a post needs public sharing.</p>
-          <div className="vltd-dark-surface rounded-2xl p-2 text-white" style={{ background: "rgba(13,16,21,0.96)" }}><PublicSharePrompt kind="item" onEnable={onEnablePublic} /></div>
+          <div className="vltd-dark-surface rounded-[14px] p-2 text-white" style={{ background: "rgba(13,16,21,0.96)" }}><PublicSharePrompt kind="item" onEnable={onEnablePublic} /></div>
         </div>
       ) : (
         <p className="mt-2 text-[11px]" style={{ color: "var(--muted)" }}>This item has no public link. The picture above does not need one.</p>
@@ -1417,7 +1417,7 @@ export default function SocialExportSheet({ item, onClose, initialTab = "image",
       <button type="button" tabIndex={-1} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
 
       <div
-        className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"
+        className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"
         style={{ background: "var(--surface)" }}
       >
         {/* Handle */}

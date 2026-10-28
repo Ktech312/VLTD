@@ -518,7 +518,7 @@ export default function SoldPage() {
           onClick={() => setImagePreview(null)}
           aria-label="Close image preview"
         >
-          <span className="relative block max-h-[88vh] w-full max-w-4xl rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
+          <span className="relative block max-h-[88vh] w-full max-w-4xl rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
             <span className="mb-3 flex items-center justify-between gap-3">
               <span className="line-clamp-1 text-left text-sm font-semibold text-text-primary">{imagePreview.title}</span>
               <span className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-cyan-100 ring-1 ring-[color:var(--border)]">

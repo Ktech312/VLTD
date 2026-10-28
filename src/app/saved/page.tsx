@@ -70,7 +70,7 @@ export default function SavedPage() {
         {/* Empty state */}
         {loaded && watchlist.length === 0 && (
           <div
-            className="flex flex-col items-center gap-4 rounded-[24px] px-6 py-14 text-center"
+            className="flex flex-col items-center gap-4 rounded-[14px] px-6 py-14 text-center"
             style={{
               background: "var(--theme-elevated, rgba(20,32,55,0.9))",
               border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",

@@ -50,7 +50,7 @@ function ItemRow({ item }: { item: VaultItem }) {
 
   return (
     <div
-      className="rounded-2xl ring-1 overflow-hidden transition hover:ring-[color:var(--theme-gold)]"
+      className="rounded-[14px] ring-1 overflow-hidden transition hover:ring-[color:var(--theme-gold)]"
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}
     >
       <div className="flex items-center gap-3 p-3">
@@ -211,7 +211,7 @@ export default function ReadinessPage() {
           <CloudWait what="for-sale listings" cloud={cloud} />
         ) : forSaleItems.length === 0 ? (
           <div
-            className="rounded-2xl px-6 py-14 text-center ring-1"
+            className="rounded-[14px] px-6 py-14 text-center ring-1"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
           >
             <div className="flex justify-center opacity-60"><Glyph name="tag" size={36} /></div>

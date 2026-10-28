@@ -29,7 +29,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
   if (!role) {
     return (
       <main className="px-4 py-10 text-[color:var(--fg)]">
-        <div role="alert" data-testid="admin-no-access" className="mx-auto max-w-3xl rounded-2xl border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
+        <div role="alert" data-testid="admin-no-access" className="mx-auto max-w-3xl rounded-[14px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
           You don&apos;t have access to this page.
         </div>
       </main>

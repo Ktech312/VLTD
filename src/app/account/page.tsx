@@ -405,12 +405,12 @@ export default function AccountPage() {
               </p>
 
               {error ? (
-                <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                <div className="mt-5 rounded-[14px] border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {error}
                 </div>
               ) : null}
               {success ? (
-                <div className="mt-5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                <div className="mt-5 rounded-[14px] border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
                   {success}
                 </div>
               ) : null}
@@ -422,7 +422,7 @@ export default function AccountPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Display name"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                    className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                     style={{ background: "var(--theme-card)" }}
                   />
                 </label>
@@ -433,12 +433,12 @@ export default function AccountPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_"))}
                     placeholder="Username"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                    className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                     style={{ background: "var(--theme-card)" }}
                   />
                 </label>
 
-                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-sm font-black text-text-primary">
                     {profileType === "business" ? "Business profile" : "Personal profile"}
                   </div>
@@ -490,7 +490,7 @@ export default function AccountPage() {
                     placeholder="Tell collectors who you are and what you collect…"
                     rows={3}
                     maxLength={300}
-                    className="mt-2 w-full resize-none rounded-2xl border border-[color:var(--border)] px-4 py-3 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                    className="mt-2 w-full resize-none rounded-[14px] border border-[color:var(--border)] px-4 py-3 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                     style={{ background: "var(--theme-card)" }}
                   />
                   <span className="mt-1 block text-right text-[11px] text-[color:var(--muted2)]">{bio.length}/300</span>
@@ -552,22 +552,22 @@ export default function AccountPage() {
                 Profile Summary
               </div>
               <div className="mt-5 grid gap-3">
-                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Name</div>
                   <div className="mt-1 font-black text-text-primary">{displayName || "Not set"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
                   {username ? (
                     isPublic ? <PillButton href={`/u/${username}`} className="mt-3">View public profile</PillButton> : <div className="mt-3 text-xs text-[color:var(--muted)]" data-testid="profile-private-note">Your profile is private, so it has no public page to view.</div>
                   ) : null}
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
                   <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Curator"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
                   <div className="mt-1 font-black text-text-primary">
                     {focusedUniverses.length > 0
@@ -587,7 +587,7 @@ export default function AccountPage() {
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Avatar
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+          <div className="rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
             <div className="flex flex-wrap gap-2">
               <PillButton variant={avatarMode === "EMOJI" ? "active" : "default"} onClick={() => setAvatarMode("EMOJI")}>Custom emoji</PillButton>
               <PillButton variant={avatarMode === "IMAGE" ? "active" : "default"} onClick={() => setAvatarMode("IMAGE")}>Image upload</PillButton>
@@ -605,7 +605,7 @@ export default function AccountPage() {
                     className="h-11 w-24 rounded-xl px-3 text-center text-lg ring-1 ring-[color:var(--border)] focus:outline-none"
                     style={{ background: "var(--theme-card)" }}
                   />
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl text-xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                  <div className="grid h-12 w-12 place-items-center rounded-[14px] text-xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
                     {avatarEmoji || "🗝️"}
                   </div>
                 </div>
@@ -624,9 +624,9 @@ export default function AccountPage() {
                   // avatar was a preset. resolveAvatarSrc is this app's one
                   // shared place that turns either shape into a real src.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={resolveAvatarSrc({ avatarUrl }) ?? avatarUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
+                  <img src={resolveAvatarSrc({ avatarUrl }) ?? avatarUrl} alt="Avatar preview" className="h-12 w-12 rounded-[14px] object-cover ring-1 ring-[color:var(--border)]" />
                 ) : (
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                  <div className="grid h-12 w-12 place-items-center rounded-[14px] text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
                     {(displayName || "U").slice(0, 1).toUpperCase()}
                   </div>
                 )}
@@ -709,7 +709,7 @@ export default function AccountPage() {
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Notifications
           </div>
-          <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+          <div className="flex items-start justify-between gap-4 rounded-[14px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
             <div className="flex-1">
               <div className="text-sm font-black text-text-primary">New message alerts</div>
               <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
@@ -767,7 +767,7 @@ export default function AccountPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="First and last name"
-                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   style={{ background: "var(--theme-card)" }}
                 />
               </label>
@@ -778,7 +778,7 @@ export default function AccountPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="(555) 000-0000"
                   type="tel"
-                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   style={{ background: "var(--theme-card)" }}
                 />
               </label>
@@ -790,7 +790,7 @@ export default function AccountPage() {
                 value={addressLine1}
                 onChange={(e) => setAddressLine1(e.target.value)}
                 placeholder="Street address"
-                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                 style={{ background: "var(--theme-card)" }}
               />
             </label>
@@ -801,7 +801,7 @@ export default function AccountPage() {
                 value={addressLine2}
                 onChange={(e) => setAddressLine2(e.target.value)}
                 placeholder="Apt, suite, unit, etc."
-                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                 style={{ background: "var(--theme-card)" }}
               />
             </label>
@@ -813,7 +813,7 @@ export default function AccountPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="City"
-                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   style={{ background: "var(--theme-card)" }}
                 />
               </label>
@@ -823,7 +823,7 @@ export default function AccountPage() {
                   value={stateVal}
                   onChange={(e) => setStateVal(e.target.value)}
                   placeholder="State"
-                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   style={{ background: "var(--theme-card)" }}
                 />
               </label>
@@ -833,7 +833,7 @@ export default function AccountPage() {
                   value={zip}
                   onChange={(e) => setZip(e.target.value)}
                   placeholder="00000"
-                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                  className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   style={{ background: "var(--theme-card)" }}
                 />
               </label>
@@ -845,7 +845,7 @@ export default function AccountPage() {
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 placeholder="US"
-                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                className="mt-2 h-12 w-full rounded-[14px] border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                 style={{ background: "var(--theme-card)" }}
               />
             </label>

@@ -217,7 +217,7 @@ export default function InsuranceReportPage() {
         </div>
 
         {/* Report header */}
-        <div className="mt-5 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface avoid-break">
+        <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface avoid-break">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">INSURANCE INVENTORY REPORT</div>
           <div className="mt-2 text-3xl font-semibold">VLTD Inventory Summary</div>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
@@ -225,13 +225,13 @@ export default function InsuranceReportPage() {
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">ITEMS COUNTED</div>
               <div className="mt-2 text-2xl font-semibold" data-testid="rep-count">{sorted.length}</div>
               {notCounted ? <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="not-counted">{notCounted}</div> : null}
             </div>
 
-            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL COST (ALL-IN)</div>
               <div className="mt-2 text-2xl font-semibold" data-testid="rep-cost">{fmtMoney(totals.cost)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -239,7 +239,7 @@ export default function InsuranceReportPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">UNREALIZED CHANGE</div>
               <div className="mt-2 text-2xl font-semibold" data-testid="rep-gain">{totals.gainSummary.eligibleCount > 0 ? gainText(totals.gainSummary.gain) : "—"}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="rep-gain-basis">
@@ -257,7 +257,7 @@ export default function InsuranceReportPage() {
         </div>
 
         {/* Universe breakdown */}
-        <div className="mt-5 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface avoid-break">
+        <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface avoid-break">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">BREAKDOWN</div>
           <div className="mt-2 text-xl font-semibold">Estimated value by Universe</div>
 
@@ -267,7 +267,7 @@ export default function InsuranceReportPage() {
               const val = pool.reduce((s, i) => s + (insuranceEstimate(i) ?? 0), 0);
               const unvalued = pool.filter((i) => insuranceEstimate(i) === null).length;
               return (
-                <div key={u} className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+                <div key={u} className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-sm font-semibold">{UNIVERSE_LABEL[u]}</div>
                   <div className="mt-1 text-sm text-[color:var(--muted)]">
                     {pool.length} items • {fmtMoney(val)}{unvalued > 0 ? ` (${unvalued} with no estimate)` : ""}
@@ -279,7 +279,7 @@ export default function InsuranceReportPage() {
         </div>
 
         {/* Full inventory table */}
-        <div className="mt-5 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface">
+        <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface">
           <div className="flex flex-wrap items-end justify-between gap-3 avoid-break">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">FULL INVENTORY</div>

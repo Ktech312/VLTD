@@ -35,7 +35,7 @@ export default function PublicGalleryPage() {
   if(blocked){
     return (
       <main className="min-h-screen grid place-items-center text-[color:var(--fg)]">
-        <div className="text-center rounded-[28px] vltd-panel-main bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="text-center rounded-[14px] vltd-panel-main bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <h1 className="text-3xl font-semibold">Exhibition Locked</h1>
           <div className="mt-3 opacity-70">
             This exhibition is not publicly accessible.
@@ -55,12 +55,12 @@ export default function PublicGalleryPage() {
 
       <div className="mx-auto max-w-6xl px-6 py-12">
 
-        <div className="mb-10 rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mb-10 rounded-[14px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
 
           {gallery.coverImage && (
             <img
               src={gallery.coverImage}
-              className="rounded-3xl mb-6 vltd-panel-main"
+              className="rounded-[14px] mb-6 vltd-panel-main"
             />
           )}
 
@@ -81,7 +81,7 @@ export default function PublicGalleryPage() {
           {galleryItems.map(i=>(
             <div
               key={i.id}
-              className="rounded-3xl vltd-panel-soft bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
+              className="rounded-[14px] vltd-panel-soft bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
             >
 
               {i.imageFrontUrl && (

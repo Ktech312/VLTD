@@ -393,7 +393,7 @@ export default function GalleryShelfScene({
     <section className="mt-0">
       <div
         className={[
-          "relative mx-auto overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+          "relative mx-auto overflow-hidden rounded-[14px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
           embeddedPreview ? "max-w-[940px]" : tallPicture ? "max-w-[1120px] md:max-w-[940px]" : GALLERY_STAGE_MAX_WIDTH_CLASS,
           theme.stageShell,
         ].join(" ")}

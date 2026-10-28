@@ -194,7 +194,7 @@ export default function StreamDisplay({
               )}
             </div>
           ) : (
-            <div className="grid h-[280px] w-[200px] place-items-center rounded-2xl border border-white/10 bg-white/5">
+            <div className="grid h-[280px] w-[200px] place-items-center rounded-[14px] border border-white/10 bg-white/5">
               <span className="text-4xl font-black tracking-[0.2em] text-white/20">VLTD</span>
             </div>
           )}

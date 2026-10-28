@@ -45,7 +45,7 @@ const MORE_LINKS: { label: string; href: string; icon: AppIconName }[] = [
   { label: "Events",         href: "/events",          icon: "events" },
   { label: "Alerts",         href: "/notifications",   icon: "notifications" },
   { label: "Command Center", href: "/more",            icon: "settings" },
-  { label: "VLT Lounge",     href: "/community-board", icon: "sofa" },
+  { label: "VLT Lounge",     href: "/community-board", icon: "communityBoard" },
   { label: "Activity",       href: "/activity",        icon: "activity" },
   { label: "Learn",          href: "/learn",           icon: "learn" },
   { label: "Account",        href: "/account",         icon: "account" },
@@ -84,7 +84,7 @@ export default function BottomNav() {
   return (
     <nav
       data-site-chrome="true"
-      className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom,0px),10px)] md:hidden no-select"
+      className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom,0px),6px)] md:hidden no-select"
       style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
       aria-label="Main navigation"
     >
@@ -125,7 +125,7 @@ export default function BottomNav() {
                   key={l.href}
                   href={l.href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 active:opacity-70"
+                  className="flex flex-col items-center gap-1.5 rounded-[14px] py-3.5 active:opacity-70"
                   style={{ background: "var(--theme-elevated, rgba(255,255,255,0.04))", border: "1px solid var(--theme-border, rgba(255,255,255,0.08))" }}
                 >
                   <AppIcon name={l.icon} size={24} className="vltd-keep-color" style={keepColor(DIM)} />
@@ -144,9 +144,9 @@ export default function BottomNav() {
         style={{
           background: "var(--theme-nav-bg, linear-gradient(180deg, rgba(9,10,12,0.98), rgba(0,0,0,0.99)))",
           border: "1px solid var(--theme-nav-border, rgba(203,208,213,0.44))",
-          borderRadius: "30px",
+          borderRadius: "24px",
           boxShadow: "0 18px 46px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 0 rgba(237,239,241,0.10)",
-          padding: "6px 8px 7px",
+          padding: "4px 6px 4px",
         }}
       >
         <div className="flex items-end justify-around gap-1">
@@ -159,7 +159,7 @@ export default function BottomNav() {
                   href="/capture"
                   aria-label="Add item to vault"
                   className="relative flex flex-col items-center"
-                  style={{ marginTop: "-22px", marginLeft: "2px", marginRight: "2px" }}
+                  style={{ marginTop: "-16px", marginLeft: "2px", marginRight: "2px" }}
                 >
                   {/* Redesigned 2026-09-30: was a multi-layer beveled chrome
                       orb (6-stop box-shadow, radial highlight) that read as
@@ -167,7 +167,7 @@ export default function BottomNav() {
                       around it. One flat accent fill, one restrained shadow,
                       same visual family as the rest of the nav. */}
                   <div
-                    className="flex h-[54px] w-[54px] items-center justify-center rounded-full"
+                    className="flex h-[46px] w-[46px] items-center justify-center rounded-full"
                     style={{
                       background: "var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))",
                       boxShadow: "0 0 0 3px #0B0B0B, 0 6px 18px rgba(0,0,0,0.45)",
@@ -189,7 +189,7 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
-                  className="flex min-w-[56px] flex-col items-center gap-[5px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                  className="flex min-w-[52px] flex-col items-center gap-[2px] rounded-[18px] px-1.5 py-1 transition-opacity active:opacity-70"
                   style={{
                     border: isActive ? "1px solid var(--theme-gold-border, rgba(203,208,213,0.44))" : "1px solid transparent",
                     background: isActive ? "var(--theme-gold-subtle, rgba(203,208,213,0.08))" : "transparent",
@@ -204,7 +204,7 @@ export default function BottomNav() {
                     name={tab.icon}
                     variant="navBottom"
                     active={isActive}
-                    size={32}
+                    size={26}
                     className="vltd-keep-color"
                     style={keepColor(isActive ? GOLD : DIM)}
                   />
@@ -223,7 +223,7 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex min-w-[56px] flex-col items-center gap-[5px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                className="flex min-w-[52px] flex-col items-center gap-[2px] rounded-[18px] px-1.5 py-1 transition-opacity active:opacity-70"
                 style={{
                   border: isActive ? "1px solid var(--theme-gold-border, rgba(203,208,213,0.44))" : "1px solid transparent",
                   background: isActive ? "var(--theme-gold-subtle, rgba(203,208,213,0.08))" : "transparent",
@@ -233,7 +233,7 @@ export default function BottomNav() {
                   name={tab.icon}
                   variant="navBottom"
                   active={isActive}
-                  size={32}
+                  size={26}
                   className="vltd-keep-color"
                   style={keepColor(isActive ? GOLD : DIM)}
                 />
@@ -243,12 +243,6 @@ export default function BottomNav() {
                 >
                   {tab.label}
                 </span>
-                {isActive && (
-                  <div
-                    className="h-[3px] w-[3px] rounded-full"
-                    style={{ background: GOLD, boxShadow: "0 0 6px rgba(203,208,213,0.8)" }}
-                  />
-                )}
               </Link>
             );
           })}

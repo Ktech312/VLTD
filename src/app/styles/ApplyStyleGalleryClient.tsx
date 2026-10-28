@@ -106,7 +106,7 @@ export default function ApplyStyleGalleryClient() {
         </div>
 
         {/* Active banner */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CURRENT</div>
@@ -141,27 +141,27 @@ export default function ApplyStyleGalleryClient() {
               <div
                 key={s.key}
                 className={[
-                  "rounded-3xl p-6 ring-1 shadow-[var(--shadow-soft)] transition",
+                  "rounded-[14px] p-6 ring-1 shadow-[var(--shadow-soft)] transition",
                   "bg-[color:var(--surface)] ring-[color:var(--border)]",
                 ].join(" ")}
               >
                 {/* Preview */}
                 <div
                   className={[
-                    "rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]",
+                    "rounded-[14px] overflow-hidden ring-1 ring-[color:var(--border)]",
                     "bg-[color:var(--surface)]",
                   ].join(" ")}
                 >
                   <div className="p-5">
                     {/* This preview box uses class naming convention for your future CSS */}
-                    <div className={[s.previewClass, "rounded-2xl p-4"].join(" ")}>
+                    <div className={[s.previewClass, "rounded-[14px] p-4"].join(" ")}>
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-xs tracking-widest text-[color:var(--muted2)]">PREVIEW</div>
                           <div className="mt-2 text-lg font-semibold truncate">{s.headline}</div>
                           <div className="mt-1 text-sm text-[color:var(--muted)]">{s.sub}</div>
                         </div>
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
+                        <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
                           {/* placeholder “icon coin” */}
                           <div className="h-6 w-6 rounded-full bg-[color:var(--pill-active-bg)]" />
                         </div>

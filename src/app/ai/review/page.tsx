@@ -242,7 +242,7 @@ function ReviewInner() {
       )}
 
       {/* Confidence card */}
-      <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
@@ -286,7 +286,7 @@ function ReviewInner() {
       </div>
 
       {/* Edit form */}
-      <div className="mt-4 rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+      <div className="mt-4 rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--muted)" }}>
           Review & edit fields
         </div>

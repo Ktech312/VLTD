@@ -36,7 +36,7 @@ export function AdultContentGate({
   return (
     <main className="min-h-screen px-4 py-10 text-[color:var(--fg)]">
       <div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center">
-        <section className="w-full rounded-[28px] bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="w-full rounded-[14px] bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">18+ CONTENT</div>
           <h1 className="mt-3 text-2xl font-semibold">{title}</h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
@@ -139,7 +139,7 @@ export function ReportDialog({
         aria-modal="true"
         aria-label={`Report this ${contentType === "item" ? "item" : "exhibition"}`}
         onClick={(event) => event.stopPropagation()}
-        className="vltd-dark-surface relative z-10 w-full rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-left text-sm text-[color:var(--fg)] shadow-2xl ring-1 ring-white/10 sm:max-w-[400px] sm:rounded-[26px]"
+        className="vltd-dark-surface relative z-10 w-full rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-left text-sm text-[color:var(--fg)] shadow-2xl ring-1 ring-white/10 sm:max-w-[400px] sm:rounded-[14px]"
         style={{ background: "linear-gradient(180deg, rgba(26,31,39,0.98), rgba(13,16,21,0.99))" }}
       >
         <div className="flex items-center justify-between gap-3">
@@ -150,7 +150,7 @@ export function ReportDialog({
         </div>
         {contentTitle ? <div className="mt-2 line-clamp-2 text-sm font-semibold">{contentTitle}</div> : null}
         {submitted ? (
-          <div role="status" className="mt-4 rounded-2xl bg-emerald-400/10 p-3 text-[13px] text-emerald-100 ring-1 ring-emerald-300/30">
+          <div role="status" className="mt-4 rounded-[14px] bg-emerald-400/10 p-3 text-[13px] text-emerald-100 ring-1 ring-emerald-300/30">
             {message}
           </div>
         ) : (

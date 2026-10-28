@@ -31,7 +31,7 @@ import {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+    <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
       <div className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--muted)" }}>
         {title}
       </div>
@@ -195,7 +195,7 @@ export default function WorkspaceSettingsPage() {
 
         <Section title="Public profile">
           <div className="flex items-center gap-4 mb-5">
-            <div className="flex items-center justify-center h-16 w-16 rounded-2xl text-4xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+            <div className="flex items-center justify-center h-16 w-16 rounded-[14px] text-4xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
               {editEmoji}
             </div>
             <div className="min-w-0">

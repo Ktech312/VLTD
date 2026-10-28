@@ -104,7 +104,7 @@ export default function InvitePage() {
     <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
       {/* Header */}
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ring-[color:var(--border)]" style={{ background: "rgba(203,208,213,0.10)", color: "#C8CDD2" }}>
+        <div className="flex h-11 w-11 items-center justify-center rounded-[14px] ring-1 ring-[color:var(--border)]" style={{ background: "rgba(203,208,213,0.10)", color: "#C8CDD2" }}>
           <GiftIcon />
         </div>
         <div>
@@ -114,7 +114,7 @@ export default function InvitePage() {
       </div>
 
       {/* How it works */}
-      <div className="mb-6 rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+      <div className="mb-6 rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <p className="mb-3 text-xs font-semibold tracking-widest" style={{ color: "var(--muted2)" }}>HOW IT WORKS</p>
         <div className="flex flex-col gap-3">
           {[
@@ -143,7 +143,7 @@ export default function InvitePage() {
       </div>
 
       {/* Your link */}
-      <div className="mb-6 rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+      <div className="mb-6 rounded-[14px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <p className="mb-2 text-xs font-semibold tracking-widest" style={{ color: "var(--muted2)" }}>YOUR INVITE LINK</p>
 
         {loading ? (
@@ -212,7 +212,7 @@ export default function InvitePage() {
           {[
             { label: "Friends Invited", value: referralCount },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-2xl p-3 ring-1 ring-[color:var(--border)] text-center" style={{ background: "var(--surface)" }}>
+            <div key={label} className="rounded-[14px] p-3 ring-1 ring-[color:var(--border)] text-center" style={{ background: "var(--surface)" }}>
               <p className="text-2xl font-bold" style={{ color: "#C8CDD2" }}>{value}</p>
               <p className="mt-0.5 text-[10px] leading-tight" style={{ color: "var(--muted)" }}>{label}</p>
             </div>

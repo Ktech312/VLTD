@@ -117,7 +117,7 @@ function AdminLoginGate({ onSignedIn }: { onSignedIn: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
-      <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10">
+      <div className="w-full max-w-sm rounded-[14px] bg-[#111318] p-8 ring-1 ring-white/10">
         <div className="text-center">
           <div className="text-2xl">🔐</div>
           <div className="mt-2 text-sm font-semibold text-white">Admin Login</div>
@@ -183,7 +183,7 @@ function NotAuthorized({
   }
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
-      <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
+      <div className="w-full max-w-sm rounded-[14px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
         <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
         <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
         <button
@@ -290,7 +290,7 @@ function CouponsPanel({ adminEmail }: { adminEmail: string }) {
       ) : null}
 
       {/* Generator */}
-      <div className="mt-4 shrink-0 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
+      <div className="mt-4 shrink-0 rounded-[14px] bg-white/[0.04] p-4 ring-1 ring-white/10">
         <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3">New coupon</div>
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
@@ -344,7 +344,7 @@ function CouponsPanel({ adminEmail }: { adminEmail: string }) {
               const used = c.max_redemptions != null;
               const exhausted = used && c.times_redeemed >= (c.max_redemptions ?? 0);
               return (
-                <div key={c.id} className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1 ${c.active && !exhausted ? "bg-white/[0.04] ring-white/10" : "bg-white/[0.02] ring-white/5 opacity-60"}`}>
+                <div key={c.id} className={`flex flex-wrap items-center gap-3 rounded-[14px] px-4 py-3 ring-1 ${c.active && !exhausted ? "bg-white/[0.04] ring-white/10" : "bg-white/[0.02] ring-white/5 opacity-60"}`}>
                   <button type="button" onClick={() => void copy(c.code)} className="font-mono text-sm font-bold text-[#C8CDD2] hover:underline" title="Copy code">
                     {copied === c.code ? "Copied!" : c.code}
                   </button>
@@ -598,7 +598,7 @@ function ItemEditModal({
     <div className="fixed inset-0 z-[300] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full max-w-lg overflow-hidden rounded-[24px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-[14px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -763,7 +763,7 @@ function BioEditModal({
     <div className="fixed inset-0 z-[300] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full max-w-lg rounded-[24px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
+        className="relative z-10 w-full max-w-lg rounded-[14px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
@@ -843,7 +843,7 @@ function ExhibitEditModal({
     <div className="fixed inset-0 z-[300] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full max-w-lg rounded-[24px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
+        className="relative z-10 w-full max-w-lg rounded-[14px] bg-[#14181f] ring-1 ring-white/10 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
@@ -1043,7 +1043,7 @@ function CharacterCard({
     <button
       onClick={onClick}
       className={[
-        "w-full rounded-2xl p-4 text-left transition ring-1",
+        "w-full rounded-[14px] p-4 text-left transition ring-1",
         isSelected
           ? "bg-amber-500/10 ring-amber-400/40"
           : "bg-white/[0.03] ring-white/8 hover:bg-white/[0.06]",
@@ -1118,7 +1118,7 @@ function ExhibitGrid({
             return (
               <div
                 key={idx}
-                className="flex flex-col overflow-hidden rounded-2xl ring-1 ring-white/10"
+                className="flex flex-col overflow-hidden rounded-[14px] ring-1 ring-white/10"
                 style={{ background: "rgba(255,255,255,0.04)" }}
               >
                 {/* Thumbnail */}
@@ -1165,7 +1165,7 @@ function ExhibitGrid({
             <button
               key={idx}
               onClick={() => { setPickingSlot(idx); setPickSearch(""); }}
-              className="group relative flex h-[168px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/10 transition hover:border-green-400/50 hover:bg-green-400/5"
+              className="group relative flex h-[168px] flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-white/10 transition hover:border-green-400/50 hover:bg-green-400/5"
             >
               <span className="absolute left-1.5 top-1.5 rounded-full bg-white/5 px-1.5 py-0.5 text-[10px] text-white/25">{idx + 1}</span>
               <span className="text-3xl font-bold text-green-400/40 transition group-hover:text-green-400">+</span>
@@ -1533,11 +1533,11 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
             </div>
             <div className="text-sm leading-relaxed text-white/70">{bio || <span className="text-white/25 italic">No bio set</span>}</div>
 
-            <div className="mt-4 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/8">
+            <div className="mt-4 rounded-[14px] bg-white/[0.03] p-4 ring-1 ring-white/8">
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Profile ID</div>
               <div className="font-mono text-xs text-white/50 break-all">{char.profileId}</div>
             </div>
-            <div className="mt-3 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/8">
+            <div className="mt-3 rounded-[14px] bg-white/[0.03] p-4 ring-1 ring-white/8">
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Exhibition IDs</div>
               {char.galleries.map((g) => (
                 <div key={g.id} className="font-mono text-[10px] text-white/40 mb-1">{g.id}</div>
@@ -1587,7 +1587,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
               const filledCount = slots ? slots.filter(Boolean).length : g.itemIds.length;
 
               return (
-                <div key={g.id} className="overflow-hidden rounded-2xl ring-1 ring-white/8"
+                <div key={g.id} className="overflow-hidden rounded-[14px] ring-1 ring-white/8"
                   style={{ background: isOpen ? "rgba(203,208,213,0.03)" : "rgba(255,255,255,0.03)" }}>
 
                   {/* Header */}

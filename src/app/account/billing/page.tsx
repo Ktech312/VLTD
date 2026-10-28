@@ -188,7 +188,7 @@ export default function BillingPage() {
         <RedeemCodeCard />
 
         {fromLimit ? (
-          <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--pill-active-bg)", borderColor: "var(--frame-ring)" }}>
+          <div className="rounded-[14px] p-4 ring-1" style={{ background: "var(--pill-active-bg)", borderColor: "var(--frame-ring)" }}>
             <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>You&apos;ve hit your free item limit</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
               Upgrade to a paid plan below to add unlimited items and unlock everything.
@@ -197,7 +197,7 @@ export default function BillingPage() {
         ) : null}
 
         {/* Current plan banner */}
-        <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--theme-gold-subtle, rgba(203,208,213,0.1))", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>
+        <div className="rounded-[14px] p-4 ring-1" style={{ background: "var(--theme-gold-subtle, rgba(203,208,213,0.1))", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--theme-gold)" }}>Current plan</div>
@@ -221,7 +221,7 @@ export default function BillingPage() {
               return (
                 <div
                   key={plan.key}
-                  className="rounded-2xl p-4 ring-1 transition"
+                  className="rounded-[14px] p-4 ring-1 transition"
                   style={{
                     background: isCurrent ? "var(--theme-gold-subtle, rgba(203,208,213,0.1))" : "var(--surface)",
                     borderColor: isCurrent ? "var(--theme-gold-border, rgba(203,208,213,0.3))" : "var(--border)",
@@ -262,7 +262,7 @@ export default function BillingPage() {
 
         {/* Payment method — only shown once a real subscription exists */}
         {customerId && (
-          <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+          <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Payment method</div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm" style={{ color: "var(--muted)" }}>Managed via Stripe billing portal</div>
@@ -273,7 +273,7 @@ export default function BillingPage() {
 
         {/* Invoice history — only shown once a real subscription exists */}
         {customerId && (
-          <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+          <div className="rounded-[14px] p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Invoice history</div>
             <p className="text-xs" style={{ color: "var(--muted)" }}>View invoices and receipts in the <button type="button" onClick={openBillingPortal} className="underline" style={{ color: "var(--theme-gold)" }}>billing portal</button>.</p>
           </div>
@@ -281,7 +281,7 @@ export default function BillingPage() {
 
         {/* Cancel — only shown once a real subscription exists */}
         {customerId && (
-          <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
+          <div className="rounded-[14px] p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
             <div className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>Cancel subscription</div>
             <p className="text-xs mb-3" style={{ color: "var(--muted)" }}>Your vault data is always yours. Canceling downgrades to Free at the end of the billing period.</p>
             <PillButton variant="danger" onClick={openBillingPortal} disabled={busyPortal}>{busyPortal ? "Opening…" : "Cancel plan"}</PillButton>

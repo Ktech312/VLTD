@@ -74,7 +74,7 @@ export default function ScanPanel({
     isVisionLookupRunning;
 
   return (
-    <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
         <div className="flex flex-wrap gap-2">
@@ -96,7 +96,7 @@ export default function ScanPanel({
           value={titleValue}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Name this item to save it…"
-          className="h-11 md:h-9 w-full rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
+          className="h-11 md:h-9 w-full rounded-[14px] bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
           style={{ borderColor: titleValue.trim() ? "var(--border)" : "rgba(203,208,213,0.5)", boxShadow: titleValue.trim() ? undefined : "0 0 0 1px rgba(203,208,213,0.4)" }}
         />
       </div>
@@ -104,7 +104,7 @@ export default function ScanPanel({
       <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_188px]">
         {/* Photo carousel — replaces the old left thumbnail panel + center preview */}
         {capturedPhotos.length > 0 ? (
-          <div className="flex min-h-[160px] gap-2 overflow-x-auto rounded-[20px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] [scrollbar-width:none]">
+          <div className="flex min-h-[160px] gap-2 overflow-x-auto rounded-[14px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] [scrollbar-width:none]">
             {capturedPhotos.map((photo) => (
               <button
                 key={photo.id}
@@ -157,7 +157,7 @@ export default function ScanPanel({
           <button
             type="button"
             onClick={onUseCamera}
-            className="flex min-h-[160px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none"
+            className="flex min-h-[160px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none"
             title="Take a new picture"
             aria-label="Take a new picture"
           >

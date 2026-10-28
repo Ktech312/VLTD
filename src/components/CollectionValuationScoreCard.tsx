@@ -74,7 +74,7 @@ function Stat({
   sublabel?: string;
 }) {
   return (
-    <div className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+    <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
         {label}
       </div>
@@ -88,7 +88,7 @@ function Stat({
 
 export default function CollectionValuationScoreCard({ score }: Props) {
   return (
-    <section className="vltd-panel-main rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="vltd-panel-main rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
         COLLECTION VALUATION SCORE
       </div>
@@ -100,7 +100,7 @@ export default function CollectionValuationScoreCard({ score }: Props) {
       </p>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
-        <div className="vltd-panel-soft flex flex-col items-center justify-center rounded-[22px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
+        <div className="vltd-panel-soft flex flex-col items-center justify-center rounded-[14px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
           <Ring value={score.totalScore} band={score.band} />
           <div className="mt-4 text-center text-sm leading-6 text-[color:var(--muted)]">
             {score.summary}
@@ -131,7 +131,7 @@ export default function CollectionValuationScoreCard({ score }: Props) {
             />
           </div>
 
-          <div className="vltd-panel-soft rounded-[22px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
+          <div className="vltd-panel-soft rounded-[14px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
             <div className="text-sm font-semibold">Score Breakdown</div>
 
             <div className="mt-4 grid gap-4">

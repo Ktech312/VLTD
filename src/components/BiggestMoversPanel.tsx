@@ -34,7 +34,7 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
   const rows = movers.length ? movers : ranked.slice(0, 3);
 
   return (
-    <section className="rounded-[24px] border p-3.5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(203,208,213,0.12))" }}>
+    <section className="rounded-[14px] border p-3.5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(203,208,213,0.12))" }}>
       <div className="flex items-center justify-between gap-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">
           Top Performers
@@ -43,7 +43,7 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
       </div>
 
       {ranked.length === 0 ? (
-        <div className="mt-3 rounded-2xl border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--muted)]">
+        <div className="mt-3 rounded-[14px] border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--muted)]">
           Add purchase prices and current values to see movers.
         </div>
       ) : (
@@ -53,7 +53,7 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
             return (
               <div
                 key={entry.item.id}
-                className="rounded-2xl border px-3.5 py-2.5"
+                className="rounded-[14px] border px-3.5 py-2.5"
                 style={{
                   background: "var(--theme-card, rgba(15,25,45,0.85))",
                   borderColor: positive ? "rgba(76,175,130,0.20)" : "rgba(224,82,82,0.20)",

@@ -156,7 +156,7 @@ export default function ResetPasswordPage() {
                 <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">{linkKind === "invite" ? "Welcome to VLTD" : "Account recovery"}</div>
                 <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">{linkKind === "invite" ? "Set your password" : "Choose a new password"}</h1>
 
-                {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                {error ? <div className="mt-5 rounded-[14px] border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
                 <div className="mt-8 grid gap-5">
                   <label className="block">
@@ -168,7 +168,7 @@ export default function ResetPasswordPage() {
                       autoComplete="new-password"
                       autoFocus
                       placeholder="At least 8 characters"
-                      className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg"
+                      className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg"
                     />
                   </label>
 
@@ -181,7 +181,7 @@ export default function ResetPasswordPage() {
                       type="password"
                       autoComplete="new-password"
                       placeholder="••••••••"
-                      className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg"
+                      className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg"
                     />
                   </label>
                 </div>

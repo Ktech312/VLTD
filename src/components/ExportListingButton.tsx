@@ -97,7 +97,7 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
   }
 
   return (
-    <div className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
@@ -116,7 +116,7 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
 
       <div className="mt-4 grid gap-3">
         {listing.checklist.length > 0 || listing.warnings.length > 0 ? (
-          <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[14px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Listing Readiness</div>
             <div className="mt-2 grid gap-2 text-sm text-[color:var(--muted)]">
               {listing.checklist.length > 0 ? (
@@ -130,18 +130,18 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl bg-emerald-950/40 p-4 text-sm text-emerald-100 ring-1 ring-emerald-400/20">
+          <div className="rounded-[14px] bg-emerald-950/40 p-4 text-sm text-emerald-100 ring-1 ring-emerald-400/20">
             Listing has the core fields needed for copy export.
           </div>
         )}
-        <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="rounded-[14px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Title</div>
           <div className="mt-2 text-sm font-semibold">{listing.title}</div>
         </div>
         <textarea
           value={copy}
           readOnly
-          className="min-h-[220px] rounded-2xl bg-[color:var(--pill)] p-4 text-sm leading-6 ring-1 ring-[color:var(--border)] focus:outline-none"
+          className="min-h-[220px] rounded-[14px] bg-[color:var(--pill)] p-4 text-sm leading-6 ring-1 ring-[color:var(--border)] focus:outline-none"
         />
       </div>
 

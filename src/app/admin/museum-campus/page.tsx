@@ -230,7 +230,7 @@ export default function AdminMuseumCampusPage() {
         </div>
 
         {tableMissing ? (
-          <div className="rounded-[24px] p-5 text-sm" style={{ background: "var(--theme-elevated)", border: "1px solid rgba(224,82,82,0.3)", color: "var(--fg)" }}>
+          <div className="rounded-[14px] p-5 text-sm" style={{ background: "var(--theme-elevated)", border: "1px solid rgba(224,82,82,0.3)", color: "var(--fg)" }}>
             The backing tables don&apos;t exist yet — run <code>20260902_museum_campus_config.sql</code> in Supabase,
             then reload this page.
           </div>
@@ -243,7 +243,7 @@ export default function AdminMuseumCampusPage() {
             )}
 
             {/* Campus settings */}
-            <section className="mb-8 rounded-[24px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
+            <section className="mb-8 rounded-[14px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
               <h2 className="mb-3 text-base font-black" style={{ color: "var(--fg)" }}>Campus settings</h2>
               <label className="block max-w-xs">
                 <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--muted)" }}>Items shown per room</span>
@@ -270,7 +270,7 @@ export default function AdminMuseumCampusPage() {
             </section>
 
             {/* Spotlight programs */}
-            <section className="mb-8 rounded-[24px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
+            <section className="mb-8 rounded-[14px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
                   <h2 className="text-base font-black" style={{ color: "var(--fg)" }}>Spotlight programs</h2>
@@ -377,7 +377,7 @@ export default function AdminMuseumCampusPage() {
             </section>
 
             {/* Store items */}
-            <section className="rounded-[24px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
+            <section className="rounded-[14px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
                   <h2 className="text-base font-black" style={{ color: "var(--fg)" }}>Store items</h2>

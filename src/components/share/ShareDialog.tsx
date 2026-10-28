@@ -103,7 +103,7 @@ export function PublicSharePrompt({ kind, onEnable }: { kind: "item" | "exhibiti
   }
 
   return (
-    <div className="rounded-2xl bg-amber-400/10 p-3 ring-1 ring-amber-300/30">
+    <div className="rounded-[14px] bg-amber-400/10 p-3 ring-1 ring-amber-300/30">
       <div className="text-[13px] font-semibold text-amber-100">Turn on public sharing?</div>
       <p className="mt-0.5 text-[12px] leading-snug text-amber-100/80">
         {kind === "item" ? "Anyone with the link can see this item's public details." : "Anyone with the link can view this exhibition. It is not added to public discovery."}
@@ -312,7 +312,7 @@ export default function ShareDialog({
 
   const tileProps = (d: Destination) =>
     ({
-      className: "vltd-glass-destination flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-1.5 text-center text-[11.5px] font-medium text-white/90 focus:outline-none",
+      className: "vltd-glass-destination flex min-w-0 flex-col items-center gap-1.5 rounded-[14px] px-1 py-1.5 text-center text-[11.5px] font-medium text-white/90 focus:outline-none",
       title: d.how,
       "aria-label": `${d.label}: ${d.how}`,
     }) as const;
@@ -326,7 +326,7 @@ export default function ShareDialog({
         aria-modal="true"
         aria-label={`Share ${kindWord}`}
         onClick={(event) => event.stopPropagation()}
-        className="vltd-dark-surface relative z-10 max-h-[88dvh] w-full overflow-y-auto rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-2xl ring-1 ring-white/10 sm:max-w-[520px] sm:rounded-[26px]"
+        className="vltd-dark-surface relative z-10 max-h-[88dvh] w-full overflow-y-auto rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-2xl ring-1 ring-white/10 sm:max-w-[520px] sm:rounded-[14px]"
         style={{ background: "linear-gradient(180deg, rgba(26,31,39,0.98), rgba(13,16,21,0.99))" }}
       >
         <div className="flex items-center justify-between gap-3">
@@ -337,7 +337,7 @@ export default function ShareDialog({
         </div>
 
         {/* what is being shared */}
-        <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+        <div className="mt-3 flex items-center gap-3 rounded-[14px] bg-white/5 p-2 ring-1 ring-white/10">
           <div className="h-12 w-9 shrink-0 overflow-hidden rounded-lg bg-black/40 ring-1 ring-white/10">
             {previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -432,7 +432,7 @@ export default function ShareDialog({
                   {note}
                 </p>
               ) : null}
-              <div className="mt-3 flex items-center gap-2 rounded-2xl bg-black/50 p-1.5 pl-3 ring-1 ring-white/10">
+              <div className="mt-3 flex items-center gap-2 rounded-[14px] bg-black/50 p-1.5 pl-3 ring-1 ring-white/10">
                 <input
                   ref={inputRef}
                   readOnly
@@ -468,7 +468,7 @@ export default function ShareDialog({
               <PublicSharePrompt kind={kind} onEnable={onEnablePublic} />
             </div>
           ) : (
-            <div role="status" className="mt-2 rounded-2xl bg-amber-400/10 p-3 text-[13px] leading-relaxed text-amber-100 ring-1 ring-amber-300/30">
+            <div role="status" className="mt-2 rounded-[14px] bg-amber-400/10 p-3 text-[13px] leading-relaxed text-amber-100 ring-1 ring-amber-300/30">
               {restriction || `This ${kindWord} has no public link, so there is nothing to share.`}
             </div>
           )}

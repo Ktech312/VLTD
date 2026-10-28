@@ -108,7 +108,7 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
 
   return (
     <div
-      className="relative w-full h-full rounded-[22px] overflow-hidden select-none"
+      className="relative w-full h-full rounded-[14px] overflow-hidden select-none"
       style={{ background: "var(--surface)" }}
     >
       {/* Image */}
@@ -286,7 +286,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
 
   return (
     <div
-      className="relative h-full w-full select-none overflow-hidden rounded-[26px]"
+      className="relative h-full w-full select-none overflow-hidden rounded-[14px]"
       style={{
         background: "linear-gradient(145deg, rgba(19,27,35,0.98), rgba(4,8,10,0.98))",
         border: "1px solid rgba(218,171,74,0.32)",
@@ -426,7 +426,7 @@ function VaultFlipBack({ item }: { item: ModelItem }) {
 
   return (
     <div
-      className="relative h-full w-full select-none overflow-hidden rounded-[26px] px-6 pb-6 pt-16"
+      className="relative h-full w-full select-none overflow-hidden rounded-[14px] px-6 pb-6 pt-16"
       style={{
         background: "linear-gradient(145deg, rgba(9,17,21,0.98), rgba(2,5,6,0.99))",
         border: "1px solid rgba(218,171,74,0.32)",
@@ -523,7 +523,7 @@ function SwipeHint({
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 rounded-[22px] flex items-center justify-center"
+      className="pointer-events-none absolute inset-0 rounded-[14px] flex items-center justify-center"
       style={{
         background: isRight
           ? `rgba(74,222,128,${opacity * 0.12})`
@@ -533,7 +533,7 @@ function SwipeHint({
       }}
     >
       <div
-        className="text-[28px] font-black uppercase tracking-[0.15em] px-6 py-3 rounded-2xl ring-2"
+        className="text-[28px] font-black uppercase tracking-[0.15em] px-6 py-3 rounded-[14px] ring-2"
         style={{
           color,
           borderColor: color,
@@ -681,7 +681,7 @@ function ActionBar({
 function EmptyState({ mode }: { mode: SwipeMode }) {
   return (
     <div
-      className="flex flex-col items-center justify-center rounded-[22px] h-full gap-4"
+      className="flex flex-col items-center justify-center rounded-[14px] h-full gap-4"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
       <div
@@ -1031,7 +1031,7 @@ export default function SwipeStack({
             >
               {prevItem ? (
                 <div
-                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[22px] transition-all duration-500 ease-out"
+                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[14px] transition-all duration-500 ease-out"
                   style={{
                     transform: "translate3d(-135%, 0, -200px) rotateY(32deg)",
                     transformStyle: "preserve-3d",
@@ -1046,7 +1046,7 @@ export default function SwipeStack({
 
               {nextItem ? (
                 <div
-                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[22px] transition-all duration-500 ease-out"
+                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[14px] transition-all duration-500 ease-out"
                   style={{
                     transform: "translate3d(35%, 0, -200px) rotateY(-32deg)",
                     transformStyle: "preserve-3d",
@@ -1072,7 +1072,7 @@ export default function SwipeStack({
                     {[3, 2, 1].map((depth) => (
                       <div
                         key={depth}
-                        className="pointer-events-none absolute inset-0 rounded-[24px]"
+                        className="pointer-events-none absolute inset-0 rounded-[14px]"
                         style={{
                           transform: `translateY(${depth * 11}px) scale(${1 - depth * 0.038}) rotate(${depth % 2 === 0 ? "4deg" : "-4deg"})`,
                           transformOrigin: "center bottom",
@@ -1222,7 +1222,7 @@ export default function SwipeStack({
                 return (
                   <div
                     key={`${item.id}-depth-${depth}`}
-                    className="absolute inset-0 rounded-[22px] overflow-hidden"
+                    className="absolute inset-0 rounded-[14px] overflow-hidden"
                     style={{
                       transform: `scale(${scale}) translateY(${translateY}px)`,
                       transformOrigin: "bottom center",
@@ -1240,7 +1240,7 @@ export default function SwipeStack({
             {visibleItems.length > 0 && (
               <div
                 ref={cardRef}
-                className="absolute inset-0 rounded-[22px] overflow-hidden cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 rounded-[14px] overflow-hidden cursor-grab active:cursor-grabbing"
                 style={{
                   transform: `translate(${dx}px, ${dy}px) rotate(${rotation}deg)`,
                   transition,

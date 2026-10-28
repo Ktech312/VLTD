@@ -89,7 +89,7 @@ export default function InsuranceReportPage() {
         {cloud.state === "failed" ? <div className="no-print mt-4"><StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /></div> : null}
 
         {/* Report header */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-card">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-card">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">INSURANCE REPORT</div>
@@ -122,7 +122,7 @@ export default function InsuranceReportPage() {
         </div>
 
         {/* Table */}
-        <div className="mt-4 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-card">
+        <div className="mt-4 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-card">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>

@@ -87,7 +87,7 @@ function GateCard({
   return (
     <GalleryBackgroundShell backgroundUrl={backgroundUrl}>
       <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-        <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="w-full rounded-[14px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
             SHARED EXHIBITION
           </div>
@@ -98,7 +98,7 @@ function GateCard({
             </p>
           ) : null}
 
-          <div className="mt-6 rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm ring-1 ring-[color:var(--border)]">
+          <div className="mt-6 rounded-[14px] bg-[color:var(--pill)] px-4 py-4 text-sm ring-1 ring-[color:var(--border)]">
             {requiresRegistered
               ? "Owner only allows registered users to access this exhibition."
               : "Create a free account for full access, or continue as a guest."}
@@ -325,7 +325,7 @@ export default function SharedGalleryPage() {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             Loading exhibition...
           </div>
         </div>
@@ -337,7 +337,7 @@ export default function SharedGalleryPage() {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="rounded-[28px] border border-red-500/40 bg-red-500/10 p-8 text-center text-red-200">
+          <div className="rounded-[14px] border border-red-500/40 bg-red-500/10 p-8 text-center text-red-200">
             {error}
           </div>
         </div>
@@ -349,7 +349,7 @@ export default function SharedGalleryPage() {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               SHARED EXHIBITION
             </div>
@@ -375,7 +375,7 @@ export default function SharedGalleryPage() {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="w-full rounded-[14px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               SHARED EXHIBITION
             </div>

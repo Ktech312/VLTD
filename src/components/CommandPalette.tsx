@@ -196,7 +196,7 @@ export default function CommandPalette({
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
+        className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[14px] border border-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
         style={{
           // Guaranteed-opaque base (no theme var can make it transparent), with the
           // theme surface tint composited on top so it still matches the active theme.
@@ -235,13 +235,13 @@ export default function CommandPalette({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder='Try "vault", "exhibitions", "create exhibition", a profile name, or an item title...'
-            className="mt-3 min-h-[48px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-base text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+            className="mt-3 min-h-[48px] w-full rounded-[14px] bg-[color:var(--input)] px-4 py-3 text-base text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted2)] focus:outline-none"
           />
         </div>
 
         <div className="max-h-[65vh] overflow-auto p-3 sm:p-4">
           {visibleResults.length === 0 ? (
-            <div className="rounded-[22px] bg-[color:var(--input)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            <div className="rounded-[14px] bg-[color:var(--input)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               No commands matched your search.
             </div>
           ) : (
@@ -272,7 +272,7 @@ export default function CommandPalette({
                             type="button"
                             onClick={() => runCommand(command)}
                             className={[
-                              "w-full rounded-[20px] px-4 py-3 text-left ring-1 transition",
+                              "w-full rounded-[14px] px-4 py-3 text-left ring-1 transition",
                               active
                                 ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
                                 : "bg-[color:var(--input)] text-[color:var(--fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill)]",

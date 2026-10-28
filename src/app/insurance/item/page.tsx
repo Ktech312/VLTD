@@ -148,7 +148,7 @@ export default function InsuranceItemPage() {
 
       <div className="mx-auto max-w-4xl">
         {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
-        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
             <PillButton href="/insurance">
               ← Back to Insurance
@@ -173,7 +173,7 @@ export default function InsuranceItemPage() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Item Sheet</div>
 
           {!item ? (
-            <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 text-[color:var(--muted)]">
+            <div className="mt-4 rounded-[14px] border border-[color:var(--border)] bg-vault-card p-4 text-[color:var(--muted)]">
               Item not found. Go back and open a per-item sheet from the report.
             </div>
           ) : (
@@ -194,17 +194,17 @@ export default function InsuranceItemPage() {
                     <img
                       src={item.imageFrontUrl}
                       alt={item.title}
-                      className="max-h-[320px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
+                      className="max-h-[320px] w-full rounded-[14px] border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
                     />
                   ) : (
-                    <div className="grid h-72 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#141414,#141414)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
+                    <div className="grid h-72 w-full place-items-center rounded-[14px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#141414,#141414)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
                       NO IMG
                     </div>
                   )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
+                  <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? ""}</div>
@@ -213,14 +213,14 @@ export default function InsuranceItemPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
+                  <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Storage</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Location:</span> {item.storageLocation ?? ""}</div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
+                  <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Financial</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">{COST_LABEL}:</span> <span className="font-semibold text-text-primary" data-testid="item-cost">{fmtCost(insuranceCost(item))}</span></div>
@@ -229,7 +229,7 @@ export default function InsuranceItemPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
+                  <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Appraisal</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Source:</span> {item.valueSource ?? ""}</div>
@@ -241,7 +241,7 @@ export default function InsuranceItemPage() {
               </div>
 
               {item.notes ? (
-                <div className="mt-6 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
+                <div className="mt-6 rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Notes</div>
                   <div className="mt-3 whitespace-pre-wrap text-sm text-[color:var(--fg)]">{item.notes}</div>
                 </div>

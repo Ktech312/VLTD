@@ -101,7 +101,7 @@ export default function SignupPage() {
             </h1>
 
             {status ? (
-              <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <div className="mt-5 rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-bold">Founding collectors</span>
                   <span className="font-black text-[color:var(--accent)]">{status.claimed}/{status.capacity}</span>
@@ -121,27 +121,27 @@ export default function SignupPage() {
                 </Link>
               </div>
             ) : confirmationSent ? (
-              <div className="mt-7 rounded-2xl border border-green-400/35 bg-green-500/10 px-5 py-4 text-sm leading-6 text-green-200">
+              <div className="mt-7 rounded-[14px] border border-green-400/35 bg-green-500/10 px-5 py-4 text-sm leading-6 text-green-200">
                 Check your email for your next step. If this address already has an account, the email will help you get back in.
               </div>
             ) : (
               <form onSubmit={handleSignup} className="mt-7 grid gap-5">
-                {error ? <div className="rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                {error ? <div className="rounded-[14px] border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">First name <span className="text-sm text-[color:var(--muted2)]">(optional)</span></span>
-                  <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" autoComplete="given-name" maxLength={40} placeholder="So we can say hello properly" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                  <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" autoComplete="given-name" maxLength={40} placeholder="So we can say hello properly" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                 </label>
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">Email</span>
-                  <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                  <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                 </label>
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">Password</span>
-                  <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="new-password" required minLength={8} placeholder="At least 8 characters" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                  <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="new-password" required minLength={8} placeholder="At least 8 characters" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                 </label>
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">Confirm password</span>
-                  <input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} type="password" autoComplete="new-password" required minLength={8} placeholder="Repeat your password" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                  <input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} type="password" autoComplete="new-password" required minLength={8} placeholder="Repeat your password" className="vltd-input mt-3 h-16 w-full rounded-[14px] px-6 text-lg" />
                 </label>
                 <button type="submit" disabled={submitting} className="vltd-primary-button mt-1 inline-flex h-16 items-center justify-center rounded-full px-6 text-base font-black transition disabled:opacity-50">
                   {submitting ? "Creating account…" : "Claim free account"}

@@ -800,7 +800,7 @@ export default function GalleryPage() {
     return (
       <main className="text-[color:var(--fg)]">
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
-          <div className="rounded-[28px] vltd-panel-main bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="rounded-[14px] vltd-panel-main bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               MUSEUM
             </div>
@@ -844,7 +844,7 @@ export default function GalleryPage() {
         {status ? (
           <div
             className={[
-              "mx-auto mb-5 max-w-[780px] rounded-2xl px-4 py-3 text-sm ring-1",
+              "mx-auto mb-5 max-w-[780px] rounded-[14px] px-4 py-3 text-sm ring-1",
               statusTone === "good"
                 ? "bg-emerald-500/10 text-emerald-200 ring-emerald-500/30"
                 : "bg-[color:var(--surface)] text-[color:var(--muted)] ring-[color:var(--border)]",
@@ -854,7 +854,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative mx-auto max-w-[780px] overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
+        <section className="relative mx-auto max-w-[780px] overflow-hidden rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
           {draft.coverImage ? (
             <>
               <div
@@ -990,7 +990,7 @@ export default function GalleryPage() {
             </div>
 
             <div className="mt-4 md:max-w-[690px] xl:mt-2">
-              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
@@ -1001,24 +1001,24 @@ export default function GalleryPage() {
                     </div>
                   </div>
               <div className="flex flex-wrap gap-1.5 sm:justify-end">
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
+                <div className="rounded-[14px] bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VALUE</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{formatMoney(metrics.totalValue)}</div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
+                <div className="rounded-[14px] bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">
                     {metrics.gainItemCount > 0 ? `${metrics.roi >= 0 ? "+" : ""}${metrics.roi.toFixed(1)}%` : "—"}
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
+                <div className="rounded-[14px] bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">NOTES</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.notesCoverage.toFixed(0)}%</div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
+                <div className="rounded-[14px] bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VIEWS</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.views}</div>
                 </div>
@@ -1088,7 +1088,7 @@ export default function GalleryPage() {
                   </div>
 
                   {accessInfoOpen ? (
-                    <div id="gallery-access-mode-help" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-3 w-full max-w-[520px] rounded-2xl p-4 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+                    <div id="gallery-access-mode-help" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-3 w-full max-w-[520px] rounded-[14px] p-4 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
                       <div className="flex items-start justify-between gap-4">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ACCESS MODE HELP</div>
                         <button
@@ -1290,7 +1290,7 @@ export default function GalleryPage() {
             }}
             advancedContent={
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" style={{ maxWidth: "calc(100vw - 2rem)" }}>
-          <div className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="rounded-[14px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
               ITEMS
             </div>
@@ -1309,13 +1309,13 @@ export default function GalleryPage() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              <div className="mt-4 rounded-[14px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                 Add items in the builder above, then save.
               </div>
             )}
           </div>
 
-          <aside className="rounded-[22px] vltd-panel-main bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <aside className="rounded-[14px] vltd-panel-main bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[10px] tracking-[0.24em] text-[color:var(--muted2)]">
               AUDIENCE + ACCESS
             </div>

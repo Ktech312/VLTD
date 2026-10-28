@@ -60,7 +60,7 @@ function DraftCard({
 
   return (
     <div
-      className="rounded-2xl p-4 ring-1 ring-[color:var(--border)] transition"
+      className="rounded-[14px] p-4 ring-1 ring-[color:var(--border)] transition"
       style={{ background: "var(--surface)" }}
     >
       <div className="flex items-start gap-3">
@@ -259,7 +259,7 @@ export default function AIDraftsPage() {
         {/* List */}
         {displayed.length === 0 ? (
           <div
-            className="mt-6 rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
+            className="mt-6 rounded-[14px] px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
             <div className="flex justify-center" style={{ color: "var(--muted)" }}><AppIcon name="sparkleAI" size={40} /></div>

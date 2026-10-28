@@ -94,7 +94,7 @@ function FavoriteCard({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-4 rounded-2xl p-3 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:brightness-110"
+      className="group flex items-center gap-4 rounded-[14px] p-3 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:brightness-110"
       style={{ background: "var(--surface)" }}
     >
       {/* Thumbnail */}
@@ -243,7 +243,7 @@ export default function FavoritesPage() {
         ) : favorites.length === 0 ? (
           /* Empty state */
           <div
-            className="rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
+            className="rounded-[14px] px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
             <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="heart" size={42} /></div>

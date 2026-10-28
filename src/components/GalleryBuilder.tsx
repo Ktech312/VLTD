@@ -946,7 +946,7 @@ export default function GalleryBuilder({
         </div>
 
         {/* ── CURATE PANEL (merged with Gallery View controls) ── */}
-        <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="mt-5 overflow-hidden rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
           {/* Header row: label left, Expand right */}
           <div className="flex items-center justify-between gap-3">
@@ -1292,7 +1292,7 @@ export default function GalleryBuilder({
                 }
               }}
               placeholder="Exhibit description…"
-              className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 max-md:py-3.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+              className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-[14px] bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 max-md:py-3.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>
 
@@ -1318,7 +1318,7 @@ export default function GalleryBuilder({
             .vltd-wiggle-over { animation: none !important; transform: scale(1.06) !important; box-shadow: 0 0 0 2px rgba(74,222,128,0.8), 0 0 14px rgba(74,222,128,0.4) !important; }
           `}</style>
           <div
-            className={["relative mt-3 overflow-hidden rounded-[24px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
+            className={["relative mt-3 overflow-hidden rounded-[14px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
             style={{ width: "100%" }}
             onTouchStart={(e) => {
               if (isOrganizing || e.touches.length > 1 || wallZoomRef.current.scale > 1) {
@@ -1738,7 +1738,7 @@ export default function GalleryBuilder({
                   aria-modal="true"
                   aria-labelledby="organize-notice-title"
                   onClick={(event) => event.stopPropagation()}
-                  className="vltd-dark-surface relative z-10 w-full rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-2xl ring-1 ring-white/10 sm:max-w-[460px] sm:rounded-[22px]"
+                  className="vltd-dark-surface relative z-10 w-full rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-2xl ring-1 ring-white/10 sm:max-w-[460px] sm:rounded-[14px]"
                   style={{ background: "linear-gradient(180deg, rgba(26,31,39,0.98), rgba(13,16,21,0.99))" }}
                 >
                   <h2 id="organize-notice-title" className="text-base font-semibold">Organize needs an exhibit page</h2>
@@ -1989,7 +1989,7 @@ export default function GalleryBuilder({
       {isAdvancedOpen && (
       <div className="grid gap-5">
         <div className="grid gap-5">
-        <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+        <section className="rounded-[14px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div>

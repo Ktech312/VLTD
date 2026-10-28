@@ -99,7 +99,7 @@ function normUniverse(u: any): UniverseKey {
 
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">{title}</div>
         {right}
@@ -347,7 +347,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
         </div>
 
         {/* Controls */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CONTROLS</div>
@@ -398,7 +398,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search title, grade, notes, category…"
-              className="h-10 w-full md:w-[420px] rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="h-10 w-full md:w-[420px] rounded-[14px] bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
           </div>
         </div>
@@ -435,7 +435,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
         </div>
 
         {/* Category breakdown */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">BREAKDOWN</div>
           <div className="mt-2 text-xl font-semibold">By category</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -446,7 +446,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
             {byCategoryDisplay.map((r) => (
               <div
                 key={r.category}
-                className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)]"
+                className="flex items-center justify-between rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)]"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{r.category}</div>
@@ -468,7 +468,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
         </div>
 
         {/* Top 5 */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOP ITEMS</div>
           <div className="mt-2 text-xl font-semibold">Top 5 in {UNIVERSE_LABEL[uKey]}</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">Sorted by {rankMode === "value" ? "value" : "gain"}.</div>
@@ -478,7 +478,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
               <Link
                 key={i.id}
                 href={`/vault/item/${i.id}`}
-                className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
+                className="flex items-center justify-between rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{i.title}</div>
@@ -503,12 +503,12 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
         </div>
 
         {/* Table */}
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">TABLE</div>
           <div className="mt-2 text-xl font-semibold">Items</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">Sorted by {rankMode === "value" ? "value" : "gain"}.</div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--theme-border)]">
+          <div className="mt-4 overflow-hidden rounded-[14px] ring-1 ring-[color:var(--theme-border)]">
             <div className="grid grid-cols-12 gap-2 bg-[color:var(--theme-card)] px-4 py-3 text-xs text-[color:var(--theme-text-secondary)]">
               <div className="col-span-5">Item</div>
               <div className="col-span-3">Category</div>

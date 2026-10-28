@@ -189,7 +189,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">{title}</div>
         {right}
@@ -485,7 +485,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
   return (
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-10">
-        <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
+        <section className="relative overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative flex items-start justify-between gap-4">
@@ -516,7 +516,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
           </div>
 
           <div className="relative mt-6 grid gap-3 md:grid-cols-4">
-            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+            <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 TOTAL VALUE
               </div>
@@ -526,7 +526,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+            <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 TOTAL COST
               </div>
@@ -536,7 +536,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+            <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 UNREALIZED CHANGE
               </div>
@@ -551,7 +551,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               ) : null}
             </div>
 
-            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+            <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">RETURN</div>
               <div className="mt-2 text-2xl font-semibold">{totals.roi === null ? "—" : fmtPct(totals.roi)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -561,7 +561,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
           </div>
         </section>
 
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CONTROLS</div>
@@ -625,7 +625,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search title, grade, notes, category, cert, storage…"
-              className="h-10 w-full md:w-[440px] rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="h-10 w-full md:w-[440px] rounded-[14px] bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
           </div>
         </div>
@@ -702,7 +702,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
           </Card>
         </div>
 
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">BREAKDOWN</div>
           <div className="mt-2 text-xl font-semibold">By category</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -714,7 +714,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               <Link
                 key={r.category}
                 href={`/portfolio/universe/${uKey}/category/${encodeURIComponent(r.category)}`}
-                className="rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-4 ring-1 ring-[color:var(--theme-border)] transition hover:bg-[color:var(--theme-card)]"
+                className="rounded-[14px] bg-[color:var(--theme-elevated)] px-4 py-4 ring-1 ring-[color:var(--theme-border)] transition hover:bg-[color:var(--theme-card)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -770,7 +770,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
                   <Link
                     key={item.id}
                     href={`/vault/item/${item.id}`}
-                    className="block rounded-[22px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(0,0,0,0.26)]"
+                    className="block rounded-[14px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(0,0,0,0.26)]"
                   >
                     <div className="mb-4 aspect-[4/5] overflow-hidden rounded-[16px] bg-[color:var(--theme-card)]">
                       {itemImage(item) ? (
@@ -832,14 +832,14 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
           </div>
         ) : null}
 
-        <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mt-6 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">TABLE</div>
           <div className="mt-2 text-xl font-semibold">Items</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">
             Sorted by {rankMode === "value" ? "value" : "gain"}.
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--theme-border)]">
+          <div className="mt-4 overflow-hidden rounded-[14px] ring-1 ring-[color:var(--theme-border)]">
             <div className="grid grid-cols-12 gap-2 bg-[color:var(--theme-card)] px-4 py-3 text-xs text-[color:var(--theme-text-secondary)]">
               <div className="col-span-5">Item</div>
               <div className="col-span-3">Category</div>

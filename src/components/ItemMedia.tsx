@@ -702,7 +702,7 @@ export default function ItemMedia({
                 }}
                 aria-label={`Show photo ${visibleIndex + 1}`}
                 className={[
-                  "relative block h-[96px] w-[96px] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] ring-1 transition",
+                  "relative block h-[96px] w-[96px] overflow-hidden rounded-[14px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] ring-1 transition",
                   entry.originalIndex === (activeVisibleEntry?.originalIndex ?? -1)
                     ? "ring-[color:var(--pill-active-bg)] shadow-[0_0_0_1px_rgba(104,220,255,0.15)]"
                     : "ring-[color:var(--border)] hover:ring-white/20",
@@ -736,7 +736,7 @@ export default function ItemMedia({
             </div>
           ))}
 
-          <div className="relative flex h-[96px] w-[96px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
+          <div className="relative flex h-[96px] w-[96px] shrink-0 overflow-hidden rounded-[14px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
             <span
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-black leading-none text-[color:var(--theme-gold,#C8CDD2)]"
@@ -776,7 +776,7 @@ export default function ItemMedia({
             ) : null}
           </div>
 
-          <div className="group relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.015)_45%,rgba(0,0,0,0.18)_100%)] ring-1 ring-[color:var(--border)]">
+          <div className="group relative aspect-[4/3] overflow-hidden rounded-[14px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.015)_45%,rgba(0,0,0,0.18)_100%)] ring-1 ring-[color:var(--border)]">
             {activeImage && activeVisibleEntry ? (
               <button
                 type="button"
@@ -835,7 +835,7 @@ export default function ItemMedia({
                 {proofEntries.map((entry) => (
                   <div
                     key={`proof-${entry.url}-${entry.originalIndex}`}
-                    className="rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-2 ring-1 ring-[color:var(--border)]"
+                    className="rounded-[14px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-2 ring-1 ring-[color:var(--border)]"
                   >
                     <button
                       type="button"
@@ -1087,7 +1087,7 @@ export default function ItemMedia({
                 if (event.target === event.currentTarget && !isSavingBg) closeBackgroundRemoval();
               }}
             >
-              <div className="w-full max-w-[min(94dvw,560px)] rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="w-full max-w-[min(94dvw,560px)] rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">REMOVE BACKGROUND</div>
@@ -1150,7 +1150,7 @@ export default function ItemMedia({
       {draftFile ? (
         <div className="fixed inset-0 z-[10005] bg-black/90 backdrop-blur-sm">
           <div className="absolute inset-0 flex items-start justify-center overflow-auto px-4 pt-16 pb-8">
-            <div className="w-full max-w-3xl rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+            <div className="w-full max-w-3xl rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -1169,7 +1169,7 @@ export default function ItemMedia({
                 </button>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.01)_50%,rgba(0,0,0,0.16)_100%)] ring-1 ring-[color:var(--border)]">
+              <div className="mt-4 overflow-hidden rounded-[14px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.01)_50%,rgba(0,0,0,0.16)_100%)] ring-1 ring-[color:var(--border)]">
                 <div className="aspect-[4/3]">
                   <img
                     src={draftPreviewUrl}

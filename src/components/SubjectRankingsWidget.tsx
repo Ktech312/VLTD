@@ -28,7 +28,7 @@ export default function SubjectRankingsWidget({
   if (rankings.length === 0) {
     return (
       <div
-        className="rounded-2xl p-5 text-center ring-1"
+        className="rounded-[14px] p-5 text-center ring-1"
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
       >
         <div className="mb-1 text-[13px] font-semibold" style={{ color: "var(--fg)" }}>
@@ -43,7 +43,7 @@ export default function SubjectRankingsWidget({
 
   return (
     <div
-      className="overflow-hidden rounded-2xl ring-1"
+      className="overflow-hidden rounded-[14px] ring-1"
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}
     >
       <div
