@@ -608,17 +608,19 @@ export default function GuestGalleryRenderer({
                 {model.access.modeLabel.toUpperCase()}
               </div>
 
-              <div className="mt-3 flex items-start gap-4 sm:gap-5">
+              {/* Phone: the cover and the title sit side by side, and everything below (actions, counts, exhibit tabs) uses the full card width.
+                  From sm up it is the same layout as before: the cover on the left, everything else in the column beside it. */}
+              <div className={["mt-3 grid items-start gap-x-4 sm:gap-x-5", coverImageUrl ? "grid-cols-[84px_minmax(0,1fr)] sm:grid-cols-[120px_minmax(0,1fr)]" : "grid-cols-1"].join(" ")}>
                 {coverImageUrl ? (
                   <div
-                    className="w-[84px] shrink-0 overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] ring-1 ring-white/15 sm:w-[120px]"
+                    className="row-span-1 w-[84px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] ring-1 ring-white/15 sm:row-span-4 sm:w-[120px]"
                     style={{ aspectRatio: "3/4" }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={coverImageUrl} alt={model.galleryTitle} className="h-full w-full object-cover" draggable={false} />
                   </div>
                 ) : null}
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                   <h1 className="text-3xl font-semibold sm:text-4xl lg:text-5xl">
                     {model.galleryTitle}
                   </h1>
@@ -626,10 +628,11 @@ export default function GuestGalleryRenderer({
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)] sm:text-base">
                     {model.galleryDescription}
                   </p>
+                </div>
 
                   {/* Collector + Follow · Share · Save · more. Hidden inside embedded previews. */}
                   {model.gallery ? (
-                    <div className="mt-4 max-w-2xl">
+                    <div className={["mt-4 max-w-2xl", coverImageUrl ? "col-span-2 sm:col-span-1 sm:col-start-2" : ""].join(" ")}>
                       <ContentActionBar
                         kind="exhibition"
                         contentId={String(model.gallery.id || model.galleryTitle)}
@@ -651,7 +654,7 @@ export default function GuestGalleryRenderer({
                   ) : null}
 
                   {/* Owner byline + stats */}
-                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className={["mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap", coverImageUrl ? "col-span-2 sm:col-span-1 sm:col-start-2" : ""].join(" ")}>
                     {model.gallery ? (
                       <>
                         <PillButton size="compact" onClick={() => setInfoOpen(true)}>
@@ -675,7 +678,7 @@ export default function GuestGalleryRenderer({
 
                   {/* Exhibit pages: tabs live inside the header card, to the right */}
                   {sectionViews.length > 1 ? (
-                    <div className="mt-3 flex flex-wrap justify-end gap-2 max-md:gap-y-3">
+                    <div className={["mt-3 flex flex-wrap gap-2 max-md:gap-y-3 sm:justify-end", coverImageUrl ? "col-span-2 sm:col-span-1 sm:col-start-2" : ""].join(" ")}>
                       {sectionViews.map((sv, idx) => (
                         <PillButton
                           key={sv.section.id}
@@ -690,8 +693,6 @@ export default function GuestGalleryRenderer({
                       ))}
                     </div>
                   ) : null}
-                </div>
-
               </div>
             </div>
           </section> : null}
