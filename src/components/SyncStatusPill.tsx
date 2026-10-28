@@ -74,9 +74,9 @@ export default function SyncStatusPill() {
       aria-live="polite"
       data-cloud-save-status={phase}
       data-site-chrome="true"
-      // Placement (checked at phone width, 2026-10-13): above the floating Add Item button, which sits just over the bottom bar, so it never covers
-      // either; below every dialog and sheet (they start at z-index 10001), so a dialog's buttons are never hidden behind it.
-      className="vltd-keep-color pointer-events-none fixed left-0 right-0 z-[9990] flex justify-center px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+152px)] md:bottom-6"
+      // Placement: just above the bottom bar, so it never covers it; below every dialog and sheet (they start at z-index 10001),
+      // so a dialog's buttons are never hidden behind it.
+      className="vltd-keep-color pointer-events-none fixed left-0 right-0 z-[9990] flex justify-center px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+104px)] md:bottom-6"
       // (inline: a site-wide rule on direct children of the page forces z-index 1, which a class cannot override)
       style={{ zIndex: 9990 }}
     >

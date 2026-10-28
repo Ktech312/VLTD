@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { showMobileAddItem } from "@/lib/primaryNav";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -16,11 +15,6 @@ const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Screens whose own controls sit where the pill would float (the camera shutter, Bulk's "Add all"): the prompt waits until the person is somewhere else.
 const NO_BANNER_ROUTES = ["/vault/quick", "/vault/bulk"];
-
-function isGuestGalleryRoute(pathname: string) {
-  const parts = pathname.split("/");
-  return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
-}
 
 export default function PWAInstallBanner() {
   const pathname = usePathname() ?? "";
@@ -113,14 +107,10 @@ export default function PWAInstallBanner() {
 
   if (!show || suppressed) return null;
 
-  // Small floating pill — bottom-left, above the bottom nav. On phones, pages that show the
-  // floating Add group (Quick Add / Add Item / upload) put that group right above the bar, and the
-  // centered Sync status pill sits above that group (SyncStatusPill: safe-area + 152px, up to
-  // 44px tall). So on those pages the prompt clears both instead of drawing on top of them.
-  const aboveAddGroup = showMobileAddItem(pathname) && !isGuestGalleryRoute(pathname);
-  const pillPosition = aboveAddGroup
-    ? "bottom-[calc(max(env(safe-area-inset-bottom,0px),0px)+204px)] md:bottom-3"
-    : "bottom-[calc(var(--bottomnav-h,64px)+max(env(safe-area-inset-bottom,0px),0px)+12px)] md:bottom-3";
+  // Small floating pill — bottom-left, above the bottom nav. On phones the centered Sync status
+  // pill sits just above the bar (SyncStatusPill: safe-area + 104px, up to 44px tall), so the prompt
+  // clears it instead of drawing on top of it.
+  const pillPosition = "bottom-[calc(max(env(safe-area-inset-bottom,0px),0px)+156px)] md:bottom-3";
   const pillStyle: React.CSSProperties = {
     position: "fixed",
     left: 16,

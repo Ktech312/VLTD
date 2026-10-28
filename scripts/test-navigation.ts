@@ -3,7 +3,7 @@
 //   npm run test:nav
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { PRIMARY_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS, activeMoreKey, isPrimaryNavActive, showMobileAddItem } from "../src/lib/primaryNav";
+import { PHONE_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS, activeMoreKey, isPrimaryNavActive, showMobileAddItem } from "../src/lib/primaryNav";
 
 let pass = 0;
 let fail = 0;
@@ -18,7 +18,7 @@ function test(name: string, fn: () => void) {
   }
 }
 const desktop = (path: string) => DESKTOP_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label);
-const phone = (path: string) => PRIMARY_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label);
+const phone = (path: string) => [...PHONE_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label), ...(activeMoreKey(path) ? ["More"] : [])];
 const read = (p: string) => fs.readFileSync(p, "utf8");
 
 test("the desktop header is Home, Vault, Exhibitions, Insights, then a More menu", () => {
@@ -58,11 +58,16 @@ test("Insights highlights on /portfolio only; Vault keeps Items, For Sale, Sold,
   assert.deepEqual(desktop("/dashboard"), ["Home"]);
   assert.deepEqual(desktop("/museum"), ["Exhibitions"]);
 });
-test("the phone bar is unchanged: Home, Vault, Exhibitions, Lounge, Discover (Insights still counts as Vault there)", () => {
-  assert.deepEqual(PRIMARY_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions", "Lounge", "Discover"]);
+test("the phone bar is Home, Vault, the round Add button, Exhibitions, More (Insights still counts as Vault there)", () => {
+  assert.deepEqual(PHONE_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions"]);
   assert.deepEqual(phone("/portfolio"), ["Vault"]);
-  for (const p of ["/discover", "/market", "/upcoming", "/events"]) assert.deepEqual(phone(p), ["Discover"], p);
-  assert.deepEqual(phone("/learn"), ["Lounge"]);
+  for (const p of ["/discover", "/market", "/upcoming", "/events", "/learn", "/community-board"]) assert.deepEqual(phone(p), ["More"], p);
+  const bar = read("src/components/BottomNav.tsx");
+  assert.ok(bar.indexOf("PHONE_NAV.slice(0, 2)") < bar.indexOf('ariaLabel="Add"'), "Home and Vault, then Add");
+  assert.ok(bar.indexOf('ariaLabel="Add"') < bar.indexOf("PHONE_NAV.slice(2)"), "Add, then Exhibitions");
+  assert.ok(bar.indexOf("PHONE_NAV.slice(2)") < bar.indexOf('ariaLabel="More"'), "Exhibitions, then More");
+  assert.match(bar, /MORE_ITEMS\.filter/);
+  for (const href of ["/capture", "/vault/quick", "/capture?openUpload=1", "/vault/bulk"]) assert.ok(bar.includes('href: "' + href + '"'), href);
 });
 test("the account menu still has Saved then Watchlist at the existing URLs", () => {
   assert.deepEqual(ACCOUNT_SHORTCUTS.map((i) => [i.label, i.href]), [["Saved", "/saved"], ["Watchlist", "/watchlist"]]);
@@ -129,16 +134,16 @@ test("Collector supplies & services is a labelled link in Marketplace; Kickstart
   assert.deepEqual(DESKTOP_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions", "Insights"]);
   assert.deepEqual(MORE_ITEMS.map((i) => i.label), ["Discover", "Events", "VLT Lounge", "Activity", "Learn"]);
   for (const f of ["src/app/shop/page.tsx", "src/app/kickstarter/page.tsx", "src/app/patreon/page.tsx", "src/app/market/page.tsx", "src/app/upcoming/page.tsx"]) assert.ok(fs.existsSync(f), f + " still exists");
-  // the destinations keep More (Discover) highlighted, and the phone bar's Discover
+  // the destinations keep More (Discover) highlighted, and the phone bar's More
   for (const path of ["/shop", "/kickstarter", "/patreon"]) {
     assert.equal(activeMoreKey(path), "discover", path);
     assert.deepEqual(desktop(path), [], path + ": no direct header link highlighted");
-    assert.deepEqual(phone(path), ["Discover"], path);
+    assert.deepEqual(phone(path), ["More"], path);
   }
 });
 test("/collector still redirects to Home and gets no menu entry; the Styles page gets no link", () => {
   assert.ok(read("src/app/collector/page.tsx").includes('redirect("/dashboard")'));
-  const nav = JSON.stringify([PRIMARY_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS]);
+  const nav = JSON.stringify([PHONE_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS]);
   assert.equal(nav.includes("/collector"), false);
   assert.equal(nav.includes("/styles"), false);
   assert.equal(read("src/app/account/page.tsx").includes('href="/styles"'), false);
