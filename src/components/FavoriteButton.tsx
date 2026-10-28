@@ -21,6 +21,7 @@ export default function FavoriteButton({
   label = "Save",
   showMessage = true,
   className = "",
+  compact = false,
 }: {
   contentType: FavoriteContentType;
   contentId: string;
@@ -28,6 +29,8 @@ export default function FavoriteButton({
   label?: string;
   showMessage?: boolean;
   className?: string;
+  /** The small pill (32px visual, 44px touch area) with 6px corners, for dense headers. */
+  compact?: boolean;
 }) {
   const [favorited, setFavorited] = useState(false);
   const [message, setMessage] = useState("");
@@ -76,6 +79,8 @@ export default function FavoriteButton({
         disabled={loading || !contentId}
         variant={favorited ? "active" : "default"}
         pressed={favorited}
+        size={compact ? "compact" : "default"}
+        className={compact ? "rounded-[6px]!" : undefined}
         ariaLabel={favorited ? `Saved. Remove from your saved list` : `${label} to your saved list`}
         title={favorited ? "Saved — click to remove" : "Save to your Favorites"}
       >

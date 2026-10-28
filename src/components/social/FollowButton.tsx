@@ -17,11 +17,14 @@ export function FollowButton({
   targetProfileId,
   initialFollowing = false,
   signInHref,
+  compact = false,
 }: {
   viewerProfileId: string;
   targetProfileId: string;
   initialFollowing?: boolean;
   signInHref?: string;
+  /** The small pill (32px visual, 44px touch area) with 6px corners, for dense headers. */
+  compact?: boolean;
 }) {
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
@@ -58,7 +61,8 @@ export function FollowButton({
       pressed={following}
       ariaLabel={following ? "Following. Unfollow this collector" : signedOut ? "Sign in to follow this collector" : "Follow this collector"}
       title={signedOut ? "Sign in to follow" : following ? "Following — click to unfollow" : "Follow this collector"}
-      className="font-semibold"
+      size={compact ? "compact" : "default"}
+      className={compact ? "font-semibold rounded-[6px]!" : "font-semibold"}
     >
       {following ? <AppIcon name="checkmark" size={14} strokeWidth={2.4} /> : null}
       {following ? "Following" : "Follow"}

@@ -579,18 +579,18 @@ export default function GuestGalleryRenderer({
         <div className={["mx-auto max-w-7xl px-4 sm:px-6", embedded ? "py-4" : "py-6 sm:py-10"].join(" ")}>
           {model.navigation.show ? (
             <div className={["mb-6 mx-auto flex flex-wrap items-center gap-3", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
-              <PillButton variant="active" className="text-sm font-semibold">
+              <PillButton variant="active" size="compact" className="text-sm font-semibold rounded-[6px]!">
                 {model.navigation.primaryLabel || model.access.modeLabel}
               </PillButton>
 
               {model.navigation.backHref ? (
-                <PillButton href={model.navigation.backHref} className="text-sm">
+                <PillButton href={model.navigation.backHref} size="compact" className="text-sm rounded-[6px]!">
                   {model.navigation.backLabel ?? "Back"}
                 </PillButton>
               ) : null}
 
               {model.navigation.homeHref ? (
-                <PillButton href={model.navigation.homeHref} className="text-sm">
+                <PillButton href={model.navigation.homeHref} size="compact" className="text-sm rounded-[6px]!">
                   {model.navigation.homeLabel ?? "Exhibitions"}
                 </PillButton>
               ) : null}
@@ -599,7 +599,7 @@ export default function GuestGalleryRenderer({
 
           {!embedded ? <section
             className={[
-              "relative mx-auto overflow-hidden rounded-[30px] border border-white/12 bg-black/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.30)] backdrop-blur-sm sm:p-6",
+              "relative mx-auto overflow-hidden rounded-[14px] border border-white/12 bg-black/40 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.30)] backdrop-blur-sm sm:p-6",
               GALLERY_STAGE_WIDTH_CLASS,
             ].join(" ")}
           >
@@ -634,6 +634,7 @@ export default function GuestGalleryRenderer({
                   {model.gallery ? (
                     <div className={["mt-4 max-w-2xl", coverImageUrl ? "col-span-2 sm:col-span-1 sm:col-start-2" : ""].join(" ")}>
                       <ContentActionBar
+                        compact
                         kind="exhibition"
                         contentId={String(model.gallery.id || model.galleryTitle)}
                         title={model.galleryTitle}
@@ -657,7 +658,7 @@ export default function GuestGalleryRenderer({
                   <div className={["mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap", coverImageUrl ? "col-span-2 sm:col-span-1 sm:col-start-2" : ""].join(" ")}>
                     {model.gallery ? (
                       <>
-                        <PillButton size="compact" onClick={() => setInfoOpen(true)}>
+                        <PillButton size="compact" className="rounded-[6px]!" onClick={() => setInfoOpen(true)}>
                           Info
                         </PillButton>
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
@@ -685,7 +686,7 @@ export default function GuestGalleryRenderer({
                           size="compact"
                           variant={idx === selectedSectionIdx ? "active" : "default"}
                           pressed={idx === selectedSectionIdx}
-                          className="shrink-0"
+                          className="shrink-0 rounded-[6px]!"
                           onClick={() => setSelectedSectionIdx(idx)}
                         >
                           {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}

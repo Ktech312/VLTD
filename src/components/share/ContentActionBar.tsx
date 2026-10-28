@@ -48,7 +48,10 @@ export default function ContentActionBar({
   sharePhotos,
   shareFooter,
   className = "",
+  compact = false,
 }: {
+  /** Dense header version: no frame, small pills with 6px corners (the exhibition header uses it). */
+  compact?: boolean;
   kind: "item" | "exhibition";
   contentId: string;
   title: string;
@@ -131,11 +134,11 @@ export default function ContentActionBar({
     <div
       role="toolbar"
       aria-label={`Actions for this ${kindWord}`}
-      className={[bare ? "flex items-center" : "vltd-glass-dock flex flex-wrap items-center gap-x-3 gap-y-2.5 px-3 py-2.5", !bare && collector ? "justify-between" : !bare ? "justify-end" : "", className].filter(Boolean).join(" ")}
+      className={[compact ? "flex flex-wrap items-center gap-x-3 gap-y-1.5" : bare ? "flex items-center" : "vltd-glass-dock flex flex-wrap items-center gap-x-3 gap-y-2.5 px-3 py-2.5", !compact && !bare && collector ? "justify-between" : !compact && !bare ? "justify-end" : "", className].filter(Boolean).join(" ")}
     >
       {collector ? (
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white/10 text-lg leading-none ring-1 ring-white/25">
+          <span className={["grid shrink-0 place-items-center overflow-hidden rounded-full bg-white/10 leading-none ring-1 ring-white/25", compact ? "h-7 w-7 text-base" : "h-9 w-9 text-lg"].join(" ")}>
             {collector.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={collector.avatarUrl} alt="" className="h-full w-full object-cover" draggable={false} />
@@ -148,7 +151,7 @@ export default function ContentActionBar({
               type="button"
               onClick={collector.onOpen}
               title={`About ${collector.name}`}
-              className="inline-flex min-h-[44px] min-w-0 max-w-[180px] items-center truncate rounded-md text-left text-sm font-semibold text-[color:var(--fg)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 md:min-h-9 sm:max-w-[240px]"
+              className={["inline-flex min-w-0 max-w-[180px] items-center truncate rounded-md text-left text-sm font-semibold text-[color:var(--fg)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 sm:max-w-[240px]", compact ? "min-h-8" : "min-h-[44px] md:min-h-9"].join(" ")}
             >
               {collector.name}
             </button>
@@ -156,7 +159,7 @@ export default function ContentActionBar({
             <span className="min-w-0 max-w-[180px] truncate text-sm font-semibold text-[color:var(--fg)] sm:max-w-[240px]">{collector.name}</span>
           )}
           {followTarget && following !== null ? (
-            <FollowButton viewerProfileId={viewerProfileId} targetProfileId={followTarget} initialFollowing={following} signInHref={signInHref} key={`${followTarget}:${viewerProfileId}:${following}`} />
+            <FollowButton viewerProfileId={viewerProfileId} targetProfileId={followTarget} initialFollowing={following} signInHref={signInHref} compact={compact} key={`${followTarget}:${viewerProfileId}:${following}`} />
           ) : null}
         </div>
       ) : null}
@@ -180,7 +183,7 @@ export default function ContentActionBar({
           aria-label={`Share this ${kindWord}`}
           aria-haspopup="dialog"
           title={`Share this ${kindWord}`}
-          className={pillClassName("default")}
+          className={compact ? pillClassName("default", false, "rounded-[6px]!", "compact") : pillClassName("default")}
         >
           <AppIcon name="share" size={16} strokeWidth={1.9} />
           Share
@@ -192,6 +195,7 @@ export default function ContentActionBar({
             contentId={contentId}
             metadata={{ title, image: previewUrl ?? "", ...(saveMetadata ?? {}) }}
             label="Save"
+            compact={compact}
           />
         ) : null}
 
@@ -206,7 +210,7 @@ export default function ContentActionBar({
               aria-expanded={menuOpen}
               aria-controls={menuOpen ? menuId : undefined}
               title="More actions"
-              className={pillClassName(menuOpen ? "active" : "default", false, "w-11 px-0! md:w-9")}
+              className={compact ? pillClassName(menuOpen ? "active" : "default", false, "w-8 px-0! rounded-[6px]!", "compact") : pillClassName(menuOpen ? "active" : "default", false, "w-11 px-0! md:w-9")}
             >
               <AppIcon name="more" size={18} />
             </button>
