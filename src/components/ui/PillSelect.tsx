@@ -218,7 +218,7 @@ export function PillSelect<T extends string>({
         }}
         style={{ width: btnW }}
         className={[
-          "relative inline-flex justify-between rounded-[8px]",
+          "relative inline-flex justify-between rounded-[6px]",
           showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : (btnH + " items-center"),
           btnPx,
           btnText,

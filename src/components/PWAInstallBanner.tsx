@@ -83,7 +83,8 @@ export default function PWAInstallBanner() {
   // While the pill is on screen the page scrolls a little further, so the last controls and links can be scrolled out from under it (globals.css reads this).
   useEffect(() => {
     const visible = show && !suppressed && (deferredPrompt !== null || isIOS);
-    const space = visible ? (iosExpanded ? "132px" : "72px") : "0px";
+    // The pill floats 136px above the screen bottom (68px of that is the tab bar), so the room under the last content has to reach the top of the pill: 104px, or 136px with the iOS steps open.
+    const space = visible ? (iosExpanded ? "136px" : "104px") : "0px";
     document.documentElement.style.setProperty("--pwa-banner-space", space);
     return () => { document.documentElement.style.removeProperty("--pwa-banner-space"); };
   }, [show, suppressed, deferredPrompt, isIOS, iosExpanded]);
@@ -134,6 +135,7 @@ export default function PWAInstallBanner() {
     return (
       <div
         data-site-chrome="true"
+        data-pwa-banner="true"
         style={pillStyle}
         className={`${pillPosition} vltd-dark-surface flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >
@@ -158,6 +160,7 @@ export default function PWAInstallBanner() {
     return (
       <div
         data-site-chrome="true"
+        data-pwa-banner="true"
         style={pillStyle}
         className={`${pillPosition} vltd-dark-surface flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >

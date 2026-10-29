@@ -4,4 +4,4 @@
  * and the shared keyboard focus ring. Form fields may be full width; pass width and spacing alongside it.
  */
 export const nativeSelectClass =
-  "h-11 md:h-9 rounded-[8px] bg-[color:var(--pill)] pl-3 pr-8 text-[13px] font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] disabled:cursor-not-allowed disabled:opacity-60";
+  "h-11 md:h-9 rounded-[6px] bg-[color:var(--pill)] pl-3 pr-8 text-[13px] font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] disabled:cursor-not-allowed disabled:opacity-60";

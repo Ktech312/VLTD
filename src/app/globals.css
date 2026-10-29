@@ -2443,6 +2443,11 @@ main {
   display: block;
   height: var(--pwa-banner-space, 0px);
 }
+/* While a menu is open (the Add chooser, Tools, a dropdown) the install pill steps aside instead of peeking out from behind it. */
+html:has([role="menu"]) [data-pwa-banner] {
+  opacity: 0;
+  pointer-events: none;
+}
 .vltd-content-wrap main,
 .vltd-content-wrap > div > main {
   min-height: 0 !important;

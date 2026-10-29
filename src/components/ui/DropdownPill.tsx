@@ -44,7 +44,7 @@ export function DropdownPill({
           aria-label={title}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="relative inline-flex h-8 w-8 items-center justify-center rounded-[8px] ring-1 transition max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-[''] focus-visible:outline-2 focus-visible:outline-white md:h-7 md:w-7"
+          className="relative inline-flex h-8 w-8 items-center justify-center rounded-[6px] ring-1 transition max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-[''] focus-visible:outline-2 focus-visible:outline-white md:h-7 md:w-7"
           style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.85)" }}
         >
           <Glyph name={compactIcon} size={15} strokeWidth={1.8} />
@@ -87,7 +87,7 @@ export function DropdownPill({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="relative inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium ring-1 transition max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-[''] focus-visible:outline-2 focus-visible:outline-white md:h-7"
+        className="relative inline-flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-xs font-medium ring-1 transition max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-[''] focus-visible:outline-2 focus-visible:outline-white md:h-7"
         style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.85)" }}
       >
         {title}
