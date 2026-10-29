@@ -1,0 +1,444 @@
+[
+ {
+  "w": 390,
+  "page": "home",
+  "path": "/dashboard",
+  "top": "after-home-top-390.jpg",
+  "end": "after-home-end-390.jpg",
+  "vw": 390,
+  "docOverflow": 0,
+  "barTop": 774,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 3 - Original Motion P [309..441]",
+   "QA Album 4 - Original Motion P [449..581]",
+   "QA Album 5 - Original Motion P [589..721]",
+   "QA Album 6 - Original Motion P [729..861]",
+   "QA Album 7 - Original Motion P [869..1001]",
+   "QA Album 8 - Original Motion P [1009..1141]",
+   "QA Album 9 - Original Motion P [1149..1281]",
+   "QA Album 10 - Original Motion  [1289..1421]"
+  ],
+  "tall": [],
+  "short": [
+   "Seasonal theme off 15"
+  ],
+  "endClear": {
+   "lowestContentBottom": 776,
+   "barTop": 774,
+   "clear": false
+  }
+ },
+ {
+  "w": 390,
+  "page": "vault",
+  "path": "/vault",
+  "top": "after-vault-top-390.jpg",
+  "end": "after-vault-end-390.jpg",
+  "vw": 390,
+  "docOverflow": 0,
+  "barTop": 774,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "TCG & Non Sport Card\n4 [376..607]",
+   "Music\n9 [615..737]",
+   "DOCUMENTATION COMPLETE\n0%\n0 of [323..441]",
+   "NEEDS REVIEW\n26\nItems missing  [471..589]",
+   "Music (9) [375..449]"
+  ],
+  "tall": [
+   "ITEMS\n26\n4 universes\nAll 92"
+  ],
+  "short": [
+   "All (26) 25",
+   "Pop Culture (8) 25",
+   "Sports (5) 25",
+   "TCG (4) 25",
+   "Music (9) 25"
+  ],
+  "endClear": {
+   "lowestContentBottom": 776,
+   "barTop": 774,
+   "clear": false
+  }
+ },
+ {
+  "w": 390,
+  "page": "exhibitions",
+  "path": "/museum",
+  "top": "after-exhibitions-top-390.jpg",
+  "end": "after-exhibitions-end-390.jpg",
+  "vw": 390,
+  "docOverflow": 0,
+  "barTop": 774,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 776,
+   "barTop": 774,
+   "clear": false
+  }
+ },
+ {
+  "w": 390,
+  "page": "discover",
+  "path": "/discover",
+  "top": "after-discover-top-390.jpg",
+  "end": "after-discover-end-390.jpg",
+  "vw": 390,
+  "docOverflow": 0,
+  "barTop": 774,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "View Grails\n → [417..547]",
+   "View Music\n → [769..901]",
+   "View Sports Slabs\n → [1121..1299]",
+   "View The Hughes Aviation Colle [1473..1713]"
+  ],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 776,
+   "barTop": 774,
+   "clear": false
+  }
+ },
+ {
+  "w": 390,
+  "page": "insights",
+  "path": "/portfolio",
+  "top": "after-insights-top-390.jpg",
+  "end": "after-insights-end-390.jpg",
+  "vw": 390,
+  "docOverflow": 0,
+  "barTop": 774,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 2 - Original Motion P [255..465]",
+   "QA Album 3 - Original Motion P [477..687]",
+   "QA Album 4 - Original Motion P [699..909]",
+   "QA Album 5 - Original Motion P [921..1131]",
+   "Review items [1143..1333]"
+  ],
+  "tall": [],
+  "short": [
+   "See all > 18"
+  ],
+  "endClear": {
+   "lowestContentBottom": 688,
+   "barTop": 774,
+   "clear": true
+  }
+ },
+ {
+  "w": 390,
+  "page": "menus",
+  "more": "after-menu-more-390.jpg",
+  "add": "after-menu-add-390.jpg",
+  "addItems": [
+   "Add ItemCamera, then the details -> /capture",
+   "Quick AddSnap now, fill in later -> /vault/quick",
+   "Upload: single itemAll images go on 1 item -> /capture?openUpload=1",
+   "Upload: batchEach image creates a new item -> /vault/bulk"
+  ]
+ },
+ {
+  "w": 360,
+  "page": "home",
+  "path": "/dashboard",
+  "top": "after-home-top-360.jpg",
+  "end": "after-home-end-360.jpg",
+  "vw": 360,
+  "docOverflow": 0,
+  "barTop": 709,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 3 - Original Motion P [309..441]",
+   "QA Album 4 - Original Motion P [449..581]",
+   "QA Album 5 - Original Motion P [589..721]",
+   "QA Album 6 - Original Motion P [729..861]",
+   "QA Album 7 - Original Motion P [869..1001]",
+   "QA Album 8 - Original Motion P [1009..1141]",
+   "QA Album 9 - Original Motion P [1149..1281]",
+   "QA Album 10 - Original Motion  [1289..1421]"
+  ],
+  "tall": [],
+  "short": [
+   "Seasonal theme off 15"
+  ],
+  "endClear": {
+   "lowestContentBottom": 711,
+   "barTop": 709,
+   "clear": false
+  }
+ },
+ {
+  "w": 360,
+  "page": "vault",
+  "path": "/vault",
+  "top": "after-vault-top-360.jpg",
+  "end": "after-vault-end-360.jpg",
+  "vw": 360,
+  "docOverflow": 0,
+  "barTop": 709,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "Pop Culture\n8 [207..368]",
+   "TCG & Non Sport Card\n4 [376..607]",
+   "Music\n9 [615..737]",
+   "DOCUMENTATION COMPLETE\n0%\n0 of [323..441]",
+   "NEEDS REVIEW\n26\nItems missing  [471..589]",
+   "TCG (4) [303..369]",
+   "Music (9) [375..449]"
+  ],
+  "tall": [
+   "ITEMS\n26\n4 universes\nAll 92"
+  ],
+  "short": [
+   "All (26) 25",
+   "Pop Culture (8) 25",
+   "Sports (5) 25",
+   "TCG (4) 25",
+   "Music (9) 25"
+  ],
+  "endClear": {
+   "lowestContentBottom": 711,
+   "barTop": 709,
+   "clear": false
+  }
+ },
+ {
+  "w": 360,
+  "page": "exhibitions",
+  "path": "/museum",
+  "top": "after-exhibitions-top-360.jpg",
+  "end": "after-exhibitions-end-360.jpg",
+  "vw": 360,
+  "docOverflow": 0,
+  "barTop": 709,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 711,
+   "barTop": 709,
+   "clear": false
+  }
+ },
+ {
+  "w": 360,
+  "page": "discover",
+  "path": "/discover",
+  "top": "after-discover-top-360.jpg",
+  "end": "after-discover-end-360.jpg",
+  "vw": 360,
+  "docOverflow": 0,
+  "barTop": 709,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "View Grails\n → [387..517]",
+   "View Music\n → [709..841]",
+   "View Sports Slabs\n → [1031..1209]",
+   "View The Hughes Aviation Colle [1353..1593]"
+  ],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 711,
+   "barTop": 709,
+   "clear": false
+  }
+ },
+ {
+  "w": 360,
+  "page": "insights",
+  "path": "/portfolio",
+  "top": "after-insights-top-360.jpg",
+  "end": "after-insights-end-360.jpg",
+  "vw": 360,
+  "docOverflow": 0,
+  "barTop": 709,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 2 - Original Motion P [255..465]",
+   "QA Album 3 - Original Motion P [477..687]",
+   "QA Album 4 - Original Motion P [699..909]",
+   "QA Album 5 - Original Motion P [921..1131]",
+   "Review items [1143..1333]"
+  ],
+  "tall": [],
+  "short": [
+   "See all > 18"
+  ],
+  "endClear": {
+   "lowestContentBottom": 623,
+   "barTop": 709,
+   "clear": true
+  }
+ },
+ {
+  "w": 320,
+  "page": "home",
+  "path": "/dashboard",
+  "top": "after-home-top-320.jpg",
+  "end": "after-home-end-320.jpg",
+  "vw": 320,
+  "docOverflow": 0,
+  "barTop": 623,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 3 - Original Motion P [309..441]",
+   "QA Album 4 - Original Motion P [449..581]",
+   "QA Album 5 - Original Motion P [589..721]",
+   "QA Album 6 - Original Motion P [729..861]",
+   "QA Album 7 - Original Motion P [869..1001]",
+   "QA Album 8 - Original Motion P [1009..1141]",
+   "QA Album 9 - Original Motion P [1149..1281]",
+   "QA Album 10 - Original Motion  [1289..1421]"
+  ],
+  "tall": [],
+  "short": [
+   "Seasonal theme off 15"
+  ],
+  "endClear": {
+   "lowestContentBottom": 625,
+   "barTop": 623,
+   "clear": false
+  }
+ },
+ {
+  "w": 320,
+  "page": "vault",
+  "path": "/vault",
+  "top": "after-vault-top-320.jpg",
+  "end": "after-vault-end-320.jpg",
+  "vw": 320,
+  "docOverflow": 0,
+  "barTop": 623,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "Pop Culture\n8 [207..368]",
+   "TCG & Non Sport Card\n4 [376..607]",
+   "Music\n9 [615..737]",
+   "DOCUMENTATION COMPLETE\n0%\n0 of [323..441]",
+   "NEEDS REVIEW\n26\nItems missing  [471..589]",
+   "TCG (4) [303..369]",
+   "Music (9) [375..449]"
+  ],
+  "tall": [
+   "ITEMS\n26\n4 universes\nAll 92"
+  ],
+  "short": [
+   "All (26) 25",
+   "Pop Culture (8) 25",
+   "Sports (5) 25",
+   "TCG (4) 25",
+   "Music (9) 25"
+  ],
+  "endClear": {
+   "lowestContentBottom": 625,
+   "barTop": 623,
+   "clear": false
+  }
+ },
+ {
+  "w": 320,
+  "page": "exhibitions",
+  "path": "/museum",
+  "top": "after-exhibitions-top-320.jpg",
+  "end": "after-exhibitions-end-320.jpg",
+  "vw": 320,
+  "docOverflow": 0,
+  "barTop": 623,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 625,
+   "barTop": 623,
+   "clear": false
+  }
+ },
+ {
+  "w": 320,
+  "page": "discover",
+  "path": "/discover",
+  "top": "after-discover-top-320.jpg",
+  "end": "after-discover-end-320.jpg",
+  "vw": 320,
+  "docOverflow": 0,
+  "barTop": 623,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "View Grails\n → [347..477]",
+   "View Music\n → [629..761]",
+   "View Sports Slabs\n → [911..1089]",
+   "View The Hughes Aviation Colle [1193..1433]"
+  ],
+  "tall": [],
+  "short": [],
+  "endClear": {
+   "lowestContentBottom": 625,
+   "barTop": 623,
+   "clear": false
+  }
+ },
+ {
+  "w": 320,
+  "page": "insights",
+  "path": "/portfolio",
+  "top": "after-insights-top-320.jpg",
+  "end": "after-insights-end-320.jpg",
+  "vw": 320,
+  "docOverflow": 0,
+  "barTop": 623,
+  "barHeight": 64,
+  "scroller": "DIV.vltd-content-wrap",
+  "cut": [
+   "QA Album 2 - Original Motion P [255..465]",
+   "QA Album 3 - Original Motion P [477..687]",
+   "QA Album 4 - Original Motion P [699..909]",
+   "QA Album 5 - Original Motion P [921..1131]",
+   "Review items [1143..1333]"
+  ],
+  "tall": [],
+  "short": [
+   "See all > 18"
+  ],
+  "endClear": {
+   "lowestContentBottom": 537,
+   "barTop": 623,
+   "clear": true
+  }
+ },
+ {
+  "w": 320,
+  "page": "menus",
+  "more": "after-menu-more-320.jpg",
+  "add": "after-menu-add-320.jpg",
+  "addItems": [
+   "Add ItemCamera, then the details -> /capture",
+   "Quick AddSnap now, fill in later -> /vault/quick",
+   "Upload: single itemAll images go on 1 item -> /capture?openUpload=1",
+   "Upload: batchEach image creates a new item -> /vault/bulk"
+  ]
+ }
+]
