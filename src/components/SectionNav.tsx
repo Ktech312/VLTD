@@ -35,7 +35,7 @@ const VAULT_TOOLS = [
 
 /** Vault: Items, For Sale, Sold, then Insights, Goals and Insurance. The same bar on every Vault page, so each one has a way back. */
 export function VaultLocalNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" | "insurance" }) {
-  return <LocalNav ariaLabel="Vault" items={VAULT_ITEMS} trailing={VAULT_TOOLS} activeKey={activeKey} />;
+  return <LocalNav ariaLabel="Vault" items={VAULT_ITEMS} trailing={VAULT_TOOLS} activeKey={activeKey} phoneCompact />;
 }
 
 /** The Vault bar in the standard page strip, for pages that do not lay out their own container. */

@@ -111,8 +111,10 @@ export default function BottomNav() {
               zIndex: 2,
               background: "var(--theme-nav-bg, rgba(14,14,16,0.98))",
               borderTop: "1px solid var(--theme-nav-border, rgba(203,208,213,0.20))",
-              borderTopLeftRadius: "24px",
-              borderTopRightRadius: "24px",
+              borderTopLeftRadius: "14px",
+              borderTopRightRadius: "14px",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
               padding: "16px",
               ...keepColor(DIM),
             }}
@@ -173,6 +175,7 @@ export default function BottomNav() {
                     ariaLabel="Add item to vault"
                     placement="above"
                     align="center"
+                    blurPanel
                     width={250}
                     items={ADD_CHOOSER_ITEMS}
                     triggerClassName="vltd-keep-color flex h-[46px] w-[46px] items-center justify-center rounded-full"

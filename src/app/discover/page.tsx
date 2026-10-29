@@ -557,6 +557,7 @@ export default function DiscoverPage() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
             <PillSelect
+              phoneCompact
               value={activeTab}
               ariaLabel="Filter public exhibitions by universe"
               align="left"
@@ -565,6 +566,7 @@ export default function DiscoverPage() {
               options={[{ value: "All", label: "All universes" }, ...visibleUniverseKeys.map((key) => ({ value: key as string, label: UNIVERSE_LABEL[key] }))]}
             />
             <PillSelect
+              phoneCompact
               value={sort}
               ariaLabel="Sort exhibitions"
               align="right"

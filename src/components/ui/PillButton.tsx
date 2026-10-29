@@ -104,6 +104,14 @@ export function pillClassName(variant: PillVariant = "default", disabled = false
   return [base, styles, disabledStyles, extra].filter(Boolean).join(" ");
 }
 
+/**
+ * Phone-only compact look for the page-header and local-navigation controls of Home, Vault, Exhibitions, Discover and Insights:
+ * 32px visual (the default stays 36px from 768px up) with an invisible hit area that keeps the touch target at 44px. Pass it as the
+ * `extra` argument of pillClassName or as a PillButton className. Nothing uses it unless a page opts in.
+ */
+export const PHONE_COMPACT_CLASS =
+  "relative max-md:h-8 max-md:px-2.5 max-md:text-xs max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']";
+
 export function PillButton({
   children,
   variant = "default",

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PillButton } from "@/components/ui/PillButton";
+import { PHONE_COMPACT_CLASS, PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -600,15 +600,15 @@ export default function MuseumPage() {
         contentClassName={selectedEntry ? "max-w-[1480px]" : "max-w-[900px]"}
         actions={
           <>
-            <ToolsMenu items={[{ key: "halls", label: "Build exhibition from search", description: "Search your vault, pick items, save as an exhibition", href: "/vault/halls" }]} />
+            <ToolsMenu phoneCompact items={[{ key: "halls", label: "Build exhibition from search", description: "Search your vault, pick items, save as an exhibition", href: "/vault/halls" }]} />
             {galleries.length > 0 ? (
             <>
               {/* Mobile-only filter dropdown, grouped inline with sort */}
               <span className="sm:hidden">
-                <PillSelect value={filter} ariaLabel="Filter exhibitions" align="right" onChange={(next) => setFilter(next)} options={EXHIBITION_FILTERS.map((f) => ({ value: f.key, label: f.label }))} />
+                <PillSelect phoneCompact value={filter} ariaLabel="Filter exhibitions" align="right" onChange={(next) => setFilter(next)} options={EXHIBITION_FILTERS.map((f) => ({ value: f.key, label: f.label }))} />
               </span>
-              <PillSelect value={sortMode} ariaLabel="Sort exhibitions" align="right" onChange={(next) => setSortMode(next)} options={EXHIBITION_SORTS.map((s) => ({ value: s.key, label: s.label }))} />
-              <PillButton href="/museum/new" className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</PillButton>
+              <PillSelect phoneCompact value={sortMode} ariaLabel="Sort exhibitions" align="right" onChange={(next) => setSortMode(next)} options={EXHIBITION_SORTS.map((s) => ({ value: s.key, label: s.label }))} />
+              <PillButton href="/museum/new" className={"font-black " + PHONE_COMPACT_CLASS} style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</PillButton>
             </>
           ) : null}
           </>

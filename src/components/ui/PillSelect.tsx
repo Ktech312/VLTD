@@ -52,6 +52,7 @@ export function PillSelect<T extends string>({
   showSelectedSubtitle = false,
   labelPrefix = "",
   compact = false,
+  phoneCompact = false,
 }: {
   value: T;
   onChange: (next: T) => void;
@@ -63,6 +64,8 @@ export function PillSelect<T extends string>({
   showSelectedSubtitle?: boolean;
   labelPrefix?: string;
   compact?: boolean;
+  /** Phone-only compact (32px visual, 44px touch area); from 768px up it is the normal 36px control. */
+  phoneCompact?: boolean;
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -191,9 +194,11 @@ export function PillSelect<T extends string>({
   // compact = the shared compact variant (see PillButton): 32px visual (28px on desktop) with a 44px touch target on phones.
   const btnH = compact
     ? "min-h-8 md:min-h-7 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']"
-    : "min-h-[44px] md:min-h-[36px]";
-  const btnPx = compact ? "pl-2.5 pr-8" : "px-3 pr-9";
-  const btnText = compact ? "text-xs" : "text-[13px]";
+    : phoneCompact
+      ? "min-h-8 md:min-h-[36px] max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']"
+      : "min-h-[44px] md:min-h-[36px]";
+  const btnPx = compact ? "pl-2.5 pr-8" : phoneCompact ? "pl-2.5 pr-8 md:px-3 md:pr-9" : "px-3 pr-9";
+  const btnText = compact ? "text-xs" : phoneCompact ? "text-xs md:text-[13px]" : "text-[13px]";
 
   return (
     <div ref={wrapRef} className="relative inline-flex">

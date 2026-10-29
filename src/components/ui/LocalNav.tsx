@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { pillClassName } from "@/components/ui/PillButton";
+import { PHONE_COMPACT_CLASS, pillClassName } from "@/components/ui/PillButton";
 
 export type LocalNavItem = { key: string; label: string; href: string };
 
@@ -16,13 +16,17 @@ export function LocalNav({
   activeKey,
   trailing,
   ariaLabel = "Local navigation",
+  phoneCompact = false,
 }: {
+  /** Phone-only compact pills (32px visual, 44px touch area); unchanged from 768px up. */
+  phoneCompact?: boolean;
   items: LocalNavItem[];
   activeKey: string;
   /** Related links shown after a gap, for example Insights and Goals. */
   trailing?: LocalNavItem[];
   ariaLabel?: string;
 }) {
+  const extra = phoneCompact ? PHONE_COMPACT_CLASS : "";
   return (
     <nav aria-label={ariaLabel} data-local-nav="true" className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -32,7 +36,7 @@ export function LocalNav({
             href={item.href}
             data-local-tab="true"
             aria-current={item.key === activeKey ? "page" : undefined}
-            className={pillClassName(item.key === activeKey ? "active" : "default")}
+            className={pillClassName(item.key === activeKey ? "active" : "default", false, extra)}
           >
             {item.label}
           </Link>
@@ -46,7 +50,7 @@ export function LocalNav({
               href={item.href}
               data-local-tab="true"
               aria-current={item.key === activeKey ? "page" : undefined}
-              className={pillClassName(item.key === activeKey ? "active" : "default")}
+              className={pillClassName(item.key === activeKey ? "active" : "default", false, extra)}
             >
               {item.label}
             </Link>

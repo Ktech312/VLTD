@@ -127,7 +127,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                   className="mt-4 inline-flex h-11 md:h-9 items-center rounded-full px-4 text-sm font-black"
                   style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
                 >
-                  <span className="max-w-[260px] truncate">View {slide.title}</span>&nbsp;&rarr;
+                  <span className="max-w-[190px] truncate sm:max-w-[260px]">View {slide.title}</span>&nbsp;&rarr;
                 </Link>
                 {slide.previews && slide.previews.length > 0 ? (
                   <div className="mt-3 flex gap-1.5" data-testid="slide-previews">

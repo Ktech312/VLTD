@@ -33,6 +33,7 @@ export function ActionMenu({
   align = "right",
   width = 260,
   placement = "below",
+  blurPanel = false,
 }: {
   items: ActionMenuItem[];
   triggerClassName: string;
@@ -43,6 +44,8 @@ export function ActionMenu({
   width?: number;
   /** Open below the button (default) or above it, for controls that sit at the bottom of the screen. */
   placement?: "below" | "above";
+  /** Blur whatever is behind the panel so its text stays readable over busy pages (used by the phone Add chooser). */
+  blurPanel?: boolean;
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -154,6 +157,7 @@ export function ActionMenu({
                   role="menu"
                   aria-label={ariaLabel}
                   className="rounded-[8px] bg-[color:var(--surface-strong)] p-1 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
+                  style={blurPanel ? { backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" } : undefined}
                 >
                   {items.map((item) => {
                     const content = (

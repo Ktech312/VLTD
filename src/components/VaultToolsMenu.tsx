@@ -24,6 +24,7 @@ export default function VaultToolsMenu() {
   return (
     <>
       <ToolsMenu
+        phoneCompact
         items={[
           { key: "import", label: "Import", description: "Bring in items from a spreadsheet", href: "/vault/import" },
           { key: "csv", label: "Export CSV", description: "Your records as a spreadsheet", onClick: exportVaultCsv },

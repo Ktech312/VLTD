@@ -757,6 +757,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
     <>
       <WorkspaceActions>
         <ToolsMenu
+          phoneCompact
           label="Collection tools"
           items={[
             { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
