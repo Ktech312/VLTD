@@ -327,7 +327,8 @@
 [data-vltd-theme] body [class*="rounded-full"][class*="py-"],
 [data-vltd-theme] body .vltd-selectable,
 [data-vltd-theme] body [class*="pill"] {
-  border-radius: 8px !important;
+  /* The control corner of the locked corner standard (6px). This rule used to force 8px, which overrode the 6px on every pill and dropdown button. */
+  border-radius: var(--radius-control, 6px) !important;
 }
 
 /* Pills with white/gray bg in dark mode → theme card */

@@ -604,7 +604,7 @@ textarea {
    min-height only raises a short select; it never shrinks a taller one. */
 select {
   min-height: 44px;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 6px);
 }
 @media (min-width: 768px) {
   select {
