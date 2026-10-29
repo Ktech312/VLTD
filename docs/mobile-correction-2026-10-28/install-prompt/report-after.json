@@ -1,0 +1,1571 @@
+[
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "home",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "android-home-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "vault",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "Show priced only"
+   ],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "android-vault-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "exhibitions",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "+ Sports Slabs 6 items · Publi"
+   ],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "android-exhibitions-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "discover",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "android-discover-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "insights",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 584,
+   "bannerTop": 658,
+   "clear": true
+  },
+  "img": "android-insights-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 0,
+    "t": -70,
+    "r": 390,
+    "b": 774
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": true,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "img": "android-menu-more-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [
+    "Quick Add",
+    "Upload: single item"
+   ],
+   "vh": 844
+  },
+  "img": "android-menu-add-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "home",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "What does this change?"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "android-home-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "vault",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "TOTAL VALUE $1,226 +$595 Chang"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "android-vault-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "exhibitions",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "+",
+    "Delete exhibition Movie Poster",
+    "+"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "android-exhibitions-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "discover",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "android-discover-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "insights",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 433,
+   "bannerTop": 507,
+   "clear": true
+  },
+  "img": "android-insights-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 0,
+    "t": -70,
+    "r": 320,
+    "b": 623
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": true,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "img": "android-menu-more-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [
+    "Quick Add",
+    "Upload: single item"
+   ],
+   "vh": 693
+  },
+  "img": "android-menu-add-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "home",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "ios-home-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "vault",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "Show priced only"
+   ],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "ios-vault-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "exhibitions",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "+ Sports Slabs 6 items · Publi"
+   ],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "ios-exhibitions-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "discover",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 672,
+   "bannerTop": 658,
+   "clear": false
+  },
+  "img": "ios-discover-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "insights",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "gap": {
+   "lowestContentBottom": 584,
+   "bannerTop": 658,
+   "clear": true
+  },
+  "img": "ios-insights-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 0,
+    "t": -70,
+    "r": 390,
+    "b": 774
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": true,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "img": "ios-menu-more-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [
+    "Quick Add",
+    "Upload: single item"
+   ],
+   "vh": 844
+  },
+  "img": "ios-menu-add-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "ios-steps",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 625,
+    "r": 265,
+    "b": 708
+   },
+   "bar": {
+    "l": 12,
+    "t": 774,
+    "r": 378,
+    "b": 838
+   },
+   "bug": {
+    "l": 326,
+    "t": 716,
+    "r": 374,
+    "b": 764
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 844
+  },
+  "img": "ios-steps-open-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "home",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "What does this change?"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "ios-home-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "vault",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "TOTAL VALUE $1,226 +$595 Chang"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "ios-vault-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "exhibitions",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "+",
+    "Delete exhibition Movie Poster",
+    "+"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "ios-exhibitions-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "discover",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 521,
+   "bannerTop": 507,
+   "clear": false
+  },
+  "img": "ios-discover-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "insights",
+  "top": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "gap": {
+   "lowestContentBottom": 433,
+   "bannerTop": 507,
+   "clear": true
+  },
+  "img": "ios-insights-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 0,
+    "t": -70,
+    "r": 320,
+    "b": 623
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": true,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "img": "ios-menu-more-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "menuOverlaps": [
+    "Quick Add",
+    "Upload: single item"
+   ],
+   "vh": 693
+  },
+  "img": "ios-menu-add-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "ios-steps",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 474,
+    "r": 265,
+    "b": 557
+   },
+   "bar": {
+    "l": 12,
+    "t": 623,
+    "r": 308,
+    "b": 687
+   },
+   "bug": {
+    "l": 256,
+    "t": 565,
+    "r": 304,
+    "b": 613
+   },
+   "overBar": false,
+   "overBug": false,
+   "covered": [
+    "Show priced only",
+    "What does this change?"
+   ],
+   "menuOverlaps": [],
+   "vh": 693
+  },
+  "img": "ios-steps-open-320.jpg"
+ }
+]
