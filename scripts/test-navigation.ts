@@ -63,8 +63,12 @@ test("the phone bar is the original one: Exhibitions, Vault, the round Add butto
   const labels = ['label: "Exhibitions"', 'label: "Vault"', "null, // gold + centre button", 'label: "Discover"', 'label: "More"'].map((m) => bar.indexOf(m));
   assert.ok(labels.every((n) => n > 0), `all present: ${labels}`);
   assert.deepEqual([...labels].sort((a, b) => a - b), labels, "in that order");
-  assert.match(bar, /href="\/capture"/);
   assert.match(bar, /data-site-chrome="true"/);
+  // the central + opens the Add chooser (no floating strip): Add Item, Quick Add, Upload single and batch
+  assert.match(bar, /items=\{ADD_CHOOSER_ITEMS\}/);
+  const chooser = read("src/components/AddItemActions.tsx");
+  for (const href of ["/capture", "/vault/quick", "/capture?openUpload=1", "/vault/bulk"]) assert.ok(chooser.includes(`href: "${href}"`), href);
+  assert.doesNotMatch(bar, /<AddItemActions/);
 });
 test("the account menu still has Saved then Watchlist at the existing URLs", () => {
   assert.deepEqual(ACCOUNT_SHORTCUTS.map((i) => [i.label, i.href]), [["Saved", "/saved"], ["Watchlist", "/watchlist"]]);

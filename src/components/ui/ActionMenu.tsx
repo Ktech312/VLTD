@@ -39,7 +39,7 @@ export function ActionMenu({
   triggerStyle?: CSSProperties;
   triggerChildren: ReactNode;
   ariaLabel: string;
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
   width?: number;
   /** Open below the button (default) or above it, for controls that sit at the bottom of the screen. */
   placement?: "below" | "above";
@@ -140,7 +140,9 @@ export function ActionMenu({
                   ...(placement === "above"
                     ? { bottom: (typeof window !== "undefined" ? window.innerHeight : 0) - (rect?.top ?? 0) + 6 }
                     : { top: (rect?.bottom ?? 0) + 6 }),
-                  ...(align === "left"
+                  ...(align === "center"
+                    ? { left: Math.max(8, Math.min(((rect?.left ?? 0) + (rect?.right ?? 0)) / 2 - Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16) / 2, (typeof window !== "undefined" ? window.innerWidth : 0) - Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16) - 8)) }
+                    : align === "left"
                     ? { left: Math.max(8, Math.min(rect?.left ?? 0, (typeof window !== "undefined" ? window.innerWidth : 0) - width - 8)) }
                     : { right: Math.max(8, (typeof window !== "undefined" ? window.innerWidth : 0) - (rect?.right ?? 0)) }),
                   width: Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16),

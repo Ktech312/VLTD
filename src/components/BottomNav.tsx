@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type CSSProperties } from "react";
+import { ADD_CHOOSER_ITEMS } from "@/components/AddItemActions";
+import { ActionMenu } from "@/components/ui/ActionMenu";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 
 /* ── Tab config ─────────────────────────────────────────── */
@@ -154,28 +156,34 @@ export default function BottomNav() {
             /* Centre gold + button */
             if (tab === null) {
               return (
-                <Link
+                <div
                   key="capture"
-                  href="/capture"
-                  aria-label="Add item to vault"
                   className="relative flex flex-col items-center"
                   style={{ marginTop: "-16px", marginLeft: "2px", marginRight: "2px" }}
+                  data-add-chooser
                 >
                   {/* Redesigned 2026-09-30: was a multi-layer beveled chrome
                       orb (6-stop box-shadow, radial highlight) that read as
                       skeuomorphic next to the flat monochrome tab icons
                       around it. One flat accent fill, one restrained shadow,
-                      same visual family as the rest of the nav. */}
-                  <div
-                    className="flex h-[46px] w-[46px] items-center justify-center rounded-full"
-                    style={{
+                      same visual family as the rest of the nav.
+                      2026-10-28: the orb opens the Add chooser (Add Item, Quick Add, Upload single / batch) instead of going straight to
+                      /capture, so those entries stay reachable on a phone without a floating strip above the bar. */}
+                  <ActionMenu
+                    ariaLabel="Add item to vault"
+                    placement="above"
+                    align="center"
+                    width={250}
+                    items={ADD_CHOOSER_ITEMS}
+                    triggerClassName="vltd-keep-color flex h-[46px] w-[46px] items-center justify-center rounded-full"
+                    triggerStyle={{
                       background: "var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))",
                       boxShadow: "0 0 0 3px #0B0B0B, 0 6px 18px rgba(0,0,0,0.45)",
+                      ...keepColor("#0B0B0B"),
                     }}
-                  >
-                    <AppIcon name="addItem" size={22} strokeWidth={2.5} className="vltd-keep-color" style={keepColor("#0B0B0B")} />
-                  </div>
-                </Link>
+                    triggerChildren={<AppIcon name="addItem" size={22} strokeWidth={2.5} className="vltd-keep-color" style={keepColor("#0B0B0B")} />}
+                  />
+                </div>
               );
             }
 

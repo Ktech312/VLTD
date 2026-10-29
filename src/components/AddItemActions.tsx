@@ -16,6 +16,16 @@ const UPLOAD_OPTIONS: ActionMenuItem[] = [
   { key: "batch", label: "Batch", description: "Each image creates a new item", href: "/vault/bulk" },
 ];
 
+/**
+ * The Add chooser behind the phone bottom bar's central + button: the same four ways in as the row above (Add Item, Quick Add, and the two upload
+ * choices), in one menu. Same destinations and descriptions as AddItemActions, so the two never drift apart.
+ */
+export const ADD_CHOOSER_ITEMS: ActionMenuItem[] = [
+  { key: "add", label: "Add Item", description: "Camera, then the details", href: "/capture" },
+  { key: "quick", label: "Quick Add", description: "Snap now, fill in later", href: "/vault/quick" },
+  ...UPLOAD_OPTIONS.map((o) => ({ ...o, key: `upload-${o.key}`, label: `Upload: ${o.label.toLowerCase()}` })),
+];
+
 export default function AddItemActions({ placement = "below" }: { placement?: "below" | "above" }) {
   return (
     <div className="inline-flex shrink-0 items-center gap-2" data-add-item-actions>
