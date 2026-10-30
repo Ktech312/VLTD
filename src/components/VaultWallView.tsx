@@ -334,7 +334,8 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
 
         {/* Row 2: universe pills (multi-select) */}
         {/* The padding gives each chip a taller tap area inside the scroll box; the margins cancel it so the layout is unchanged. */}
-        <div className="mt-0.5 -mb-[5px] flex gap-1.5 overflow-x-auto pb-[7px] pt-1.5" style={{ scrollbarWidth: "none" }}>
+        {/* 10px above and below the chips (offset by the negative margins, so nothing moves) leaves room inside the scrolling row for their 44px touch area. */}
+        <div className="-mt-[2px] -mb-[8px] flex gap-1.5 overflow-x-auto pb-2.5 pt-2.5" style={{ scrollbarWidth: "none" }}>
           {/* All pill */}
           <button
             type="button"
