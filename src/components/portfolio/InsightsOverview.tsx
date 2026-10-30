@@ -861,7 +861,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <Panel id="movers" className="p-3.5">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
-              <Link href="/vault?sort=gain_desc" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
+              <Link href="/vault?sort=gain_desc" className="vltd-tap-y text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
@@ -949,7 +949,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                 <Label>Value Evidence</Label>
                 <InfoMark />
               </div>
-              <Link href="/vault?review=needs_review&gap=value" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+              <Link href="/vault?review=needs_review&gap=value" className="vltd-tap-y text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
             </div>
             <div className="mt-4 grid grid-cols-[minmax(0,0.92fr)_1px_minmax(0,1fr)] gap-5">
               <div>
@@ -993,7 +993,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         <Panel className="mt-3 p-4">
           <div className="flex items-center justify-between gap-3">
             <Label>Items Needing Review ({reviewItems.length})</Label>
-            <Link href="/vault?review=needs_review" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+            <Link href="/vault?review=needs_review" className="vltd-tap-y text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
           </div>
           <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
             {reviewItems.length > 0 ? (
@@ -1019,9 +1019,9 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Panel className="p-4">
             <Label>Needs Documentation</Label>
-            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? AMBER : GREEN }}>{documentation.needsReview}</Link>
+            <Link href="/vault?review=needs_review" className="vltd-tap-y mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? AMBER : GREEN }}>{documentation.needsReview}</Link>
             <div className="text-sm" style={{ color: MUTED }}>items missing part of the checklist{items.length > 0 ? ` (${100 - documentation.pctItems}% of items)` : ""}</div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1.5 max-md:gap-y-3">
               {REVIEW_GAP_FILTERS.map((gap) => (
                 <PillButton key={gap} size="compact" href={`/vault?review=needs_review&gap=${gap}`}>
                   {REVIEW_GAP_PILL[gap]} <span className="text-[11px] opacity-70">{documentation.byGap[gap]}</span>
@@ -1037,9 +1037,9 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           </Panel>
           <Panel className="p-4">
             <Label>Value Not Fully Documented</Label>
-            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.remainingValue > 0 ? GOLD : GREEN }}>{formatMoney(documentation.remainingValue)}</Link>
+            <Link href="/vault?review=needs_review" className="vltd-tap-y mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.remainingValue > 0 ? GOLD : GREEN }}>{formatMoney(documentation.remainingValue)}</Link>
             <div className="text-sm" style={{ color: MUTED }}>{100 - documentation.pctValue}% of estimated value, in {documentation.needsReview} {documentation.needsReview === 1 ? "item" : "items"}</div>
-            <Link href="/insurance" className="mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Open the insurance packet &gt;</Link>
+            <Link href="/insurance" className="vltd-tap-y mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Open the insurance packet &gt;</Link>
           </Panel>
         </div>
 

@@ -19,9 +19,25 @@ export default function BugReporter() {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+  // On a phone the button steps out of the way while the page scrolls (globals.css: .vltd-bug-fab), so it never sits on the content being read.
+  const [quiet, setQuiet] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      setQuiet(true);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => setQuiet(false), 1200);
+    };
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   // Help > Support in the top bar opens this same reporter.
@@ -113,7 +129,8 @@ export default function BugReporter() {
         aria-label="Report a bug"
         title="Report a bug"
         data-site-chrome="true"
-        className="fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
+        data-quiet={quiet ? "true" : undefined}
+        className="vltd-bug-fab fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the
           // `fixed` class with position:relative, which shoved this off-screen.

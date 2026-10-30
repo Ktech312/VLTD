@@ -102,6 +102,7 @@ export default function BottomNav() {
           />
           {/* Sheet: sits directly above the nav bar */}
           <div
+            data-more-sheet="true"
             className="vltd-keep-color"
             style={{
               position: "absolute",

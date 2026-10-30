@@ -10,7 +10,7 @@ import SwipeStrip from "@/components/home/SwipeStrip";
 import { loadActivityEvents, type ActivityEventRecord } from "@/lib/activityEvents";
 import { UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import SeasonalBanner from "@/components/SeasonalBanner";
-import { PillButton } from "@/components/ui/PillButton";
+import { PHONE_COMPACT_CLASS, PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import { getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
@@ -435,7 +435,7 @@ export default function HomeClient() {
               <h1 style={{ fontFamily: C.r, fontSize: 36, fontWeight: 700, lineHeight: 1.05, marginTop: 4 }}>{displayName || "Curator"}</h1>
               {stats.totalItems === 0 && sales.count === 0 ? null : (
                 <div style={{ marginTop: 8 }}>
-                  <PillButton href="/vault" ariaLabel={`Open your Vault: ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`}>{stats.totalItems} {stats.totalItems === 1 ? "item" : "items"} · Open Vault</PillButton>
+                  <PillButton href="/vault" className={PHONE_COMPACT_CLASS} ariaLabel={`Open your Vault: ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`}>{stats.totalItems} {stats.totalItems === 1 ? "item" : "items"} · Open Vault</PillButton>
                 </div>
               )}
             </div>
@@ -533,7 +533,7 @@ export default function HomeClient() {
             {notices.map((n) => (
               <div key={n.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "10px 14px", borderRadius: 8, background: "rgba(240,195,106,0.10)", border: "1px solid rgba(240,195,106,0.35)", fontSize: 13 }}>
                 <span>{n.text}</span>
-                <PillButton href={n.href}>{n.cta}</PillButton>
+                <PillButton href={n.href} className={PHONE_COMPACT_CLASS}>{n.cta}</PillButton>
               </div>
             ))}
           </div>
@@ -574,7 +574,7 @@ export default function HomeClient() {
           <Block
             label="Your exhibitions"
             labelLink={{ href: "/museum", text: "All exhibitions", ariaLabel: "Open all exhibitions" }}
-            action={<PillButton href="/museum/new">Create exhibition</PillButton>}
+            action={<PillButton href="/museum/new" className={PHONE_COMPACT_CLASS}>Create exhibition</PillButton>}
           >
             {galleries.length > 0 ? (
               <ExhibitionCarousel galleries={galleries} />

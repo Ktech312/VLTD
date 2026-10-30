@@ -2443,6 +2443,20 @@ main {
   display: block;
   height: var(--pwa-banner-space, 0px);
 }
+/* Bug button on a phone: smaller and dimmed at rest, hidden while the page scrolls, so it does not sit on top of content (unchanged from 640px up). */
+@media (max-width: 639px) {
+  .vltd-bug-fab {
+    width: 40px !important;
+    height: 40px !important;
+    right: 12px !important;
+    opacity: 0.6;
+    transition: opacity 0.18s ease;
+  }
+  .vltd-bug-fab[data-quiet="true"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
 /* While a menu is open (the Add chooser, Tools, a dropdown) the install pill steps aside instead of peeking out from behind it. */
 html:has([role="menu"]) [data-pwa-banner] {
   opacity: 0;

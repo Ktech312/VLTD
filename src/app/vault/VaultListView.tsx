@@ -2077,8 +2077,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             ))}
           </div>
 
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
-            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
+          {/* Phone: each summary tile is as tall as its own content (items-start) and the Total Value tile is wide enough for its notes to wrap to a few lines, so it is not a tall column that stretches the other tiles. */}
+          <div className="mt-5 flex items-start gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:items-stretch sm:gap-3 sm:overflow-visible xl:grid-cols-4">
+            <div className="w-[236px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
               <Link
                 href="/portfolio"
                 aria-label={`Total value ${formatMoney(stats.totalValue)}. Open the financial breakdown`}
