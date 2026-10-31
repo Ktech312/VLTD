@@ -181,7 +181,7 @@ export default function PrivacyIdentityCards() {
             disabled={saving}
             onClick={() => void handleSave()}
             className="inline-flex h-11 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
-            style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+            style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
           >
             {saving ? "Saving..." : "Save"}
           </button>

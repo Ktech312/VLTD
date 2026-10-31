@@ -261,7 +261,7 @@ export default function AdminMuseumCampusPage() {
                     onClick={() => void saveItemsPerRoom()}
                     disabled={savingConfig}
                     className="shrink-0 rounded-xl px-4 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                    style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
                   >
                     {savingConfig ? "Saving…" : "Save"}
                   </button>
@@ -283,7 +283,7 @@ export default function AdminMuseumCampusPage() {
                   type="button"
                   onClick={startNewProgram}
                   className="shrink-0 rounded-full px-4 py-2 text-xs font-black text-[#0B0B0B] transition hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                  style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
                 >
                   + Add program
                 </button>
@@ -335,7 +335,7 @@ export default function AdminMuseumCampusPage() {
                       onClick={() => void saveProgram()}
                       disabled={!programForm.title.trim()}
                       className="rounded-full px-5 py-2 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                      style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
                     >
                       {editingProgramId ? "Update" : "Create"}
                     </button>
@@ -389,7 +389,7 @@ export default function AdminMuseumCampusPage() {
                   type="button"
                   onClick={startNewStoreItem}
                   className="shrink-0 rounded-full px-4 py-2 text-xs font-black text-[#0B0B0B] transition hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                  style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
                 >
                   + Add item
                 </button>
@@ -424,7 +424,7 @@ export default function AdminMuseumCampusPage() {
                     </label>
                   </div>
                   <div className="mt-4 flex gap-3">
-                    <button type="button" onClick={() => void saveStoreItem()} disabled={!storeForm.name.trim()} className="rounded-full px-5 py-2 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}>
+                    <button type="button" onClick={() => void saveStoreItem()} disabled={!storeForm.name.trim()} className="rounded-full px-5 py-2 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
                       {editingStoreId ? "Update" : "Create"}
                     </button>
                     <button type="button" onClick={() => { setShowStoreForm(false); setEditingStoreId(null); setStoreForm(EMPTY_STORE_ITEM); }} className="rounded-full border px-5 py-2 text-sm font-semibold transition hover:brightness-110" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>

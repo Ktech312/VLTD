@@ -160,7 +160,7 @@ export default function AdminSpotlightsPage() {
             type="button"
             onClick={startNew}
             className="rounded-full px-5 py-2.5 text-sm font-black text-[#0B0B0B] transition hover:brightness-110"
-            style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+            style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
           >
             + Add Spotlight
           </button>
@@ -319,7 +319,7 @@ export default function AdminSpotlightsPage() {
                 onClick={() => void handleSave()}
                 disabled={saving || !form.name.trim()}
                 className="rounded-full px-6 py-2.5 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
               >
                 {saving ? "Saving…" : editingId ? "Update" : "Create"}
               </button>

@@ -185,7 +185,7 @@ export default function AdminWaitlistPage() {
                         disabled={invitingEmail === r.email}
                         onClick={() => void invite(r.email)}
                         className="inline-flex h-9 items-center rounded-full px-4 text-xs font-black text-[#0B0B0B] transition hover:brightness-105 disabled:opacity-50"
-                        style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                        style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
                       >
                         {invitingEmail === r.email ? "Sending…" : r.invited_at ? "Re-invite" : "Approve & Invite"}
                       </button>
