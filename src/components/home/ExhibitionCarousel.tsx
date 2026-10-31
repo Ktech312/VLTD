@@ -216,7 +216,7 @@ export default function ExhibitionCarousel({ galleries }: { galleries: Gallery[]
       </div>
 
       <div style={{ marginTop: 8, textAlign: "center", minWidth: 0 }} aria-live="polite">
-        <Link href={"/gallery/" + current.id} style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)", fontSize: 18, fontWeight: 700, color: "var(--theme-text-primary, #ECEDEF)", textDecoration: "none", display: "inline-block", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Link href={"/gallery/" + current.id} style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)", fontSize: 18, fontWeight: 700, color: "var(--theme-text-primary, #ECEDEF)", textDecoration: "none", display: "inline-block", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "8px 0", margin: "-8px 0" }}>
           {current.title || "Untitled"}
         </Link>
         <div style={{ fontSize: 12, color: "var(--theme-text-secondary, #9BA0A6)", marginTop: 2 }}>

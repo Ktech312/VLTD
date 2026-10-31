@@ -537,7 +537,7 @@ export default function BulkUploadPage() {
                           value={d.title}
                           onChange={(e) => patchDraft(d.id, { title: e.target.value })}
                           placeholder="Title (optional)"
-                          className="w-full rounded-md border bg-vault-card px-1.5 py-1 text-[10px] font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                          className="w-full rounded-md border bg-vault-card px-1.5 py-1 text-[10px] font-semibold text-text-primary max-md:min-h-[44px] outline-none transition focus:border-[color:var(--theme-gold-border)]"
                           style={INPUT_STYLE}
                         />
                       </div>
