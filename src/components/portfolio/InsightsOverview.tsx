@@ -817,7 +817,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                 {(["7d", "30d", "90d", "all"] as TimeRange[]).map((value) => {
                   const active = value === range;
                   return (
-                    <PillButton key={value} variant={active ? "active" : "default"} onClick={() => setRange(value)}>
+                    <PillButton key={value} variant={active ? "active" : "default"} className="min-w-[44px]" onClick={() => setRange(value)}>
                       {value === "all" ? "1Y" : value.toUpperCase()}
                     </PillButton>
                   );
@@ -842,7 +842,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                     <Link
                       key={row.label}
                       href={`/vault?q=${encodeURIComponent(row.label)}`}
-                      className="grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
+                      className="vltd-tap-y [--tap-h:23px] grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
                       style={{ color: "var(--fg)" }}
                     >
                       <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length] }} />

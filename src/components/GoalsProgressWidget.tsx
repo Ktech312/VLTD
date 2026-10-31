@@ -29,7 +29,7 @@ export default function GoalsProgressWidget({
         <button
           type="button"
           onClick={() => router.push("/goals")}
-          className="text-[12px] transition-opacity hover:opacity-70"
+          className="vltd-tap-y text-[12px] transition-opacity hover:opacity-70"
           style={{ color: "var(--theme-gold)" }}
         >
           See all &gt;

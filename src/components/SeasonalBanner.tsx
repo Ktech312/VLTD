@@ -349,7 +349,7 @@ export default function SeasonalBanner() {
                 goTo(shownRef.current - 1, true);
               }}
               aria-label="Previous"
-              className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
               style={arrowStyle}
             >
               <Glyph name="back" size={12} strokeWidth={2} style={{ color: glyph }} />
@@ -388,7 +388,7 @@ export default function SeasonalBanner() {
               href={ctaHref ?? "#"}
               draggable={false}
               onClick={(e) => e.stopPropagation()}
-              className="max-w-[84px] flex-shrink-0 whitespace-normal px-2 py-1 text-center text-[10px] font-black leading-tight transition hover:brightness-110 sm:max-w-none sm:whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-[11px] sm:leading-normal"
+              className="vltd-tap-y [--tap-h:40px] max-w-[84px] flex-shrink-0 whitespace-normal px-2 py-1 text-center text-[10px] font-black leading-tight transition hover:brightness-110 sm:max-w-none sm:whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-[11px] sm:leading-normal"
               style={
                 graphic
                   ? { background: "#141A1F", border: "1px solid rgba(0,0,0,0.5)", borderRadius: 7, color: "#F1F3F5", boxShadow: "0 6px 16px rgba(0,0,0,0.18)" }
@@ -413,7 +413,7 @@ export default function SeasonalBanner() {
                 goTo(shownRef.current + 1, true);
               }}
               aria-label="Next"
-              className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125 [--tap-w:40px]"
               style={arrowStyle}
             >
               <Glyph name="next" size={12} strokeWidth={2} style={{ color: glyph }} />

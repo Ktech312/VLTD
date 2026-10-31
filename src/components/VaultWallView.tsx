@@ -373,7 +373,8 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
         </div>
 
         {/* Row 3: A–Z nav + Advanced toggle */}
-        <div className="mt-2 flex items-center gap-1">
+        {/* 14px (was 8) below the chips on a phone, so the Advanced button's 44px touch area no longer overlaps the chips' touch area above it. */}
+        <div className="mt-2 flex items-center gap-1 max-md:mt-[14px]">
           <div className="-my-1.5 flex gap-0.5 overflow-x-auto pb-3 pt-2.5 flex-1" style={{ scrollbarWidth: "none" }}>
             {flat ? <span className="px-1 text-[11px] text-white/40" data-testid="wall-order-note">{sortMode === "newest" ? "Newest first" : "Ordered by the Sort you chose"}</span> : null}
             {(flat ? [] : LETTERS).map((letter) => {

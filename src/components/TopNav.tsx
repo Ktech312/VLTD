@@ -423,7 +423,7 @@ function TopNavInner() {
               type="button"
               onClick={() => setCommandOpen(true)}
               aria-label="Search"
-              className="grid h-11 w-9 place-items-center rounded-full md:hidden"
+              className="vltd-tap grid h-11 w-9 place-items-center rounded-full min-[350px]:w-10 max-[349px]:[--tap-w:36px] md:hidden"
               style={{ color: "var(--muted)" }}
             >
               <AppIcon name="search" variant="navTop" size={26} />
@@ -486,7 +486,7 @@ function TopNavInner() {
             <Link
               href="/messages"
               aria-label={unreadDmCount > 0 ? `Messages — ${unreadDmCount} unread` : "Messages"}
-              className="vltd-tap-y relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
+              className="vltd-tap relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90 min-[350px]:w-10 max-[349px]:[--tap-w:36px]"
               style={{ color: "var(--muted)" }}
             >
               <AppIcon name="message" variant="navTop" size={28} strokeWidth={1.7} />

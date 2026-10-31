@@ -158,7 +158,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
             type="button"
             aria-label="Previous featured room"
             onClick={() => go(current - 1)}
-            className="absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[rgba(203,208,213,0.35)] bg-black/55 text-[#ECEDEF]"
+            className="vltd-tap absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[rgba(203,208,213,0.35)] bg-black/55 text-[#ECEDEF]"
           >
             <Glyph name="next" size={16} style={{ transform: "scaleX(-1)" }} />
           </button>
@@ -166,7 +166,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
             type="button"
             aria-label="Next featured room"
             onClick={() => go(current + 1)}
-            className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[rgba(203,208,213,0.35)] bg-black/55 text-[#ECEDEF]"
+            className="vltd-tap absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[rgba(203,208,213,0.35)] bg-black/55 text-[#ECEDEF]"
           >
             <Glyph name="next" size={16} />
           </button>
@@ -178,7 +178,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                 aria-label={`Show ${slide.title}`}
                 aria-current={i === current ? "true" : undefined}
                 onClick={() => go(i)}
-                className="grid h-6 w-6 place-items-center max-md:h-11 max-md:w-10"
+                className="grid h-6 w-6 place-items-center max-md:h-11 max-md:w-11"
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: i === current ? "var(--theme-gold,#C8CDD2)" : "rgba(240,234,214,0.35)" }} />
               </button>

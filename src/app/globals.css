@@ -2441,9 +2441,9 @@ main {
 .vltd-content-wrap::after {
   content: "";
   display: block;
-  height: var(--pwa-banner-space, 0px);
+  height: max(var(--pwa-banner-space, 0px), var(--bug-fab-space, 0px));
 }
-/* Bug button on a phone: smaller and dimmed at rest, hidden while the page scrolls, so it does not sit on top of content (unchanged from 640px up). */
+/* Bug button on a phone: smaller and dimmed, and shown only at the end of the page (BugReporter sets data-quiet while it is not), where the page leaves room for it. Unchanged from 640px up. */
 @media (max-width: 639px) {
   .vltd-bug-fab {
     width: 40px !important;

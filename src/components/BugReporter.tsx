@@ -19,26 +19,42 @@ export default function BugReporter() {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
-  // On a phone the button steps out of the way while the page scrolls (globals.css: .vltd-bug-fab), so it never sits on the content being read.
-  const [quiet, setQuiet] = useState(false);
+  // On a phone the floating button only shows once the page is scrolled to its end, where the page leaves room for it (--bug-fab-space, globals.css), so it never sits on content.
+  // Anywhere else on a phone, Report a bug is Account menu > Support (it opens this same dialog).
+  const [atEnd, setAtEnd] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const onScroll = () => {
-      setQuiet(true);
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => setQuiet(false), 1200);
+    const check = () => {
+      const sc = document.querySelector<HTMLElement>(".vltd-content-wrap");
+      setAtEnd(!sc || sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 16);
     };
-    window.addEventListener("scroll", onScroll, true);
+    check();
+    const id = window.setInterval(check, 400);
+    window.addEventListener("scroll", check, true);
+    window.addEventListener("resize", check);
     return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      if (timer) clearTimeout(timer);
+      window.clearInterval(id);
+      window.removeEventListener("scroll", check, true);
+      window.removeEventListener("resize", check);
     };
   }, []);
+
+  // Room under the last content of a phone page for the button (read by .vltd-content-wrap::after in globals.css).
+  useEffect(() => {
+    if (!signedIn) return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const apply = () => document.documentElement.style.setProperty("--bug-fab-space", mq.matches ? "44px" : "0px");
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.style.removeProperty("--bug-fab-space");
+    };
+  }, [signedIn]);
 
   // Help > Support in the top bar opens this same reporter.
   useEffect(() => {
@@ -129,7 +145,7 @@ export default function BugReporter() {
         aria-label="Report a bug"
         title="Report a bug"
         data-site-chrome="true"
-        data-quiet={quiet ? "true" : undefined}
+        data-quiet={atEnd ? undefined : "true"}
         className="vltd-bug-fab fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the
