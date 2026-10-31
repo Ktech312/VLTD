@@ -1,0 +1,27 @@
+PASS [add-item] typed name with emulated keyboard :: QAFUNCOOPM Add Item Robot
+PASS [add-item] Save to Vault reachable with the keyboard up :: {"reachable":true,"clearOfBar":true}
+PASS [add-item] after Save the app goes to the Vault :: /vault
+PASS [add-item] item is in the database :: {"id":"1793424586463_t0geq9","title":"QAFUNCOOPM Add Item Robot"}
+PASS [add-item] brand, set and note were stored :: {"brand":true,"set":true,"note":true}
+PASS [add-item] after a reload the Vault still lists it :: title found on the page
+PASS [add-item] after a reload the item page shows the saved details :: {"title":true,"brand":true}
+PASS [single-upload] page has a plain file input (not the camera one) :: [{"accept":"image/*","capture":null,"multiple":false},{"accept":"image/*","capture":"environment","multiple":false}]
+PASS [single-upload] chosen file attached (picture shows on the page) :: {"photoCount":null,"hasPreview":true}
+PASS [single-upload] saved item is in the database with its picture :: {"id":"1793424627191_9q2s9a","image":true}
+PASS [bulk] Universe and Category chosen :: {"universe":"Pop Culture","category":"Comics"}
+PASS [bulk] two pictures chosen (two title fields appear) :: {"titleFields":2}
+PASS [bulk] Fill in by hand opens the review with both names and Add all 2 :: {"names":["QAFUNCOOPM Bulk One","QAFUNCOOPM Bulk Two"],"addAll":true}
+PASS [bulk] Add all reachable with the keyboard up :: {"reachable":true,"clearOfBar":true}
+PASS [bulk] after Add all the app goes to the Vault :: /vault
+PASS [bulk] both items are in the database with pictures :: [{"title":"QAFUNCOOPM Bulk One","image":true,"universe":"POP_CULTURE","category":"Comics"},{"title":"QAFUNCOOPM Bulk Two Edited","image":true,"universe":"POP_CULTURE","category":"Comics"}]
+PASS [bulk] names, filing and value were stored :: [{"title":"QAFUNCOOPM Bulk One","universe":"POP_CULTURE","value":12},{"title":"QAFUNCOOPM Bulk Two Edited","universe":"POP_CULTURE"}]
+PASS [bulk] after a reload the Vault lists the bulk items :: {"one":true,"two":true}
+PASS [exhibitions] Create Exhibition enabled, reachable with the keyboard up :: {"disabled":false,"reachable":true,"clearOfBar":true}
+PASS [exhibitions] creating goes to the new exhibition :: /museum/592f10f0-9c89-4847-8f17-69375615f33d
+PASS [exhibitions] exhibition is in the database with the typed title :: {"title":"QAFUNCOOPM Exhibit","description":"QAFUNCOOPM created with the keyboard up"}
+PASS [exhibitions] header title and description autosaved :: {"title":"QAFUNCOOPM Exhibit Renamed","description":"QAFUNCOOPM header description"}
+PASS [exhibitions] builder page name and description fields are present :: true
+PASS [exhibitions] builder Save reachable with the keyboard up :: {"reachable":true,"clearOfBar":true,"h":32}
+PASS [exhibitions] builder page name and description saved to the database (exhibition_layout) :: {"name":true,"description":true}
+PASS [exhibitions] after a reload the saved title, page name and description show :: {"name":"QAFUNCOOPM Page One","desc":"QAFUNCOOPM page description typed with the keyboard up","text":true}
+DONE 26/26 passed; tag QAFUNCOOPM

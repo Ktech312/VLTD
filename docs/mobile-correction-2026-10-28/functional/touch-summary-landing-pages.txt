@@ -1,0 +1,18 @@
+﻿== 390
+home        compact pills: 3 (min tap height 44)   still under 44: Next 40x44; Seasonal theme off 81x32; Comics (Misc. & Peach  81x42
+vault       compact pills: 7 (min tap height 44)   still under 44: INPUT 81x32
+exhibitions compact pills: 2 (min tap height 44)   still under 44: none
+discover    compact pills: 0 (min tap height null)   still under 44: INPUT 81x42
+insights    compact pills: 7 (min tap height 44)   still under 44: Trading Card Games $37 81x23; Movies / TV / Film $22 81x23; Comics $205 (16.7%) 81x23; Sports Cards $192 (15. 81x23; Audio Formats $120 (9. 81x23; Instruments & Gear $11 81x24
+== 360
+home        compact pills: 3 (min tap height 44)   still under 44: Learn More 75x40; Next 40x44; Seasonal theme off 81x32; Comics (Misc. & Peach  81x42
+vault       compact pills: 7 (min tap height 44)   still under 44: INPUT 81x32
+exhibitions compact pills: 2 (min tap height 44)   still under 44: none
+discover    compact pills: 0 (min tap height null)   still under 44: INPUT 81x42
+insights    compact pills: 7 (min tap height 44)   still under 44: Trading Card Games $37 81x23; Movies / TV / Film $22 81x23; Comics $205 (16.7%) 81x23; Sports Cards $192 (15. 81x23; Audio Formats $120 (9. 81x23; Instruments & Gear $11 81x24
+== 320
+home        compact pills: 3 (min tap height 44)   still under 44: Search 36x44; Messages 36x44; Alerts 36x44; Learn More 75x40; Next 40x44; Seasonal theme off 81x32; Show Vinyl Wall, exhib 32x81; Show Sports Slabs, exh 32x81; Comics (Misc. & Peach  81x42
+vault       compact pills: 7 (min tap height 44)   still under 44: Search 36x44; Messages 36x44; Alerts 36x44; INPUT 81x32
+exhibitions compact pills: 2 (min tap height 44)   still under 44: Search 36x44; Messages 36x44; Alerts 36x44
+discover    compact pills: 0 (min tap height null)   still under 44: Search 36x44; Messages 36x44; Alerts 36x44; INPUT 81x42; Open Marketplace 81x18
+insights    compact pills: 7 (min tap height 44)   still under 44: Search 36x44; Messages 36x44; Alerts 36x44; Trading Card Games $37 81x23; Movies / TV / Film $22 81x23; Comics $205 (16.7%) 81x23; Sports Cards $192 (15. 81x23; Audio Formats $120 (9. 81x23; Instruments & Gear $11 81x24

@@ -1,0 +1,259 @@
+{
+ "tag": "QAFUNCOOPM",
+ "createdItemIds": [
+  "1793424586463_t0geq9",
+  "1793424627191_9q2s9a",
+  "1793424651342_4be463",
+  "1793424651657_ww74ft"
+ ],
+ "createdGalleryId": "592f10f0-9c89-4847-8f17-69375615f33d",
+ "results": [
+  {
+   "test": "add-item",
+   "step": "typed name with emulated keyboard",
+   "ok": true,
+   "detail": "QAFUNCOOPM Add Item Robot"
+  },
+  {
+   "test": "add-item",
+   "step": "Save to Vault reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "reachable": true,
+    "clearOfBar": true
+   }
+  },
+  {
+   "test": "add-item",
+   "step": "after Save the app goes to the Vault",
+   "ok": true,
+   "detail": "/vault"
+  },
+  {
+   "test": "add-item",
+   "step": "item is in the database",
+   "ok": true,
+   "detail": {
+    "id": "1793424586463_t0geq9",
+    "title": "QAFUNCOOPM Add Item Robot"
+   }
+  },
+  {
+   "test": "add-item",
+   "step": "brand, set and note were stored",
+   "ok": true,
+   "detail": {
+    "brand": true,
+    "set": true,
+    "note": true
+   }
+  },
+  {
+   "test": "add-item",
+   "step": "after a reload the Vault still lists it",
+   "ok": true,
+   "detail": "title found on the page"
+  },
+  {
+   "test": "add-item",
+   "step": "after a reload the item page shows the saved details",
+   "ok": true,
+   "detail": {
+    "title": true,
+    "brand": true
+   }
+  },
+  {
+   "test": "single-upload",
+   "step": "page has a plain file input (not the camera one)",
+   "ok": true,
+   "detail": [
+    {
+     "accept": "image/*",
+     "capture": null,
+     "multiple": false
+    },
+    {
+     "accept": "image/*",
+     "capture": "environment",
+     "multiple": false
+    }
+   ]
+  },
+  {
+   "test": "single-upload",
+   "step": "chosen file attached (picture shows on the page)",
+   "ok": true,
+   "detail": {
+    "photoCount": null,
+    "hasPreview": true
+   }
+  },
+  {
+   "test": "single-upload",
+   "step": "saved item is in the database with its picture",
+   "ok": true,
+   "detail": {
+    "id": "1793424627191_9q2s9a",
+    "image": true
+   }
+  },
+  {
+   "test": "bulk",
+   "step": "Universe and Category chosen",
+   "ok": true,
+   "detail": {
+    "universe": "Pop Culture",
+    "category": "Comics"
+   }
+  },
+  {
+   "test": "bulk",
+   "step": "two pictures chosen (two title fields appear)",
+   "ok": true,
+   "detail": {
+    "titleFields": 2
+   }
+  },
+  {
+   "test": "bulk",
+   "step": "Fill in by hand opens the review with both names and Add all 2",
+   "ok": true,
+   "detail": {
+    "names": [
+     "QAFUNCOOPM Bulk One",
+     "QAFUNCOOPM Bulk Two"
+    ],
+    "addAll": true
+   }
+  },
+  {
+   "test": "bulk",
+   "step": "Add all reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "reachable": true,
+    "clearOfBar": true
+   }
+  },
+  {
+   "test": "bulk",
+   "step": "after Add all the app goes to the Vault",
+   "ok": true,
+   "detail": "/vault"
+  },
+  {
+   "test": "bulk",
+   "step": "both items are in the database with pictures",
+   "ok": true,
+   "detail": [
+    {
+     "title": "QAFUNCOOPM Bulk One",
+     "image": true,
+     "universe": "POP_CULTURE",
+     "category": "Comics"
+    },
+    {
+     "title": "QAFUNCOOPM Bulk Two Edited",
+     "image": true,
+     "universe": "POP_CULTURE",
+     "category": "Comics"
+    }
+   ]
+  },
+  {
+   "test": "bulk",
+   "step": "names, filing and value were stored",
+   "ok": true,
+   "detail": [
+    {
+     "title": "QAFUNCOOPM Bulk One",
+     "universe": "POP_CULTURE",
+     "value": 12
+    },
+    {
+     "title": "QAFUNCOOPM Bulk Two Edited",
+     "universe": "POP_CULTURE"
+    }
+   ]
+  },
+  {
+   "test": "bulk",
+   "step": "after a reload the Vault lists the bulk items",
+   "ok": true,
+   "detail": {
+    "one": true,
+    "two": true
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "Create Exhibition enabled, reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "disabled": false,
+    "reachable": true,
+    "clearOfBar": true
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "creating goes to the new exhibition",
+   "ok": true,
+   "detail": "/museum/592f10f0-9c89-4847-8f17-69375615f33d"
+  },
+  {
+   "test": "exhibitions",
+   "step": "exhibition is in the database with the typed title",
+   "ok": true,
+   "detail": {
+    "title": "QAFUNCOOPM Exhibit",
+    "description": "QAFUNCOOPM created with the keyboard up"
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "header title and description autosaved",
+   "ok": true,
+   "detail": {
+    "title": "QAFUNCOOPM Exhibit Renamed",
+    "description": "QAFUNCOOPM header description"
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "builder page name and description fields are present",
+   "ok": true,
+   "detail": true
+  },
+  {
+   "test": "exhibitions",
+   "step": "builder Save reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 32
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "builder page name and description saved to the database (exhibition_layout)",
+   "ok": true,
+   "detail": {
+    "name": true,
+    "description": true
+   }
+  },
+  {
+   "test": "exhibitions",
+   "step": "after a reload the saved title, page name and description show",
+   "ok": true,
+   "detail": {
+    "name": "QAFUNCOOPM Page One",
+    "desc": "QAFUNCOOPM page description typed with the keyboard up",
+    "text": true
+   }
+  }
+ ]
+}
