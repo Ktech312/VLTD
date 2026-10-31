@@ -199,7 +199,7 @@ function LockableLabel({
         type="button"
         onClick={onToggleLock}
         className={[
-          "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
+          "vltd-tap [--tap-h:30px] inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
           locked
             ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
             : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
@@ -224,7 +224,7 @@ function ActionButton({ label, icon, onClick, disabled }: { label: string; icon:
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary max-md:min-h-[44px] transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
       style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.28))" }}
     >
       <span style={{ color: "var(--theme-gold, #C8CDD2)" }}>{icon}</span>

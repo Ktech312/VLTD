@@ -146,7 +146,7 @@ export default function BugReporter() {
         title="Report a bug"
         data-site-chrome="true"
         data-quiet={atEnd ? undefined : "true"}
-        className="vltd-bug-fab fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
+        className="vltd-bug-fab vltd-tap fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the
           // `fixed` class with position:relative, which shoved this off-screen.

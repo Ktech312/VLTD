@@ -779,7 +779,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         <canvas ref={captureCanvasRef} className="hidden" />
 
         {/* Header — Universe · Category · Frame · Camera dropdown pills + Finished + close */}
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5 max-md:gap-y-3">
           <DropdownPill
             title="Universe"
             value={universe}
@@ -820,7 +820,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             onClick={toggleScan}
             title={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
             aria-label={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
+            className="vltd-tap inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
             style={
               scanState === "scanning"
                 ? { background: "rgba(74,155,255,0.16)", borderColor: "rgba(74,155,255,0.5)", color: "#4A9BFF" }

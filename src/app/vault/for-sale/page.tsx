@@ -209,7 +209,7 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
 
       {/* Actions */}
       <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] pt-3">
-        <div className="flex items-center gap-1 overflow-hidden rounded-[8px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+        <div className="flex items-center gap-1 overflow-hidden rounded-[8px] ring-1 ring-[color:var(--border)] max-md:overflow-visible" style={{ background: "var(--pill)" }}>
           <span className="pl-2 text-xs" style={{ color: "var(--muted)" }}>$</span>
           <input
             ref={askRef}

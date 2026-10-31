@@ -527,7 +527,7 @@ export default function BulkUploadPage() {
                             type="button"
                             onClick={() => removeDraft(d.id)}
                             aria-label="Remove photo"
-                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                            className="vltd-tap absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100 max-md:opacity-100"
                           >
                             ×
                           </button>

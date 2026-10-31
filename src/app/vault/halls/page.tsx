@@ -386,7 +386,7 @@ export default function VaultHallsPage() {
           <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Link href="/vault" className="text-[color:var(--muted)] hover:text-[color:var(--fg)] transition-colors text-sm">
+                <Link href="/vault" className="vltd-tap-y text-[color:var(--muted)] hover:text-[color:var(--fg)] transition-colors text-sm">
                   &larr; Vault
                 </Link>
                 <div className="h-4 w-px bg-[color:var(--border)]" />
@@ -494,7 +494,7 @@ export default function VaultHallsPage() {
                 <button
                   onClick={() => void backfillTags()}
                   disabled={backfilling}
-                  className="shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
+                  className="vltd-tap-y shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
                 >
                   {backfilling ? "Tagging…" : "Auto-tag my collection"}
                 </button>
