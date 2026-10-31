@@ -1,0 +1,206 @@
+[
+ {
+  "w": 390,
+  "buttons": [
+   {
+    "t": "A",
+    "label": "VLTD Home",
+    "h": 38
+   },
+   {
+    "t": "BUTTON",
+    "label": "Search",
+    "h": 44
+   },
+   {
+    "t": "A",
+    "label": "Messages",
+    "h": 36
+   },
+   {
+    "t": "A",
+    "label": "Alerts",
+    "h": 36
+   },
+   {
+    "t": "BUTTON",
+    "label": "Account menu",
+    "h": 40
+   },
+   {
+    "t": "A",
+    "label": "← Add one item instead",
+    "h": 44
+   },
+   {
+    "t": "BUTTON",
+    "label": "+ Add more photos Up to 60 photos per up",
+    "h": 134
+   },
+   {
+    "t": "BUTTON",
+    "label": "Use the camera — snap them one after ano",
+    "h": 44
+   },
+   {
+    "t": "BUTTON",
+    "label": "×",
+    "h": 24
+   },
+   {
+    "t": "BUTTON",
+    "label": "×",
+    "h": 24
+   },
+   {
+    "t": "BUTTON",
+    "label": "Fill in by hand",
+    "h": 44
+   },
+   {
+    "t": "A",
+    "label": "Exhibitions",
+    "h": 54
+   },
+   {
+    "t": "A",
+    "label": "Vault",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "Add item to vault",
+    "h": 46
+   },
+   {
+    "t": "A",
+    "label": "Discover",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "More",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "Report a bug",
+    "h": 40
+   }
+  ],
+  "focus": "Search vault, exhibitions, collectors...",
+  "main": [
+   {
+    "label": "+ Add more photos Up to 60 photos pe",
+    "top": -179,
+    "bottom": -45,
+    "h": 134,
+    "reachable": false,
+    "clearOfBar": true,
+    "barTop": 438
+   }
+  ]
+ },
+ {
+  "w": 320,
+  "buttons": [
+   {
+    "t": "A",
+    "label": "VLTD Home",
+    "h": 38
+   },
+   {
+    "t": "BUTTON",
+    "label": "Search",
+    "h": 44
+   },
+   {
+    "t": "A",
+    "label": "Messages",
+    "h": 36
+   },
+   {
+    "t": "A",
+    "label": "Alerts",
+    "h": 36
+   },
+   {
+    "t": "BUTTON",
+    "label": "Account menu",
+    "h": 40
+   },
+   {
+    "t": "A",
+    "label": "← Add one item instead",
+    "h": 44
+   },
+   {
+    "t": "BUTTON",
+    "label": "+ Add more photos Up to 60 photos per up",
+    "h": 134
+   },
+   {
+    "t": "BUTTON",
+    "label": "Use the camera — snap them one after ano",
+    "h": 51
+   },
+   {
+    "t": "BUTTON",
+    "label": "×",
+    "h": 24
+   },
+   {
+    "t": "BUTTON",
+    "label": "×",
+    "h": 24
+   },
+   {
+    "t": "BUTTON",
+    "label": "Fill in by hand",
+    "h": 44
+   },
+   {
+    "t": "A",
+    "label": "Exhibitions",
+    "h": 54
+   },
+   {
+    "t": "A",
+    "label": "Vault",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "Add item to vault",
+    "h": 46
+   },
+   {
+    "t": "A",
+    "label": "Discover",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "More",
+    "h": 54
+   },
+   {
+    "t": "BUTTON",
+    "label": "Report a bug",
+    "h": 40
+   }
+  ],
+  "focus": "Search vault, exhibitions, collectors...",
+  "main": [
+   {
+    "label": "+ Add more photos Up to 60 photos pe",
+    "top": -313,
+    "bottom": -179,
+    "h": 134,
+    "reachable": false,
+    "clearOfBar": true,
+    "barTop": 287
+   }
+  ]
+ }
+]

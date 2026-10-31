@@ -1,0 +1,1523 @@
+[
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-home-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-vault-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-exhibitions-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-discover-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-insights-end-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 844
+  },
+  "img": "android-menu-more-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 390,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 249,
+    "b": 708
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "android-menu-add-390.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-home-end-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-vault-end-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-exhibitions-end-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-discover-end-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-insights-end-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 779
+  },
+  "img": "android-menu-more-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 360,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 249,
+    "b": 643
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "android-menu-add-360.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-home-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-vault-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-exhibitions-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-discover-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-insights-end-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 693
+  },
+  "img": "android-menu-more-320.jpg"
+ },
+ {
+  "mode": "android",
+  "w": 320,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 249,
+    "b": 557
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "android-menu-add-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-home-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-vault-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-exhibitions-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-discover-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-insights-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 111,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 844
+  },
+  "img": "ios-menu-more-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 658,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-menu-add-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 390,
+  "page": "ios-steps-end",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 625,
+    "r": 265,
+    "b": 708
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 774,
+   "vh": 844
+  },
+  "img": "ios-steps-open-end-390.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-home-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-vault-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-exhibitions-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-discover-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-insights-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 101,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 779
+  },
+  "img": "ios-menu-more-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 593,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-menu-add-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 360,
+  "page": "ios-steps-end",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 560,
+    "r": 265,
+    "b": 643
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 709,
+   "vh": 779
+  },
+  "img": "ios-steps-open-end-360.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "home",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-home-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "vault",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-vault-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "exhibitions",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-exhibitions-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "discover",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-discover-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "insights",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-insights-end-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "menu-more",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [
+    {
+     "label": "Curator Home",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Insights",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Events",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Alerts",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Command Center",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "VLT Lounge",
+     "w": 88,
+     "h": 88,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Activity",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Learn",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    },
+    {
+     "label": "Account",
+     "w": 88,
+     "h": 74,
+     "tappable": true,
+     "onScreen": true
+    }
+   ],
+   "menu": [],
+   "barTop": -70,
+   "vh": 693
+  },
+  "img": "ios-menu-more-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "menu-add",
+  "menu": {
+   "banner": {
+    "l": 16,
+    "t": 507,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 0,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [
+    {
+     "label": "Add Item",
+     "tappable": true
+    },
+    {
+     "label": "Quick Add",
+     "tappable": true
+    },
+    {
+     "label": "Upload: single item",
+     "tappable": true
+    },
+    {
+     "label": "Upload: batch",
+     "tappable": true
+    }
+   ],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-menu-add-320.jpg"
+ },
+ {
+  "mode": "ios",
+  "w": 320,
+  "page": "ios-steps-end",
+  "end": {
+   "banner": {
+    "l": 16,
+    "t": 474,
+    "r": 265,
+    "b": 557
+   },
+   "visibleFraction": 1,
+   "overBar": false,
+   "overBug": false,
+   "covered": [],
+   "underContent": [],
+   "moreTiles": [],
+   "menu": [],
+   "barTop": 623,
+   "vh": 693
+  },
+  "img": "ios-steps-open-end-320.jpg"
+ }
+]

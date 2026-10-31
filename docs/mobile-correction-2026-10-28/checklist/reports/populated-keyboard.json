@@ -1,0 +1,122 @@
+[
+ {
+  "page": "add-item",
+  "w": 390,
+  "keyboardHeight": 336,
+  "field": {
+   "top": 232,
+   "bottom": 272,
+   "barTop": 438,
+   "visible": true,
+   "reachable": true,
+   "vh": 508
+  },
+  "saveButton": {
+   "top": 297,
+   "bottom": 349,
+   "barTop": 438,
+   "height": 52,
+   "reachable": true,
+   "clearOfBar": true,
+   "vh": 508
+  },
+  "img": "populated-keyboard-add-item-390.jpg"
+ },
+ {
+  "page": "upload-bulk",
+  "w": 390,
+  "keyboardHeight": 336,
+  "buttons": [
+   {
+    "label": "+\nAdd more photos\nUp to 60 p",
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 134
+   },
+   {
+    "label": "Fill in by hand",
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 44
+   }
+  ],
+  "img": "populated-keyboard-bulk-390.jpg"
+ },
+ {
+  "page": "exhibition-new",
+  "w": 390,
+  "keyboardHeight": 336,
+  "titleField": {
+   "top": 230,
+   "visible": true
+  },
+  "button": {
+   "label": "Create Exhibition",
+   "h": 44,
+   "reachable": true,
+   "clearOfBar": true,
+   "disabled": true
+  },
+  "img": "populated-keyboard-exhibition-new-390.jpg"
+ },
+ {
+  "page": "add-item",
+  "w": 320,
+  "keyboardHeight": 336,
+  "field": {
+   "top": 156,
+   "bottom": 197,
+   "barTop": 287,
+   "visible": true,
+   "reachable": true,
+   "vh": 357
+  },
+  "saveButton": {
+   "top": 151,
+   "bottom": 203,
+   "barTop": 287,
+   "height": 52,
+   "reachable": true,
+   "clearOfBar": true,
+   "vh": 357
+  },
+  "img": "populated-keyboard-add-item-320.jpg"
+ },
+ {
+  "page": "upload-bulk",
+  "w": 320,
+  "keyboardHeight": 336,
+  "buttons": [
+   {
+    "label": "+\nAdd more photos\nUp to 60 p",
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 134
+   },
+   {
+    "label": "Fill in by hand",
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 44
+   }
+  ],
+  "img": "populated-keyboard-bulk-320.jpg"
+ },
+ {
+  "page": "exhibition-new",
+  "w": 320,
+  "keyboardHeight": 336,
+  "titleField": {
+   "top": 155,
+   "visible": true
+  },
+  "button": {
+   "label": "Create Exhibition",
+   "h": 44,
+   "reachable": true,
+   "clearOfBar": true,
+   "disabled": true
+  },
+  "img": "populated-keyboard-exhibition-new-320.jpg"
+ }
+]

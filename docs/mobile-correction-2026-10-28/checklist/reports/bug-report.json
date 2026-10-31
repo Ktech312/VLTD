@@ -1,0 +1,492 @@
+[
+ {
+  "w": 390,
+  "page": "home",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "9 valued items have not had "
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-home-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "vault",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "26 items",
+    "TCG (4)",
+    "Music (9)"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-vault-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "exhibitions",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "New exhibit"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-exhibitions-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "discover",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "Lamp — Djinn Vesselin Enchan",
+    "IMG"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-discover-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "insights",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "$1,226",
+    "100% of estimated value, in "
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-insights-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "add-item",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": [
+    "—MintNear MintExcellentVery "
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    338,
+    724,
+    40,
+    40
+   ],
+   "barTop": 774,
+   "underContent": []
+  },
+  "img": "bug-add-item-end-390.jpg"
+ },
+ {
+  "w": 390,
+  "page": "account-menu-support",
+  "support": {
+   "ok": true,
+   "h": 44
+  },
+  "dialog": {
+   "open": true,
+   "textarea": true,
+   "send": true
+  },
+  "img": "bug-account-support-390.jpg"
+ },
+ {
+  "w": 320,
+  "page": "home",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": [
+    "Activity ›Sold QA Sold Poste"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-home-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "vault",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-vault-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "exhibitions",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": [
+    "New exhibit"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-exhibitions-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "discover",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": [
+    "Spear of Destiny — Tip Fragm",
+    "Spear of Destiny — Tip Fragm",
+    "in It Belongs in a Museum · ",
+    "$9,400,000"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-discover-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "insights",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": [
+    "Value Not Fully Documented",
+    "$1,226"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-insights-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "add-item",
+  "scrollable": true,
+  "mid": {
+   "exists": true,
+   "opacity": "0",
+   "pointerEvents": "none",
+   "shown": false,
+   "tappable": false,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": [
+    "—PSACGCBGSSGCCBCSWATAVGAOthe"
+   ]
+  },
+  "end": {
+   "exists": true,
+   "opacity": "0.6",
+   "pointerEvents": "auto",
+   "shown": true,
+   "tappable": true,
+   "box": [
+    268,
+    573,
+    40,
+    40
+   ],
+   "barTop": 623,
+   "underContent": []
+  },
+  "img": "bug-add-item-end-320.jpg"
+ },
+ {
+  "w": 320,
+  "page": "account-menu-support",
+  "support": {
+   "ok": false,
+   "h": 44
+  },
+  "dialog": {
+   "open": true,
+   "textarea": true,
+   "send": true
+  },
+  "img": "bug-account-support-320.jpg"
+ }
+]

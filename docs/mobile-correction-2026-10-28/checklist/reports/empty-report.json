@@ -1,0 +1,632 @@
+[
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-items",
+  "path": "/vault",
+  "top": "empty-vault-items-top-390.jpg",
+  "end": "empty-vault-items-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 732,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 37,
+  "small": [],
+  "cut": [],
+  "inputs": [
+   "Search the vault 328x44"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-for-sale",
+  "path": "/vault/for-sale",
+  "top": "empty-vault-for-sale-top-390.jpg",
+  "end": "empty-vault-for-sale-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 165,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 13,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-sold",
+  "path": "/vault/sold",
+  "top": "empty-vault-sold-top-390.jpg",
+  "end": "empty-vault-sold-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 476,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 13,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-insights",
+  "path": "/portfolio",
+  "top": "empty-vault-insights-top-390.jpg",
+  "end": "empty-vault-insights-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 620,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 14,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-goals",
+  "path": "/goals",
+  "top": "empty-vault-goals-top-390.jpg",
+  "end": "empty-vault-goals-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 732,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 64,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "vault-insurance",
+  "path": "/insurance",
+  "top": "empty-vault-insurance-top-390.jpg",
+  "end": "empty-vault-insurance-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 692,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 19,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "exhibition-new",
+  "path": "/museum/new",
+  "top": "empty-exhibition-new-top-390.jpg",
+  "end": "empty-exhibition-new-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 732,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 34,
+  "small": [],
+  "cut": [],
+  "inputs": [
+   "e.g. Hall of Grails 314x44",
+   "Write a short curatorial descripti 314x144",
+   "INPUT 13x16"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "exhibition-from-search",
+  "path": "/vault/halls",
+  "top": "empty-exhibition-from-search-top-390.jpg",
+  "end": "empty-exhibition-from-search-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 0,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 16,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "add-item",
+  "path": "/capture",
+  "top": "empty-add-item-top-390.jpg",
+  "end": "empty-add-item-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 708,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 46,
+  "small": [
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30"
+  ],
+  "cut": [],
+  "inputs": [
+   "Item name 320x41",
+   "Optional 320x41",
+   "e.g. Nintendo, Marvel, Topps 320x41",
+   "e.g. 1986 Fleer Basketball 320x41",
+   "Cert number 320x41",
+   "9 154x41",
+   "Add any details about this item… 320x68"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "quick-add",
+  "path": "/vault/quick",
+  "top": "empty-quick-add-top-390.jpg",
+  "end": "empty-quick-add-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 776,
+   "barTop": 774,
+   "clear": false
+  },
+  "controls": 11,
+  "small": [],
+  "cut": [],
+  "inputs": [
+   "Camera zoom 24x94"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "upload-single",
+  "path": "/capture",
+  "top": "empty-upload-single-top-390.jpg",
+  "end": "empty-upload-single-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 708,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 46,
+  "small": [
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30"
+  ],
+  "cut": [],
+  "inputs": [
+   "Item name 320x41",
+   "Optional 320x41",
+   "e.g. Nintendo, Marvel, Topps 320x41",
+   "e.g. 1986 Fleer Basketball 320x41",
+   "Cert number 320x41",
+   "9 154x41",
+   "Add any details about this item… 320x68"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "upload-bulk",
+  "path": "/vault/bulk",
+  "top": "empty-upload-bulk-top-390.jpg",
+  "end": "empty-upload-bulk-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 688,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 10,
+  "small": [],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 390,
+  "page": "exhibition-builder",
+  "path": "/museum/10ca7452-8609-4072-939c-516e5836cc5a",
+  "top": "empty-exhibition-builder-top-390.jpg",
+  "end": "empty-exhibition-builder-end-390.jpg",
+  "docOverflow": 0,
+  "barTop": 774,
+  "clear": {
+   "lowestContentBottom": 732,
+   "barTop": 774,
+   "clear": true
+  },
+  "controls": 49,
+  "small": [],
+  "cut": [],
+  "inputs": [
+   "Exhibit name… 150x44",
+   "Exhibit description… 290x52"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-items",
+  "path": "/vault",
+  "top": "empty-vault-items-top-320.jpg",
+  "end": "empty-vault-items-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 581,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 40,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": [
+   "Search the vault 258x44"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-for-sale",
+  "path": "/vault/for-sale",
+  "top": "empty-vault-for-sale-top-320.jpg",
+  "end": "empty-vault-for-sale-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 165,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 13,
+  "small": [
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-sold",
+  "path": "/vault/sold",
+  "top": "empty-vault-sold-top-320.jpg",
+  "end": "empty-vault-sold-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 491,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 13,
+  "small": [
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-insights",
+  "path": "/portfolio",
+  "top": "empty-vault-insights-top-320.jpg",
+  "end": "empty-vault-insights-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 581,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 19,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-goals",
+  "path": "/goals",
+  "top": "empty-vault-goals-top-320.jpg",
+  "end": "empty-vault-goals-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 581,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 74,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "vault-insurance",
+  "path": "/insurance",
+  "top": "empty-vault-insurance-top-320.jpg",
+  "end": "empty-vault-insurance-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 541,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 19,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "exhibition-new",
+  "path": "/museum/new",
+  "top": "empty-exhibition-new-top-320.jpg",
+  "end": "empty-exhibition-new-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 581,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 39,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": [
+   "e.g. Hall of Grails 244x44",
+   "Write a short curatorial descripti 244x144",
+   "INPUT 13x16"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "exhibition-from-search",
+  "path": "/vault/halls",
+  "top": "empty-exhibition-from-search-top-320.jpg",
+  "end": "empty-exhibition-from-search-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 0,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 16,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "add-item",
+  "path": "/capture",
+  "top": "empty-add-item-top-320.jpg",
+  "end": "empty-add-item-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 557,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 51,
+  "small": [
+   "Account menu 40x44",
+   "Take photo 97x41",
+   "Take Real Photo 127x42",
+   "Account menu 40x44",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Account menu 40x44",
+   "Unlocked for next item 44x30",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": [
+   "Item name 250x41",
+   "Optional 250x41",
+   "e.g. Nintendo, Marvel, Topps 250x41",
+   "e.g. 1986 Fleer Basketball 250x41",
+   "Cert number 250x41",
+   "9 119x41",
+   "Add any details about this item… 250x68"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "quick-add",
+  "path": "/vault/quick",
+  "top": "empty-quick-add-top-320.jpg",
+  "end": "empty-quick-add-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 625,
+   "barTop": 623,
+   "clear": false
+  },
+  "controls": 11,
+  "small": [],
+  "cut": [],
+  "inputs": [
+   "Camera zoom 24x94"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "upload-single",
+  "path": "/capture",
+  "top": "empty-upload-single-top-320.jpg",
+  "end": "empty-upload-single-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 557,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 51,
+  "small": [
+   "Account menu 40x44",
+   "Take photo 97x41",
+   "Take Real Photo 127x42",
+   "Account menu 40x44",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Unlocked for next item 44x30",
+   "Account menu 40x44",
+   "Unlocked for next item 44x30",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": [
+   "Item name 250x41",
+   "Optional 250x41",
+   "e.g. Nintendo, Marvel, Topps 250x41",
+   "e.g. 1986 Fleer Basketball 250x41",
+   "Cert number 250x41",
+   "9 119x41",
+   "Add any details about this item… 250x68"
+  ]
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "upload-bulk",
+  "path": "/vault/bulk",
+  "top": "empty-upload-bulk-top-320.jpg",
+  "end": "empty-upload-bulk-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 557,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 15,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": []
+ },
+ {
+  "state": "empty",
+  "w": 320,
+  "page": "exhibition-builder",
+  "path": "/museum/10ca7452-8609-4072-939c-516e5836cc5a",
+  "top": "empty-exhibition-builder-top-320.jpg",
+  "end": "empty-exhibition-builder-end-320.jpg",
+  "docOverflow": 0,
+  "barTop": 623,
+  "clear": {
+   "lowestContentBottom": 581,
+   "barTop": 623,
+   "clear": true
+  },
+  "controls": 54,
+  "small": [
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44",
+   "Account menu 40x44"
+  ],
+  "cut": [],
+  "inputs": [
+   "Exhibit name… 150x44",
+   "Exhibit description… 220x52"
+  ]
+ }
+]

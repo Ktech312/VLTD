@@ -1,0 +1,33 @@
+created empty exhibition -> /museum/10ca7452-8609-4072-939c-516e5836cc5a
+empty 390 vault-items            path=/vault overflow=0 controls=37 cut=0 under44=0 endClear=true
+empty 390 vault-for-sale         path=/vault/for-sale overflow=0 controls=13 cut=0 under44=0 endClear=true
+empty 390 vault-sold             path=/vault/sold overflow=0 controls=13 cut=0 under44=0 endClear=true
+empty 390 vault-insights         path=/portfolio overflow=0 controls=14 cut=0 under44=0 endClear=true
+empty 390 vault-goals            path=/goals overflow=0 controls=64 cut=0 under44=0 endClear=true
+empty 390 vault-insurance        path=/insurance overflow=0 controls=19 cut=0 under44=0 endClear=true
+empty 390 exhibition-new         path=/museum/new overflow=0 controls=34 cut=0 under44=0 endClear=true
+empty 390 exhibition-from-search path=/vault/halls overflow=0 controls=16 cut=0 under44=0 endClear=true
+empty 390 add-item               path=/capture overflow=0 controls=46 cut=0 under44=5 endClear=true :: Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30
+empty 390 quick-add              path=/vault/quick overflow=0 controls=11 cut=0 under44=0 endClear=false
+empty 390 upload-single          path=/capture overflow=0 controls=46 cut=0 under44=5 endClear=true :: Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30
+empty 390 upload-bulk            path=/vault/bulk overflow=0 controls=10 cut=0 under44=0 endClear=true
+empty 390 exhibition-builder     path=/museum/10ca7452-8609-4072-939c-516e5836cc5a overflow=0 controls=49 cut=0 under44=0 endClear=true
+empty 320 vault-items            path=/vault overflow=0 controls=40 cut=0 under44=4 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+empty 320 vault-for-sale         path=/vault/for-sale overflow=0 controls=13 cut=0 under44=1 endClear=true :: Account menu 40x44
+empty 320 vault-sold             path=/vault/sold overflow=0 controls=13 cut=0 under44=1 endClear=true :: Account menu 40x44
+empty 320 vault-insights         path=/portfolio overflow=0 controls=19 cut=0 under44=2 endClear=true :: Account menu 40x44; Account menu 40x44
+empty 320 vault-goals            path=/goals overflow=0 controls=74 cut=0 under44=9 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+empty 320 vault-insurance        path=/insurance overflow=0 controls=19 cut=0 under44=2 endClear=true :: Account menu 40x44; Account menu 40x44
+empty 320 exhibition-new         path=/museum/new overflow=0 controls=39 cut=0 under44=5 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+empty 320 exhibition-from-search path=/vault/halls overflow=0 controls=16 cut=0 under44=2 endClear=true :: Account menu 40x44; Account menu 40x44
+empty 320 add-item               path=/capture overflow=0 controls=51 cut=0 under44=12 endClear=true :: Account menu 40x44; Take photo 97x41; Take Real Photo 127x42; Account menu 40x44; Unlocked for next item 44x30; Unlocked for next item 44x30
+empty 320 quick-add              path=/vault/quick overflow=0 controls=11 cut=0 under44=0 endClear=false
+empty 320 upload-single          path=/capture overflow=0 controls=51 cut=0 under44=12 endClear=true :: Account menu 40x44; Take photo 97x41; Take Real Photo 127x42; Account menu 40x44; Unlocked for next item 44x30; Unlocked for next item 44x30
+empty 320 upload-bulk            path=/vault/bulk overflow=0 controls=15 cut=0 under44=2 endClear=true :: Account menu 40x44; Account menu 40x44
+empty 320 exhibition-builder     path=/museum/10ca7452-8609-4072-939c-516e5836cc5a overflow=0 controls=54 cut=0 under44=6 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+empty keyboard add-item 390: field={"top":232,"bottom":272,"barTop":438,"visible":true,"reachable":true,"vh":508} save={"top":297,"bottom":349,"barTop":438,"height":52,"reachable":true,"clearOfBar":true,"vh":508}
+empty keyboard bulk 390: [{"label":"+\nAdd more photos\nUp to 60 p","reachable":true,"clearOfBar":true,"h":134},{"label":"Fill in by hand","reachable":true,"clearOfBar":true,"h":44}]
+empty keyboard exhibition-new 390: {"titleField":{"top":230,"visible":true},"button":{"label":"Create Exhibition","h":44,"reachable":true,"clearOfBar":true,"disabled":true}}
+empty keyboard add-item 320: field={"top":156,"bottom":197,"barTop":287,"visible":true,"reachable":true,"vh":357} save={"top":151,"bottom":203,"barTop":287,"height":52,"reachable":true,"clearOfBar":true,"vh":357}
+empty keyboard bulk 320: [{"label":"+\nAdd more photos\nUp to 60 p","reachable":true,"clearOfBar":true,"h":134},{"label":"Fill in by hand","reachable":true,"clearOfBar":true,"h":44}]
+empty keyboard exhibition-new 320: {"titleField":{"top":155,"visible":true},"button":{"label":"Create Exhibition","h":44,"reachable":true,"clearOfBar":true,"disabled":true}}

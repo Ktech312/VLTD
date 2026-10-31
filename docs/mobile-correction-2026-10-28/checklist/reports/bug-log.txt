@@ -1,0 +1,14 @@
+390 home         scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 vault        scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 exhibitions  scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 discover     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 insights     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 add-item     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[338,724,40,40] barTop=774
+390 account menu > Support: {"ok":true,"h":44} dialog: {"open":true,"textarea":true,"send":true}
+320 home         scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 vault        scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 exhibitions  scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 discover     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 insights     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 add-item     scrollable=true mid: shown=false tappable=false | end: shown=true tappable=true underContent=[] box=[268,573,40,40] barTop=623
+320 account menu > Support: {"ok":false,"h":44} dialog: {"open":true,"textarea":true,"send":true}

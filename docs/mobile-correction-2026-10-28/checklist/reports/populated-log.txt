@@ -1,0 +1,32 @@
+populated 390 vault-items            path=/vault overflow=0 controls=71 cut=0 under44=26 endClear=true :: QA Album 1 - Original Motion Pictu 42x49; QA Album 2 - Original Motion Pictu 42x49; QA Album 3 - Original Motion Pictu 42x49; QA Album 4 - Original Motion Pictu 42x49; QA Album 5 - Original Motion Pictu 42x49; QA Album 6 - Original Motion Pictu 42x49
+populated 390 vault-for-sale         path=/vault/for-sale overflow=0 controls=46 cut=0 under44=2 endClear=true :: Condition / grade 125x22; Condition / grade 125x22
+populated 390 vault-sold             path=/vault/sold overflow=0 controls=44 cut=0 under44=0 endClear=true
+populated 390 vault-insights         path=/portfolio overflow=0 controls=111 cut=0 under44=6 endClear=true :: Trading Card Games $373 (30.4%) 321x23; Movies / TV / Film $224 (18.3%) 321x23; Comics $205 (16.7%) 321x23; Sports Cards $192 (15.7%) 321x23; Audio Formats $120 (9.8%) 321x23; Instruments & Gear $112 (9.1%) 321x24
+populated 390 vault-goals            path=/goals overflow=0 controls=64 cut=0 under44=0 endClear=true
+populated 390 vault-insurance        path=/insurance overflow=0 controls=93 cut=0 under44=0 endClear=true
+populated 390 exhibition-new         path=/museum/new overflow=0 controls=34 cut=0 under44=0 endClear=true
+populated 390 exhibition-from-search path=/vault/halls overflow=0 controls=25 cut=0 under44=0 endClear=true
+populated 390 add-item               path=/capture overflow=0 controls=46 cut=0 under44=5 endClear=true :: Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30
+populated 390 quick-add              path=/vault/quick overflow=0 controls=11 cut=0 under44=0 endClear=false
+populated 390 upload-single          path=/capture overflow=0 controls=46 cut=0 under44=5 endClear=true :: Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30; Unlocked for next item 44x30
+populated 390 upload-bulk            path=/vault/bulk overflow=0 controls=10 cut=0 under44=0 endClear=true
+populated 390 exhibition-builder     path=/museum/2d88cd8d-0b8e-4547-87ad-08f45bf02b56 overflow=0 controls=54 cut=0 under44=0 endClear=true
+populated 320 vault-items            path=/vault overflow=0 controls=73 cut=0 under44=30 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; QA Album 1 - Original Motion Pictu 32x48; QA Album 2 - Original Motion Pictu 32x48; QA Album 3 - Original Motion Pictu 32x48
+populated 320 vault-for-sale         path=/vault/for-sale overflow=0 controls=45 cut=0 under44=6 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Condition / grade 125x22; Account menu 40x44; Condition / grade 125x22
+populated 320 vault-sold             path=/vault/sold overflow=0 controls=49 cut=0 under44=5 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated 320 vault-insights         path=/portfolio overflow=0 controls=136 cut=0 under44=25 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Trading Card Games $373 (30.4%) 251x23; Movies / TV / Film $224 (18.3%) 251x23
+populated 320 vault-goals            path=/goals overflow=0 controls=74 cut=0 under44=9 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated 320 vault-insurance        path=/insurance overflow=0 controls=113 cut=0 under44=15 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated 320 exhibition-new         path=/museum/new overflow=0 controls=39 cut=0 under44=5 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated 320 exhibition-from-search path=/vault/halls overflow=0 controls=33 cut=0 under44=3 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated 320 add-item               path=/capture overflow=0 controls=51 cut=0 under44=12 endClear=true :: Account menu 40x44; Take photo 97x41; Take Real Photo 127x42; Account menu 40x44; Unlocked for next item 44x30; Unlocked for next item 44x30
+populated 320 quick-add              path=/vault/quick overflow=0 controls=11 cut=0 under44=0 endClear=false
+populated 320 upload-single          path=/capture overflow=0 controls=51 cut=0 under44=12 endClear=true :: Account menu 40x44; Take photo 97x41; Take Real Photo 127x42; Account menu 40x44; Unlocked for next item 44x30; Unlocked for next item 44x30
+populated 320 upload-bulk            path=/vault/bulk overflow=0 controls=15 cut=0 under44=2 endClear=true :: Account menu 40x44; Account menu 40x44
+populated 320 exhibition-builder     path=/museum/2d88cd8d-0b8e-4547-87ad-08f45bf02b56 overflow=0 controls=59 cut=0 under44=6 endClear=true :: Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44; Account menu 40x44
+populated keyboard add-item 390: field={"top":232,"bottom":272,"barTop":438,"visible":true,"reachable":true,"vh":508} save={"top":297,"bottom":349,"barTop":438,"height":52,"reachable":true,"clearOfBar":true,"vh":508}
+populated keyboard bulk 390: [{"label":"+\nAdd more photos\nUp to 60 p","reachable":true,"clearOfBar":true,"h":134},{"label":"Fill in by hand","reachable":true,"clearOfBar":true,"h":44}]
+populated keyboard exhibition-new 390: {"titleField":{"top":230,"visible":true},"button":{"label":"Create Exhibition","h":44,"reachable":true,"clearOfBar":true,"disabled":true}}
+populated keyboard add-item 320: field={"top":156,"bottom":197,"barTop":287,"visible":true,"reachable":true,"vh":357} save={"top":151,"bottom":203,"barTop":287,"height":52,"reachable":true,"clearOfBar":true,"vh":357}
+populated keyboard bulk 320: [{"label":"+\nAdd more photos\nUp to 60 p","reachable":true,"clearOfBar":true,"h":134},{"label":"Fill in by hand","reachable":true,"clearOfBar":true,"h":44}]
+populated keyboard exhibition-new 320: {"titleField":{"top":155,"visible":true},"button":{"label":"Create Exhibition","h":44,"reachable":true,"clearOfBar":true,"disabled":true}}
