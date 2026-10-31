@@ -145,7 +145,7 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
   }
 
   const chipStyle = { background: "rgba(227,179,65,0.10)", border: "1px solid rgba(227,179,65,0.35)", "--vltd-keep-color": AMBER } as React.CSSProperties;
-  const chipClass = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold vltd-keep-color hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--pill-active-ring)]";
+  const chipClass = "vltd-tap-y [--tap-h:28px] inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold vltd-keep-color hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--pill-active-ring)]";
 
   return (
     <article className="flex h-full min-w-0 flex-col rounded-[8px] p-3 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
