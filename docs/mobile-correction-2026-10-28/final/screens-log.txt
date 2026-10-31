@@ -1,0 +1,17 @@
+390 home        path=/dashboard overflow=0 bar=64px cut=8 tall=0 short=1 endClear=false
+390 vault       path=/vault overflow=0 bar=64px cut=5 tall=1 short=5 endClear=false
+390 exhibitions path=/museum overflow=0 bar=64px cut=0 tall=0 short=0 endClear=false
+390 discover    path=/discover overflow=0 bar=64px cut=4 tall=0 short=0 endClear=false
+390 insights    path=/portfolio overflow=0 bar=64px cut=5 tall=0 short=1 endClear=true
+390 menus menu-more-390.jpg menu-add-390.jpg ["Add ItemCamera, then the details -> /capture","Quick AddSnap now, fill in later -> /vault/quick","Upload: single itemAll images go on 1 item -> /capture?openUpload=1","Upload: batchEach image creates a new item -> /vault/bulk"]
+360 home        path=/dashboard overflow=0 bar=64px cut=8 tall=0 short=1 endClear=false
+360 vault       path=/vault overflow=0 bar=64px cut=8 tall=1 short=5 endClear=false
+360 exhibitions path=/museum overflow=0 bar=64px cut=0 tall=0 short=0 endClear=false
+360 discover    path=/discover overflow=0 bar=64px cut=4 tall=0 short=0 endClear=false
+360 insights    path=/portfolio overflow=0 bar=64px cut=5 tall=0 short=1 endClear=true
+320 home        path=/dashboard overflow=0 bar=64px cut=8 tall=0 short=1 endClear=false
+320 vault       path=/vault overflow=0 bar=64px cut=8 tall=1 short=5 endClear=false
+320 exhibitions path=/museum overflow=0 bar=64px cut=0 tall=0 short=0 endClear=false
+320 discover    path=/discover overflow=0 bar=64px cut=4 tall=0 short=0 endClear=false
+320 insights    path=/portfolio overflow=0 bar=64px cut=5 tall=0 short=1 endClear=true
+320 menus menu-more-320.jpg menu-add-320.jpg ["Add ItemCamera, then the details -> /capture","Quick AddSnap now, fill in later -> /vault/quick","Upload: single itemAll images go on 1 item -> /capture?openUpload=1","Upload: batchEach image creates a new item -> /vault/bulk"]
