@@ -561,7 +561,7 @@ export default function BulkUploadPage() {
                       disabled={!universe || !category || (profileId !== "" && remaining === 0)}
                       onClick={() => void runScan()}
                       className="inline-flex min-h-11 items-center justify-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
-                      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
                     >
                       Scan with AI to fill details
                     </button>
@@ -726,7 +726,7 @@ export default function BulkUploadPage() {
                   disabled={committing || scanningId !== null}
                   onClick={() => void addAllToVault()}
                   className="inline-flex min-h-12 items-center justify-center rounded-[8px] px-7 text-sm font-black text-[#0B0B0B] disabled:opacity-50"
-                  style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                  style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
                 >
                   {committing ? "Adding…" : `Add all ${drafts.length} to Vault`}
                 </button>
