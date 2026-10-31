@@ -87,7 +87,7 @@ export default function SavedPage() {
             <Link
               href="/discover?flip=1"
               className="mt-2 inline-flex h-11 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:brightness-105"
-              style={{ background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 30%, #C8CDD2 60%, #A8AEB4 100%)" }}
+              style={{ background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 30%, #C8CDD2 60%, #A8AEB4 100%)", color: "#0B0B0B" }}
             >
               <Glyph name="cards" size={16} /><span className="ml-2">Open The Flip</span>
             </Link>
