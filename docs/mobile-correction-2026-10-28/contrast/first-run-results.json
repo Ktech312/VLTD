@@ -1,0 +1,118 @@
+[
+ {
+  "name": "Account security: Save (PrivacyIdentityCards)",
+  "kind": "real page",
+  "colour": "rgb(11, 11, 11)",
+  "color": "rgb(11, 11, 11)",
+  "onLight": 12.3,
+  "onDark": 6.26,
+  "tag": "BUTTON",
+  "text": "Save",
+  "pass": true
+ },
+ {
+  "name": "Insurance item: Print",
+  "kind": "real page",
+  "colour": "rgb(11, 11, 11)",
+  "color": "rgb(11, 11, 11)",
+  "onLight": 12.3,
+  "onDark": 6.26,
+  "tag": "BUTTON",
+  "text": "Print / Save as PDF",
+  "pass": true
+ },
+ {
+  "name": "Insurance packet: Open Printable Page (link)",
+  "kind": "real page",
+  "colour": "rgb(11, 11, 11)",
+  "color": "rgb(11, 11, 11)",
+  "onLight": 12.3,
+  "onDark": 6.26,
+  "tag": "A",
+  "text": "Open Printable Page",
+  "pass": true
+ },
+ {
+  "name": "Saved: Open The Flip (link)",
+  "kind": "real page",
+  "colour": "color(srgb 0.801569 0.819608 0.837647)",
+  "color": "color(srgb 0.801569 0.819608 0.837647)",
+  "onLight": 13.05,
+  "onDark": 6.65,
+  "tag": "A",
+  "text": "Open The Flip",
+  "pass": true
+ },
+ {
+  "name": "Onboarding: check mark (div)",
+  "kind": "not reachable",
+  "colour": null,
+  "path": "/dashboard"
+ },
+ {
+  "name": "Admin waitlist: Approve & Invite (1 button) — as the source was (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "expectedDefect": true
+ },
+ {
+  "name": "Admin waitlist: Approve & Invite (1 button) — with the fix (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "pass": false
+ },
+ {
+  "name": "Admin spotlights: New / Save (2 buttons) — as the source was (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "expectedDefect": true
+ },
+ {
+  "name": "Admin spotlights: New / Save (2 buttons) — with the fix (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "pass": false
+ },
+ {
+  "name": "Admin museum campus: 5 buttons — as the source was (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "expectedDefect": true
+ },
+ {
+  "name": "Admin museum campus: 5 buttons — with the fix (reproduced)",
+  "kind": "reproduced",
+  "colour": "rgb(236, 237, 239)",
+  "color": "rgb(236, 237, 239)",
+  "onLight": 1.37,
+  "onDark": 2.68,
+  "tag": "BUTTON",
+  "text": "Save",
+  "pass": false
+ }
+]

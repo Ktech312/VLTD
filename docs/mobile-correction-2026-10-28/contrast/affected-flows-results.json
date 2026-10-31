@@ -1,0 +1,34 @@
+[
+ {
+  "test": "account-security",
+  "step": "date of birth entered",
+  "ok": true,
+  "detail": "1990-05-15"
+ },
+ {
+  "test": "account-security",
+  "step": "Save shows the Saved. message",
+  "ok": true,
+  "detail": true
+ },
+ {
+  "test": "account-security",
+  "step": "date of birth is in the database",
+  "ok": true,
+  "detail": {
+   "date_of_birth": "1990-05-15"
+  }
+ },
+ {
+  "test": "account-security",
+  "step": "after a reload the date of birth is still there",
+  "ok": true,
+  "detail": "1990-05-15"
+ },
+ {
+  "test": "saved",
+  "step": "Open The Flip goes to Discover's Flip view",
+  "ok": true,
+  "detail": "/discover?flip=1"
+ }
+]
