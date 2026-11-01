@@ -46,7 +46,6 @@ const MORE_LINKS: { label: string; href: string; icon: AppIconName }[] = [
   { label: "Insights",       href: "/portfolio",       icon: "chart" },
   { label: "Events",         href: "/events",          icon: "events" },
   { label: "Alerts",         href: "/notifications",   icon: "notifications" },
-  { label: "Command Center", href: "/more",            icon: "settings" },
   { label: "VLT Lounge",     href: "/community-board", icon: "communityBoard" },
   { label: "Activity",       href: "/activity",        icon: "activity" },
   { label: "Learn",          href: "/learn",           icon: "learn" },

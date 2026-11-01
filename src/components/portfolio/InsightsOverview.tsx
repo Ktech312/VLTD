@@ -756,14 +756,16 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   return (
     <>
       <WorkspaceActions>
-        <ToolsMenu
-          phoneCompact
-          label="Collection tools"
-          items={[
-            { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
-            { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
-          ]}
-        />
+        <span className="inline-flex max-md:ml-auto">
+          <ToolsMenu
+            phoneCompact
+            label="Collection tools"
+            items={[
+              { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
+              { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
+            ]}
+          />
+        </span>
       </WorkspaceActions>
       {recapOpen ? <VaultWrappedSheet onClose={() => setRecapOpen(false)} /> : null}
       <main className="vltd-portfolio-page min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">

@@ -19,31 +19,13 @@ export default function BugReporter() {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
-  // On a phone the floating button only shows once the page is scrolled to its end, where the page leaves room for it (--bug-fab-space, globals.css), so it never sits on content.
-  // Anywhere else on a phone, Report a bug is Account menu > Support (it opens this same dialog).
-  const [atEnd, setAtEnd] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const check = () => {
-      const sc = document.querySelector<HTMLElement>(".vltd-content-wrap");
-      setAtEnd(!sc || sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 16);
-    };
-    check();
-    const id = window.setInterval(check, 400);
-    window.addEventListener("scroll", check, true);
-    window.addEventListener("resize", check);
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener("scroll", check, true);
-      window.removeEventListener("resize", check);
-    };
-  }, []);
-
-  // Room under the last content of a phone page for the button (read by .vltd-content-wrap::after in globals.css).
+  // The button stays at the bottom of the screen at all times (a phone shows it small and dimmed). Room under the last content of a phone page
+  // for it (read by .vltd-content-wrap::after in globals.css), so at the very end of a page it never covers the last item.
   useEffect(() => {
     if (!signedIn) return;
     const mq = window.matchMedia("(max-width: 639px)");
@@ -145,7 +127,6 @@ export default function BugReporter() {
         aria-label="Report a bug"
         title="Report a bug"
         data-site-chrome="true"
-        data-quiet={atEnd ? undefined : "true"}
         className="vltd-bug-fab vltd-tap fixed right-4 bottom-20 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the

@@ -1998,7 +1998,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         <WorkspaceActions>
           {/* On phones the persistent Add Item above the bottom bar replaces this one. */}
           <span className="hidden md:inline-flex"><AddItemActions /></span>
-          <VaultToolsMenu />
+          {/* On phones Tools sits at the right edge so its menu opens fully on screen. */}
+          <span className="inline-flex max-md:ml-auto"><VaultToolsMenu /></span>
         </WorkspaceActions>
       ) : (
       <>
@@ -2015,7 +2016,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             {lockedUniverse ? <PillButton href="/vault">All Universes</PillButton> : null}
             {/* On phones the persistent Add Item above the bottom bar replaces this one. */}
             <span className="hidden md:inline-flex"><AddItemActions /></span>
-            <VaultToolsMenu />
+            {/* On phones Tools sits at the right edge so its menu opens fully on screen. */}
+            <span className="inline-flex max-md:ml-auto"><VaultToolsMenu /></span>
           </>
         }
       />

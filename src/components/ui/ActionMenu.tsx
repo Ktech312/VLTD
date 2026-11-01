@@ -147,7 +147,13 @@ export function ActionMenu({
                     ? { left: Math.max(8, Math.min(((rect?.left ?? 0) + (rect?.right ?? 0)) / 2 - Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16) / 2, (typeof window !== "undefined" ? window.innerWidth : 0) - Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16) - 8)) }
                     : align === "left"
                     ? { left: Math.max(8, Math.min(rect?.left ?? 0, (typeof window !== "undefined" ? window.innerWidth : 0) - width - 8)) }
-                    : { right: Math.max(8, (typeof window !== "undefined" ? window.innerWidth : 0) - (rect?.right ?? 0)) }),
+                    : (() => {
+                        // Right-aligned to the button, but never past the left edge of the screen (a button near the left made the menu unreadable).
+                        const vw = typeof window !== "undefined" ? window.innerWidth : 0;
+                        const w = Math.min(width, (vw || width) - 16);
+                        const right = Math.max(8, vw - (rect?.right ?? 0));
+                        return vw - right - w < 8 ? { left: 8 } : { right };
+                      })()),
                   width: Math.min(width, (typeof window !== "undefined" ? window.innerWidth : width) - 16),
                 }}
               >

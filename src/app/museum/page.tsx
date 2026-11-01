@@ -238,6 +238,47 @@ export default function MuseumPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [copyOk, setCopyOk] = useState(false);
 
+  // On a phone the details sheet is a layer over the list: it takes one history entry while it is open, so the phone's Back button closes
+  // the sheet (instead of leaving the page), and the page behind it does not scroll.
+  const sheetEntryRef = useRef(false);
+  useEffect(() => {
+    if (!sheetOpen || typeof window === "undefined" || !window.matchMedia("(max-width: 1023px)").matches) return;
+    if (!sheetEntryRef.current) {
+      window.history.pushState({ ...(window.history.state ?? {}), vltdSheet: true }, "");
+      sheetEntryRef.current = true;
+    }
+    const onPop = () => {
+      sheetEntryRef.current = false;
+      setSheetOpen(false);
+    };
+    window.addEventListener("popstate", onPop);
+    const html = document.documentElement;
+    const previousOverflow = html.style.overflow;
+    html.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      html.style.overflow = previousOverflow;
+    };
+  }, [sheetOpen]);
+  // Close the sheet the same way Back does (so the history entry it added is removed too).
+  function closeSheet() {
+    if (sheetEntryRef.current) window.history.back();
+    else setSheetOpen(false);
+  }
+  // Go to another page from inside the sheet: take the sheet's history entry off first, so Back from that page returns to this list.
+  function navigateAway(href: string) {
+    if (!sheetEntryRef.current) {
+      router.push(href);
+      return;
+    }
+    const leave = () => {
+      window.removeEventListener("popstate", leave);
+      router.push(href);
+    };
+    window.addEventListener("popstate", leave);
+    window.history.back();
+  }
+
   function refresh() {
     setGalleries(loadGalleries());
     setItems(loadItems());
@@ -469,7 +510,7 @@ export default function MuseumPage() {
   }
 
   function openGallery(galleryId: string) {
-    router.push(`/museum/${galleryId}`);
+    navigateAway(`/museum/${galleryId}`);
   }
 
   // A real copy: new id and share link, private until the person chooses otherwise, same items and layout. Respects the exhibition limit.
@@ -813,7 +854,9 @@ export default function MuseumPage() {
                           down correctly goes dark-on-light in light mode via
                           its own theme-aware scrim (var(--theme-card)) and
                           must keep doing that. */}
-                      <div className="vltd-dark-surface absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-100 transition lg:opacity-0 lg:group-hover:opacity-100">
+                      {/* Phones: only the bin, in the card's top-right corner with no circle (the cover is changed from the details panel
+                          or the full exhibit page). Wide screens keep both round hover buttons. */}
+                      <div className="vltd-dark-surface absolute right-0 top-0 z-20 flex items-center gap-1.5 opacity-100 transition lg:right-2 lg:top-2 lg:opacity-0 lg:group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -822,7 +865,7 @@ export default function MuseumPage() {
                             handleOpenCoverPicker(gallery);
                           }}
                           disabled={isUploadingCover}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50 lg:h-7 lg:w-7"
+                          className="hidden h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50 lg:inline-flex"
                           aria-label={`Change cover image for ${gallery.title}`}
                           style={{ color: "#fff" }}
                         >
@@ -835,10 +878,10 @@ export default function MuseumPage() {
                             event.stopPropagation();
                             handleAskDelete(gallery);
                           }}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white lg:h-7 lg:w-7"
+                          className="inline-flex h-11 w-11 items-start justify-end p-2.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition hover:text-red-200 lg:h-7 lg:w-7 lg:items-center lg:justify-center lg:rounded-full lg:bg-black/55 lg:p-0 lg:text-red-200 lg:ring-1 lg:ring-red-400/30 lg:drop-shadow-none lg:backdrop-blur lg:hover:bg-red-600/80 lg:hover:text-white"
                           aria-label={`Delete exhibition ${gallery.title}`}
                         >
-                          <AppIcon name="delete" size={13} strokeWidth={2} />
+                          <AppIcon name="delete" size={15} strokeWidth={2} />
                         </button>
                       </div>
 
@@ -905,7 +948,9 @@ export default function MuseumPage() {
               </div>
 
               {/* Right: Exhibition Details */}
-              <aside className={`${sheetOpen ? "" : "max-lg:hidden"} fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto lg:static lg:inset-x-auto lg:bottom-auto lg:z-auto lg:max-h-none lg:overflow-visible lg:sticky lg:top-4`}>
+              {/* Phones: the page behind the details sheet is dimmed, and a tap on it closes the sheet. */}
+              {sheetOpen ? <div className="fixed inset-0 z-[39] bg-black/60 lg:hidden" onClick={closeSheet} aria-hidden="true" /> : null}
+              <aside className={`${sheetOpen ? "" : "max-lg:hidden"} fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto overscroll-contain lg:static lg:inset-x-auto lg:bottom-auto lg:z-auto lg:max-h-none lg:overflow-visible lg:overscroll-auto lg:sticky lg:top-4`}>
                 {selectedEntry ? (() => {
                   const g = selectedEntry.gallery;
                   const s = selectedEntry.score;
@@ -924,12 +969,12 @@ export default function MuseumPage() {
                   ];
                   const topPct = Math.max(1, 100 - s.score);
                   return (
-                    <div className="overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
+                    <div className="vltd-sheet-panel overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
                       <div className="flex justify-center pt-2 lg:hidden"><span className="h-1 w-10 rounded-full bg-white/20" /></div>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
-                        <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close exhibition details" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[8px] text-[color:var(--muted)] hover:text-[color:var(--fg)] lg:hidden">
-                          <AppIcon name="close" size={16} strokeWidth={2.2} />
+                        <button type="button" onClick={closeSheet} aria-label="Close exhibition details" className="inline-flex h-11 w-11 items-center justify-center rounded-full transition active:scale-95 lg:hidden" style={{ background: "#06171d", boxShadow: "0 0 0 2px #4FD3EE, 0 0 16px rgba(79,211,238,0.6)" }}>
+                          <AppIcon name="close" size={20} strokeWidth={2.6} />
                         </button>
                       </div>
 
@@ -1061,10 +1106,16 @@ export default function MuseumPage() {
                                     aria-label={`Open ${it.title}`}
                                     draggable={false}
                                     onClick={(event) => {
-                                      if (!selectedItemsDragRef.current.dragged) return;
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      selectedItemsDragRef.current.dragged = false;
+                                      if (selectedItemsDragRef.current.dragged) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        selectedItemsDragRef.current.dragged = false;
+                                        return;
+                                      }
+                                      if (sheetEntryRef.current) {
+                                        event.preventDefault();
+                                        navigateAway(`/vault/item/${encodeURIComponent(it.id)}`);
+                                      }
                                     }}
                                     className="block h-[68px] w-[50px] shrink-0 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
                                     style={{

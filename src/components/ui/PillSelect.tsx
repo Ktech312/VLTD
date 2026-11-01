@@ -257,9 +257,13 @@ export function PillSelect<T extends string>({
               top: (btnRect?.bottom ?? 0) + 8,
               // A long list scrolls inside the menu instead of running off the bottom of the screen (the last options could not be reached).
               maxHeight: typeof window !== "undefined" ? Math.max(160, window.innerHeight - ((btnRect?.bottom ?? 0) + 8) - 12) : undefined,
-              ...(align === "left"
-                ? { left: btnRect?.left ?? 0 }
-                : { right: (typeof window !== "undefined" ? window.innerWidth : 0) - (btnRect?.right ?? 0) }),
+              // Never past either edge of the screen (a pill near the left or right edge used to open a cut-off menu).
+              ...(() => {
+                const vw = typeof window !== "undefined" ? window.innerWidth : 0;
+                if (!vw) return align === "left" ? { left: btnRect?.left ?? 0 } : { right: 0 };
+                const left = align === "left" ? (btnRect?.left ?? 0) : (btnRect?.right ?? 0) - popW;
+                return { left: Math.max(8, Math.min(left, vw - popW - 8)) };
+              })(),
               width: popW,
               zIndex: 61,
             }}

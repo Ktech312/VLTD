@@ -2450,7 +2450,7 @@ main {
   display: block;
   height: max(var(--pwa-banner-space, 0px), var(--bug-fab-space, 0px));
 }
-/* Bug button on a phone: smaller and dimmed, and shown only at the end of the page (BugReporter sets data-quiet while it is not), where the page leaves room for it. Unchanged from 640px up. */
+/* Bug button on a phone: always at the bottom of the screen, smaller and dimmed; the page leaves room for it at its very end. Unchanged from 640px up. */
 @media (max-width: 639px) {
   .vltd-bug-fab {
     width: 40px !important;
@@ -2459,9 +2459,14 @@ main {
     opacity: 0.6;
     transition: opacity 0.18s ease;
   }
-  .vltd-bug-fab[data-quiet="true"] {
-    opacity: 0;
-    pointer-events: none;
+}
+/* The Exhibitions details sheet on a phone: a solid panel with a glowing cyan edge, so it reads as a popup and the page behind it does not show through. */
+@media (max-width: 1023px) {
+  .vltd-sheet-panel {
+    /* surface-strong is ~96% opaque; the page background underneath makes it fully solid. */
+    background: linear-gradient(var(--surface-strong), var(--surface-strong)), var(--bg) !important;
+    border-color: #4FD3EE !important;
+    box-shadow: 0 0 0 1px rgba(79, 211, 238, 0.85), 0 0 22px rgba(79, 211, 238, 0.55), 0 18px 46px rgba(0, 0, 0, 0.55) !important;
   }
 }
 /* While a menu is open (the Add chooser, Tools, a dropdown) the install pill steps aside instead of peeking out from behind it. */

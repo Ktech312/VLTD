@@ -920,14 +920,17 @@ export default function GalleryPage() {
                     onChange={updateCover}
                     className="hidden"
                   />
+                  {/* With the pencil on, the cover is changed with a real button (what the card's "+" did); otherwise the small label stays. */}
                   <label
                     htmlFor="gallery-cover-upload"
                     className={[
-                      "mt-1 block cursor-pointer text-center text-[8px] font-semibold text-[color:var(--fg)]",
+                      headerEditing
+                        ? "mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-3 text-[13px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                        : "mt-1 block cursor-pointer text-center text-[8px] font-semibold text-[color:var(--fg)]",
                       isUploadingCover ? "cursor-wait opacity-70" : "",
                     ].join(" ")}
                   >
-                    {isUploadingCover ? "Uploading..." : "Cover Artwork"}
+                    {isUploadingCover ? "Uploading..." : headerEditing ? (draft.coverImage ? "Change cover" : "Add cover") : "Cover Artwork"}
                   </label>
                 </div>
 

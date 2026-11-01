@@ -3,10 +3,14 @@
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { PillSelect } from "@/components/ui/PillSelect";
+import { isSupplyItem } from "@/lib/vaultStats";
+import { REVIEW_GAP_SHORT, reviewGaps, type ReviewGap } from "@/lib/vaultReview";
 import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
 import { listRecentCommentsForExhibitions, type Comment } from "@/lib/comments";
 import { listExhibitionEventsForGalleries, type ExhibitionEvent } from "@/lib/exhibitionEvents";
@@ -54,6 +58,68 @@ const FILTERS: Array<{ key: ActivityKind | "all"; label: string; icon: GlyphName
   { key: "sold", label: "Sales", icon: "tag" },
   { key: "share", label: "Shares", icon: "share" },
 ];
+
+// Basic completeness: the Vault's own four-point checklist (photo, valuation, purchase price, identifying detail), so the number here
+// always agrees with the Vault's "needs review" list. It is not "every column filled in".
+type BasicInfo = { done: number; total: number; missing: ReviewGap[] };
+const BASIC_TOTAL = 4;
+
+function basicInfoFor(item?: VaultItem): BasicInfo | null {
+  if (!item || isSupplyItem(item)) return null;
+  const missing = reviewGaps(item);
+  return { done: BASIC_TOTAL - missing.length, total: BASIC_TOTAL, missing };
+}
+
+type BasicFilter = "all" | "needs_work" | "complete";
+type DateRange = "any" | "today" | "7d" | "30d" | "90d" | "year" | "custom";
+
+const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
+  { value: "any", label: "Any date" },
+  { value: "today", label: "Today" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "90d", label: "Last 90 days" },
+  { value: "year", label: "This year" },
+  { value: "custom", label: "Pick dates" },
+];
+
+function dateRangeBounds(range: DateRange, from: string, to: string): { from: number | null; to: number | null } {
+  const now = new Date();
+  const daysAgo = (n: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - n).getTime();
+  if (range === "today") return { from: daysAgo(0), to: null };
+  if (range === "7d") return { from: daysAgo(6), to: null };
+  if (range === "30d") return { from: daysAgo(29), to: null };
+  if (range === "90d") return { from: daysAgo(89), to: null };
+  if (range === "year") return { from: new Date(now.getFullYear(), 0, 1).getTime(), to: null };
+  if (range === "custom") {
+    const f = from ? new Date(`${from}T00:00:00`).getTime() : NaN;
+    const t = to ? new Date(`${to}T23:59:59.999`).getTime() : NaN;
+    return { from: Number.isFinite(f) ? f : null, to: Number.isFinite(t) ? t : null };
+  }
+  return { from: null, to: null };
+}
+
+function BasicInfoBadge({ info }: { info: BasicInfo }) {
+  const complete = info.missing.length === 0;
+  const color = complete ? "#58D783" : info.done >= 3 ? "#F2C14E" : "#F2784B";
+  return (
+    <div>
+      <div className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+        <span aria-hidden="true" className="inline-flex gap-0.5">
+          {Array.from({ length: info.total }).map((_, i) => (
+            <span key={i} className="h-2 w-4 rounded-[2px]" style={{ background: i < info.done ? color : "rgba(203,208,213,0.22)" }} />
+          ))}
+        </span>
+        Basic info {info.done} of {info.total}
+      </div>
+      {complete ? null : (
+        <div className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>
+          Needs: {info.missing.map((gap) => REVIEW_GAP_SHORT[gap].toLowerCase()).join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatMoney(value?: number) {
   return new Intl.NumberFormat("en-US", {
@@ -272,7 +338,7 @@ function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?:
   );
 }
 
-function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; selected: boolean; onSelect: () => void }) {
+function ActivityRow({ event, selected, onSelect, basic }: { event: ActivityEvent; selected: boolean; onSelect: () => void; basic: BasicInfo | null }) {
   const change = deltaPct(event);
   const showValue = event.kind === "valued" || event.kind === "sold";
   const showEvidence = Boolean(event.source || event.confidence || event.comps);
@@ -319,9 +385,10 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
             {event.confidence && <div>{event.confidence} confidence</div>}
             {event.source && <div>{event.source}{event.comps ? ` - ${event.comps} comps` : ""}</div>}
           </>
-        ) : (
+        ) : basic ? null : (
           <div>{event.meta || event.subtitle}</div>
         )}
+        {basic ? <div className={showEvidence ? "mt-2 md:flex md:justify-end" : "md:flex md:justify-end"}><BasicInfoBadge info={basic} /></div> : null}
         <div className="mt-2" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{formatClock(event.timestamp)}</div>
       </div>
     </button>
@@ -355,7 +422,12 @@ export default function ActivityPage() {
   const [retrying, setRetrying] = useState(false);
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
   const [exhibitionEvents, setExhibitionEvents] = useState<Array<ExhibitionEvent & { galleryTitle: string }>>([]);
+  const router = useRouter();
   const [filter, setFilter] = useState<ActivityKind | "all">("all");
+  const [basicFilter, setBasicFilter] = useState<BasicFilter>("all");
+  const [dateRange, setDateRange] = useState<DateRange>("any");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Close really closes the details panel (the first activity used to take its place).
@@ -465,14 +537,44 @@ export default function ActivityPage() {
       ...buildSaleEvents(sales, itemById),
       ...buildGalleryEvents(exhibitionEvents),
       ...buildCommentEvents(recentComments),
-    ]
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 60);
+    ].sort((a, b) => b.timestamp - a.timestamp);
   }, [exhibitionEvents, itemById, items, loggedEvents, recentComments, sales]);
 
+  // Basic completeness per event (items only; a sale is not about the item's record). Computed once, not per render.
+  const basicByEvent = useMemo(() => {
+    const map = new Map<string, BasicInfo | null>();
+    for (const event of allEvents) map.set(event.id, event.kind === "sold" ? null : basicInfoFor(event.item));
+    return map;
+  }, [allEvents]);
+  const needsWorkItems = useMemo(() => items.filter((item) => itemTimestamp(item) > 0 && !isSupplyItem(item) && reviewGaps(item).length > 0).length, [items]);
+  const completeItems = useMemo(() => items.filter((item) => itemTimestamp(item) > 0 && !isSupplyItem(item) && reviewGaps(item).length === 0).length, [items]);
+
+  const dateBounds = useMemo(() => dateRangeBounds(dateRange, customFrom, customTo), [dateRange, customFrom, customTo]);
   const filteredEvents = useMemo(() => {
-    return filter === "all" ? allEvents : allEvents.filter((event) => event.kind === filter);
-  }, [allEvents, filter]);
+    return allEvents.filter((event) => {
+      if (filter !== "all" && event.kind !== filter) return false;
+      if (dateBounds.from !== null && event.timestamp < dateBounds.from) return false;
+      if (dateBounds.to !== null && event.timestamp > dateBounds.to) return false;
+      if (basicFilter !== "all") {
+        const basic = basicByEvent.get(event.id);
+        if (!basic) return false;
+        if (basicFilter === "needs_work" ? basic.missing.length === 0 : basic.missing.length > 0) return false;
+      }
+      return true;
+    });
+  }, [allEvents, basicByEvent, basicFilter, dateBounds, filter]);
+  const anyFilterOn = filter !== "all" || basicFilter !== "all" || dateRange !== "any";
+  const clearFilters = () => { setFilter("all"); setBasicFilter("all"); setDateRange("any"); setCustomFrom(""); setCustomTo(""); setVisibleCount(20); };
+
+  // Below 1280px the details panel sits under the whole list, out of sight, so a tap opens the item itself. On a wide screen a tap selects it for the side panel.
+  const openOrSelect = (event: ActivityEvent) => {
+    if (event.href && typeof window !== "undefined" && window.matchMedia("(max-width: 1279px)").matches) {
+      router.push(event.href);
+      return;
+    }
+    setSelectedId(event.id);
+    setPanelClosed(false);
+  };
 
   const selected = panelClosed ? null : filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
   const availableFilters = FILTERS.filter((tab) => tab.key === "all" || allEvents.some((event) => event.kind === tab.key));
@@ -493,23 +595,64 @@ export default function ActivityPage() {
         title="Activity"
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</span>}
         contentClassName="max-w-[1420px]"
-        actions={availableFilters.map((tab) => (
-          <PillButton
-            key={tab.key}
-            variant={filter === tab.key ? "active" : "default"}
-            onClick={() => {
-              setFilter(tab.key);
-              setVisibleCount(20);
-            }}
-          >
-            <Glyph name={tab.icon} size={16} />
-            {tab.label}
-          </PillButton>
-        ))}
+        actions={
+          <>
+            {availableFilters.map((tab) => (
+              <PillButton
+                key={tab.key}
+                variant={filter === tab.key ? "active" : "default"}
+                onClick={() => {
+                  setFilter(tab.key);
+                  setVisibleCount(20);
+                }}
+              >
+                <Glyph name={tab.icon} size={16} />
+                {tab.label}
+              </PillButton>
+            ))}
+            <PillSelect
+              align="left"
+              ariaLabel="Filter by date"
+              value={dateRange}
+              options={DATE_OPTIONS}
+              onChange={(next) => { setDateRange(next); setVisibleCount(20); }}
+            />
+            <PillButton
+              variant={basicFilter === "needs_work" ? "active" : "default"}
+              onClick={() => { setBasicFilter((current) => (current === "needs_work" ? "all" : "needs_work")); setVisibleCount(20); }}
+            >
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: "#F2784B" }} />
+              Needs work{needsWorkItems > 0 ? ` (${needsWorkItems.toLocaleString()})` : ""}
+            </PillButton>
+            <PillButton
+              variant={basicFilter === "complete" ? "active" : "default"}
+              onClick={() => { setBasicFilter((current) => (current === "complete" ? "all" : "complete")); setVisibleCount(20); }}
+            >
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: "#58D783" }} />
+              Complete{completeItems > 0 ? ` (${completeItems.toLocaleString()})` : ""}
+            </PillButton>
+          </>
+        }
       />
       <main className="min-h-screen px-4 pb-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
+          {dateRange === "custom" ? (
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm" style={{ color: "var(--muted)" }}>
+              {([["From", customFrom, setCustomFrom], ["To", customTo, setCustomTo]] as const).map(([label, value, set]) => (
+                <label key={label} className="inline-flex items-center gap-2">
+                  {label}
+                  <input
+                    type="date"
+                    value={value}
+                    onChange={(event) => { set(event.target.value); setVisibleCount(20); }}
+                    className="min-h-11 rounded-[6px] border px-3 text-[13px] md:min-h-9"
+                    style={{ borderColor: "var(--border)", background: "var(--pill)", color: "var(--fg)", colorScheme: "light dark" }}
+                  />
+                </label>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-2 space-y-4">
             {cloudFailed && !isLoading && grouped.length > 0 ? <StaleDataNotice onRetry={retryLoad} busy={retrying} /> : null}
             {isLoading ? (
@@ -526,7 +669,8 @@ export default function ActivityPage() {
                         key={event.id}
                         event={event}
                         selected={selected?.id === event.id}
-                        onSelect={() => { setSelectedId(event.id); setPanelClosed(false); }}
+                        onSelect={() => openOrSelect(event)}
+                        basic={basicByEvent.get(event.id) ?? null}
                       />
                     ))}
                   </div>
@@ -534,6 +678,11 @@ export default function ActivityPage() {
               ))
             ) : cloudFailed ? (
               <LoadErrorCard what="activity" onRetry={retryLoad} busy={retrying} />
+            ) : allEvents.length > 0 && anyFilterOn ? (
+              <div role="status" className="flex flex-wrap items-center gap-3 rounded-[8px] border border-[rgba(203,208,213,0.22)] p-5 text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--muted)" }}>
+                <span>Nothing matches these filters.</span>
+                <PillButton size="compact" onClick={clearFilters}>Clear filters</PillButton>
+              </div>
             ) : (
               <EmptyState />
             )}
@@ -584,6 +733,13 @@ export default function ActivityPage() {
                 <div className="mt-2 text-lg font-black">{selected.subtitle}</div>
                 <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatFullDate(selected.timestamp)}</div>
               </div>
+
+              {basicByEvent.get(selected.id) ? (
+                <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Basic info</h3>
+                  <div className="mt-3"><BasicInfoBadge info={basicByEvent.get(selected.id) as BasicInfo} /></div>
+                </section>
+              ) : null}
 
               {showSelectedValue && (
                 <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
