@@ -428,6 +428,7 @@ export default function VltLoungePage() {
         description={
           <>
             The collector clubhouse.<br className="hidden sm:block" /> Trusted talk. Real knowledge.
+            <span className="mt-1 block">Ask collectors, share finds and discuss collecting.</span>
           </>
         }
         actions={

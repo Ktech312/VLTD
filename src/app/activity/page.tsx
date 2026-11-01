@@ -52,7 +52,7 @@ type ActivityEvent = {
 
 const FILTERS: Array<{ key: ActivityKind | "all"; label: string; icon: GlyphName }> = [
   { key: "all", label: "All", icon: "box" },
-  { key: "added", label: "Added", icon: "eye" },
+  { key: "added", label: "Items added", icon: "eye" },
   { key: "valued", label: "Value Changes", icon: "chart" },
   { key: "exhibition", label: "Exhibitions", icon: "building" },
   { key: "sold", label: "Sales", icon: "tag" },
@@ -97,6 +97,24 @@ function dateRangeBounds(range: DateRange, from: string, to: string): { from: nu
     return { from: Number.isFinite(f) ? f : null, to: Number.isFinite(t) ? t : null };
   }
   return { from: null, to: null };
+}
+
+// One rule for "is this entry in the list", used by the list AND by every pill's number, so a pill's count is always what tapping it shows.
+function entryPasses(
+  event: { kind: ActivityKind; timestamp: number },
+  kind: ActivityKind | "all",
+  basicFilter: BasicFilter,
+  bounds: { from: number | null; to: number | null },
+  basic: BasicInfo | null | undefined
+) {
+  if (kind !== "all" && event.kind !== kind) return false;
+  if (bounds.from !== null && event.timestamp < bounds.from) return false;
+  if (bounds.to !== null && event.timestamp > bounds.to) return false;
+  if (basicFilter !== "all") {
+    if (!basic) return false;
+    if (basicFilter === "needs_work" ? basic.missing.length === 0 : basic.missing.length > 0) return false;
+  }
+  return true;
 }
 
 function BasicInfoBadge({ info }: { info: BasicInfo }) {
@@ -546,22 +564,22 @@ export default function ActivityPage() {
     for (const event of allEvents) map.set(event.id, event.kind === "sold" ? null : basicInfoFor(event.item));
     return map;
   }, [allEvents]);
-  const needsWorkItems = useMemo(() => items.filter((item) => itemTimestamp(item) > 0 && !isSupplyItem(item) && reviewGaps(item).length > 0).length, [items]);
-  const completeItems = useMemo(() => items.filter((item) => itemTimestamp(item) > 0 && !isSupplyItem(item) && reviewGaps(item).length === 0).length, [items]);
 
   const dateBounds = useMemo(() => dateRangeBounds(dateRange, customFrom, customTo), [dateRange, customFrom, customTo]);
-  const filteredEvents = useMemo(() => {
-    return allEvents.filter((event) => {
-      if (filter !== "all" && event.kind !== filter) return false;
-      if (dateBounds.from !== null && event.timestamp < dateBounds.from) return false;
-      if (dateBounds.to !== null && event.timestamp > dateBounds.to) return false;
-      if (basicFilter !== "all") {
-        const basic = basicByEvent.get(event.id);
-        if (!basic) return false;
-        if (basicFilter === "needs_work" ? basic.missing.length === 0 : basic.missing.length > 0) return false;
-      }
-      return true;
-    });
+  const filteredEvents = useMemo(
+    () => allEvents.filter((event) => entryPasses(event, filter, basicFilter, dateBounds, basicByEvent.get(event.id))),
+    [allEvents, basicByEvent, basicFilter, dateBounds, filter]
+  );
+  // Each pill's number is how many entries tapping it would list, with the other filters that are on (so the number never disagrees with the list).
+  const pillCounts = useMemo(() => {
+    let added = 0, needsWork = 0, complete = 0;
+    for (const event of allEvents) {
+      const basic = basicByEvent.get(event.id);
+      if (entryPasses(event, "added", basicFilter, dateBounds, basic)) added += 1;
+      if (entryPasses(event, filter, "needs_work", dateBounds, basic)) needsWork += 1;
+      if (entryPasses(event, filter, "complete", dateBounds, basic)) complete += 1;
+    }
+    return { added, needsWork, complete };
   }, [allEvents, basicByEvent, basicFilter, dateBounds, filter]);
   const anyFilterOn = filter !== "all" || basicFilter !== "all" || dateRange !== "any";
   const clearFilters = () => { setFilter("all"); setBasicFilter("all"); setDateRange("any"); setCustomFrom(""); setCustomTo(""); setVisibleCount(20); };
@@ -577,7 +595,8 @@ export default function ActivityPage() {
   };
 
   const selected = panelClosed ? null : filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
-  const availableFilters = FILTERS.filter((tab) => tab.key === "all" || allEvents.some((event) => event.kind === tab.key));
+  // "Items added" is always offered (with its count, even 0) so its empty state can explain itself; the other kinds appear once they have an entry.
+  const availableFilters = FILTERS.filter((tab) => tab.key === "all" || tab.key === "added" || allEvents.some((event) => event.kind === tab.key));
   const showSelectedValue = Boolean(selected && (selected.kind === "valued" || selected.kind === "sold") && selected.newValue);
   const showSelectedEvidence = Boolean(selected && (selected.source || selected.confidence || selected.comps));
   const visibleEvents = filteredEvents.slice(0, visibleCount);
@@ -608,6 +627,7 @@ export default function ActivityPage() {
               >
                 <Glyph name={tab.icon} size={16} />
                 {tab.label}
+                {tab.key === "added" ? ` (${pillCounts.added.toLocaleString()})` : ""}
               </PillButton>
             ))}
             <PillSelect
@@ -622,14 +642,14 @@ export default function ActivityPage() {
               onClick={() => { setBasicFilter((current) => (current === "needs_work" ? "all" : "needs_work")); setVisibleCount(20); }}
             >
               <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: "#F2784B" }} />
-              Needs work{needsWorkItems > 0 ? ` (${needsWorkItems.toLocaleString()})` : ""}
+              Needs work ({pillCounts.needsWork.toLocaleString()})
             </PillButton>
             <PillButton
               variant={basicFilter === "complete" ? "active" : "default"}
               onClick={() => { setBasicFilter((current) => (current === "complete" ? "all" : "complete")); setVisibleCount(20); }}
             >
               <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: "#58D783" }} />
-              Complete{completeItems > 0 ? ` (${completeItems.toLocaleString()})` : ""}
+              Complete ({pillCounts.complete.toLocaleString()})
             </PillButton>
           </>
         }
@@ -678,9 +698,13 @@ export default function ActivityPage() {
               ))
             ) : cloudFailed ? (
               <LoadErrorCard what="activity" onRetry={retryLoad} busy={retrying} />
+            ) : filter === "added" && !allEvents.some((event) => event.kind === "added") ? (
+              <div role="status" className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-5 text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--muted)" }}>
+                No items added yet. When you add, import or scan an item, it shows up here.
+              </div>
             ) : allEvents.length > 0 && anyFilterOn ? (
               <div role="status" className="flex flex-wrap items-center gap-3 rounded-[8px] border border-[rgba(203,208,213,0.22)] p-5 text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--muted)" }}>
-                <span>Nothing matches these filters.</span>
+                <span>{filter === "added" ? "No items added match these filters." : "Nothing matches these filters."}</span>
                 <PillButton size="compact" onClick={clearFilters}>Clear filters</PillButton>
               </div>
             ) : (
