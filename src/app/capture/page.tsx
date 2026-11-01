@@ -1584,7 +1584,7 @@ export default function CapturePage() {
                         onClick={handleSave}
                         disabled={saving}
                         className="inline-flex min-h-[52px] disabled:opacity-60 items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
-                        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)" }}
+                        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)", color: "#06171d" }}
                       >
                         <AppIcon name="save" size={18} strokeWidth={1.8} />
                         {saving ? "Saving…" : "Save to Vault"}

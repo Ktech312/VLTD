@@ -205,7 +205,7 @@ function SaveHallModal({
           <button
             onClick={() => title.trim() && !saving && onSave(title.trim())}
             disabled={!title.trim() || saving}
-            className="flex-1 rounded-xl bg-[color:var(--theme-gold)] py-2.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
+            className="flex-1 rounded-xl bg-[color:var(--theme-gold)] py-2.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40" style={{ color: "#0B0B0B" }}
           >
             {saving ? "Saving…" : "Save Hall"}
           </button>
@@ -494,7 +494,7 @@ export default function VaultHallsPage() {
                 <button
                   onClick={() => void backfillTags()}
                   disabled={backfilling}
-                  className="vltd-tap-y shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
+                  className="vltd-tap-y shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40" style={{ color: "#0B0B0B" }}
                 >
                   {backfilling ? "Tagging…" : "Auto-tag my collection"}
                 </button>
@@ -523,7 +523,7 @@ export default function VaultHallsPage() {
                   <button
                     onClick={() => selectedItems.length > 0 && setShowSaveModal(true)}
                     disabled={selectedItems.length === 0}
-                    className="rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
+                    className="rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40" style={{ color: "#0B0B0B" }}
                   >
                     Save as Hall
                   </button>

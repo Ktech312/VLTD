@@ -783,7 +783,7 @@ export default function FramesPage() {
               style={{
                 width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 13,
                 border: "1px solid var(--border, #ddd)", background: "var(--bg, #fff)",
-                color: "var(--text, #111)", boxSizing: "border-box",
+                color: "var(--text, var(--fg, #ECEDEF))", boxSizing: "border-box",
               }}
             />
           </div>
@@ -826,7 +826,7 @@ export default function FramesPage() {
                     padding: "4px 11px", borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: "pointer",
                     border: frame === f.id ? "1.5px solid #f5c52a" : "1.5px solid var(--border, #ddd)",
                     background: frame === f.id ? "#f5c52a" : "transparent",
-                    color: frame === f.id ? "#000" : "var(--text, #333)",
+                    color: frame === f.id ? "#000" : "var(--text, var(--fg, #ECEDEF))",
                   }}
                 >
                   {f.label}
@@ -867,7 +867,7 @@ export default function FramesPage() {
                     padding: "3px 9px", borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: "pointer",
                     border: ratio === r.id ? "1.5px solid #f5c52a" : "1.5px solid var(--border, #ddd)",
                     background: ratio === r.id ? "#f5c52a" : "transparent",
-                    color: ratio === r.id ? "#000" : "var(--text, #333)",
+                    color: ratio === r.id ? "#000" : "var(--text, var(--fg, #ECEDEF))",
                   }}
                 >
                   {r.label}
@@ -916,7 +916,7 @@ export default function FramesPage() {
                       padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 600,
                       cursor: "pointer",
                       background: isActive ? s.bg : "transparent",
-                      color: isActive ? s.fg : "var(--text, #555)",
+                      color: isActive ? s.fg : "var(--text, var(--fg, #ECEDEF))",
                       border: isActive ? `1.5px solid ${s.bg}` : "1.5px solid var(--border, #ddd)",
                       opacity: noData ? 0.4 : 1,
                       ...(s.icon ? { display: "inline-flex", alignItems: "center", gap: 4 } : {}),

@@ -574,6 +574,13 @@ textarea {
   font-family: inherit;
 }
 
+/* The rules above and `a { color: ... }` are outside any style layer, so they beat Tailwind's text-colour utilities on buttons and links. Buttons and links that explicitly ask for
+   dark text on a bright fill (silver, gold, cyan, amber) were therefore showing the inherited near-white text. These rules give exactly those elements their requested colour back
+   (same colour, only for the three dark-text classes in use; nothing else is touched). */
+button.text-black, a.text-black { color: #000; }
+button.text-\[\#06171d\], a.text-\[\#06171d\] { color: #06171d; }
+button.text-\[\#0B0B0B\], a.text-\[\#0B0B0B\] { color: #0B0B0B; }
+
 select {
   background-color: var(--input);
   color: var(--fg);

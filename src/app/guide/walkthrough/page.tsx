@@ -61,7 +61,7 @@ export default function WalkthroughPage() {
           <ol className="my-7 list-decimal space-y-5 pl-6">
             {lesson.steps.map(([title, body]) => <li key={title} className="pl-2"><h3 className="text-lg font-semibold">{title}</h3><p className="mt-1 max-w-3xl leading-7" style={{ color: "var(--muted)" }}>{body}</p></li>)}
           </ol>
-          <Link href={lesson.href} className="inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold focus-visible:outline-2 focus-visible:outline-offset-4" style={{ background: "var(--fg)", color: "var(--bg)" }}>{lesson.action}</Link>
+          <Link href={lesson.href} className="inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold focus-visible:outline-2 focus-visible:outline-offset-4" style={{ background: "var(--fg)", color: "var(--surface)" }}>{lesson.action}</Link>
         </section>
       ))}
     </main>
