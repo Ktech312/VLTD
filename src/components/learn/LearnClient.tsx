@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { LoungeNav } from "@/components/SectionNav";
 import CoverArt from "@/components/learn/CoverArt";
 import NewsletterSignup from "@/components/learn/NewsletterSignup";
+import LearnVideoLibrary from "@/components/learn/LearnVideoLibrary";
 import {
   FEATURED_ARTICLE,
   GUIDE_ARTICLES,
@@ -90,7 +91,8 @@ export default function LearnClient() {
       <LoungeNav activeKey="learn" />
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-7 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <LearnVideoLibrary />
+        <div id="written-guides" className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* ── Main column ── */}
           <div className="min-w-0">
             {/* Featured */}
