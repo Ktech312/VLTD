@@ -1,0 +1,703 @@
+[
+ {
+  "page": "/dashboard",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault",
+  "landed": "/vault",
+  "checked": 59,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/for-sale",
+  "landed": "/vault/for-sale",
+  "checked": 24,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/sold",
+  "landed": "/vault/sold",
+  "checked": 21,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/quick",
+  "landed": "/vault/quick",
+  "checked": 9,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/bulk",
+  "landed": "/vault/bulk",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/halls",
+  "landed": "/vault/halls",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": [
+   {
+    "tag": "BUTTON",
+    "text": "Auto-tag my collection",
+    "color": "rgb(236, 237, 239)",
+    "ratio": 1.37,
+    "bg": [
+     "rgb(200,205,210)"
+    ],
+    "cls": "vltd-tap-y shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover",
+    "style": "",
+    "y": 976
+   }
+  ]
+ },
+ {
+  "page": "/vault/frames",
+  "landed": "/vault/frames",
+  "checked": 45,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": [
+   {
+    "tag": "BUTTON",
+    "text": "One-Touch",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px soli",
+    "y": 197
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Aluminum Case",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px soli",
+    "y": 244
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Comic Panel",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px soli",
+    "y": 291
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Neon Case",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px soli",
+    "y": 338
+   },
+   {
+    "tag": "BUTTON",
+    "text": "1:1",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid",
+    "y": 471
+   },
+   {
+    "tag": "BUTTON",
+    "text": "4:5",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid",
+    "y": 471
+   },
+   {
+    "tag": "BUTTON",
+    "text": "9:16",
+    "color": "rgb(51, 51, 51)",
+    "ratio": 1.28,
+    "bg": [
+     "rgb(30,33,38)"
+    ],
+    "cls": "",
+    "style": "padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid",
+    "y": 471
+   }
+  ]
+ },
+ {
+  "page": "/vault/import",
+  "landed": "/vault/import",
+  "checked": 19,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/add",
+  "landed": "/vault/add",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/readiness",
+  "landed": "/vault/readiness",
+  "checked": 25,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/vault/sync",
+  "landed": "/vault/sync",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/capture",
+  "landed": "/capture",
+  "checked": 15,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": [
+   {
+    "tag": "BUTTON",
+    "text": "Save to Vault",
+    "color": "rgb(236, 237, 239)",
+    "ratio": 2.66,
+    "bg": [
+     "rgb(80,156,174)"
+    ],
+    "cls": "inline-flex min-h-[52px] disabled:opacity-60 items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] ",
+    "style": "background: linear-gradient(115deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 45%, rgba(255, 255, 2",
+    "y": 1729
+   }
+  ]
+ },
+ {
+  "page": "/portfolio",
+  "landed": "/portfolio",
+  "checked": 49,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/portfolio/insurance",
+  "landed": "/portfolio/insurance",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/goals",
+  "landed": "/goals",
+  "checked": 31,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/insurance",
+  "landed": "/insurance",
+  "checked": 41,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/insurance/packet",
+  "landed": "/insurance/packet",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/museum",
+  "landed": "/museum",
+  "checked": 25,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/museum/new",
+  "landed": "/museum/new",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "exhibition builder",
+  "landed": "/museum/349c3a62-c8ad-4034-9d54-4a3d9bb5efd2",
+  "checked": 24,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "item page",
+  "landed": "/vault/item/qa_vz_mvx11rc5_2",
+  "checked": 52,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/museum/vltd",
+  "landed": "/museum/vltd",
+  "checked": 4,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/discover",
+  "landed": "/discover",
+  "checked": 50,
+  "marginal": 0,
+  "skippedPhoto": 5,
+  "fails": []
+ },
+ {
+  "page": "/events",
+  "landed": "/events",
+  "checked": 49,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/upcoming",
+  "landed": "/upcoming",
+  "checked": 283,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/market",
+  "landed": "/market",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/shop",
+  "landed": "/shop",
+  "checked": 39,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/sales",
+  "landed": "/sales",
+  "checked": 16,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/learn",
+  "landed": "/learn",
+  "checked": 29,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/learn/articles",
+  "landed": "/learn/articles",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/guide",
+  "landed": "/guide",
+  "checked": 30,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": [
+   {
+    "tag": "A",
+    "text": "Getting started: item and exhibition wal",
+    "color": "rgb(236, 237, 239)",
+    "ratio": 1,
+    "bg": [
+     "rgb(236,237,239)"
+    ],
+    "cls": "vltd-keep-color mt-6 inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold underline-offset-4 hover",
+    "style": "background: var(--fg); --vltd-keep-color: var(--bg);",
+    "y": 337
+   }
+  ]
+ },
+ {
+  "page": "/guide/walkthrough",
+  "landed": "/guide/walkthrough",
+  "checked": 9,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": [
+   {
+    "tag": "A",
+    "text": "Add an item",
+    "color": "rgb(236, 237, 239)",
+    "ratio": 1,
+    "bg": [
+     "rgb(236,237,239)"
+    ],
+    "cls": "inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold focus-visible:outline-2 focus-visible:outline",
+    "style": "background:var(--fg);color:var(--bg)",
+    "y": 1488
+   },
+   {
+    "tag": "A",
+    "text": "Create an exhibition",
+    "color": "rgb(236, 237, 239)",
+    "ratio": 1,
+    "bg": [
+     "rgb(236,237,239)"
+    ],
+    "cls": "inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold focus-visible:outline-2 focus-visible:outline",
+    "style": "background:var(--fg);color:var(--bg)",
+    "y": 2900
+   }
+  ]
+ },
+ {
+  "page": "/activity",
+  "landed": "/activity",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/messages",
+  "landed": "/messages",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/notifications",
+  "landed": "/notifications",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/favorites",
+  "landed": "/favorites",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/saved",
+  "landed": "/saved",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/watchlist",
+  "landed": "/watchlist",
+  "checked": 14,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/watchlist/checklist",
+  "landed": "/watchlist/checklist",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/clubs",
+  "landed": "/clubs",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/community-board",
+  "landed": "/community-board",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/lounge-preview",
+  "landed": "/lounge-preview",
+  "checked": 15,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/registry",
+  "landed": "/community-board",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/auction",
+  "landed": "/auction",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/kickstarter",
+  "landed": "/kickstarter",
+  "checked": 11,
+  "marginal": 4,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/patreon",
+  "landed": "/patreon",
+  "checked": 7,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/redeem",
+  "landed": "/account/billing",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/security",
+  "landed": "/account/security",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/billing",
+  "landed": "/account/billing",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/invite",
+  "landed": "/account/invite",
+  "checked": 15,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/roles",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/team",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/workspace",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/account/business/new",
+  "landed": "/account/business/new",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/styles",
+  "landed": "/styles",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/ai/drafts",
+  "landed": "/ai/drafts",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/ai/review",
+  "landed": "/ai/review",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/ingest",
+  "landed": "/ingest",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/reports/weekly",
+  "landed": "/reports/weekly",
+  "checked": 38,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/reports/insurance",
+  "landed": "/reports/insurance",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/onboarding",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "/collector",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "(signed out) /",
+  "landed": "/",
+  "checked": 19,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "(signed out) /login",
+  "landed": "/login",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "(signed out) /signup",
+  "landed": "/signup",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "(signed out) /forgot-password",
+  "landed": "/forgot-password",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ },
+ {
+  "page": "(signed out) /reset-password",
+  "landed": "/reset-password",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "fails": []
+ }
+]

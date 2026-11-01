@@ -1,0 +1,4 @@
+PASS [quick-add] two pictures taken with the test camera (Finished (2)) :: Finished (2)
+FAIL [quick-add] script error :: no control: Finished.*
+FAIL [exhibition-items] script error :: cannot type into document.querySelector("input[placeholder='e.g. Hall of Grails']")
+DONE 1/3 passed; tag QAFUNC2WUVK

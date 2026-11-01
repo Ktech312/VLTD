@@ -1,0 +1,76 @@
+/dashboard                         -> /dashboard                         checked=48 marginal=1 FAIL=0
+/vault                             -> /vault                             checked=59 marginal=0 FAIL=0
+/vault/for-sale                    -> /vault/for-sale                    checked=24 marginal=0 FAIL=0
+/vault/sold                        -> /vault/sold                        checked=21 marginal=0 FAIL=0
+/vault/quick                       -> /vault/quick                       checked=9 marginal=0 FAIL=0
+/vault/bulk                        -> /vault/bulk                        checked=7 marginal=0 FAIL=0
+/vault/halls                       -> /vault/halls                       checked=12 marginal=0 FAIL=0
+/vault/frames                      -> /vault/frames                      checked=45 marginal=0 FAIL=0
+/vault/import                      -> /vault/import                      checked=19 marginal=0 FAIL=0
+/vault/add                         -> /vault/add                         checked=13 marginal=0 FAIL=0
+/vault/readiness                   -> /vault/readiness                   checked=25 marginal=0 FAIL=0
+/vault/sync                        -> /vault/sync                        checked=10 marginal=0 FAIL=0
+/capture                           -> /capture                           checked=15 marginal=0 FAIL=0
+/portfolio                         -> /portfolio                         checked=49 marginal=0 FAIL=0
+/portfolio/insurance               -> /portfolio/insurance               checked=7 marginal=0 FAIL=0
+/goals                             -> /goals                             checked=31 marginal=0 FAIL=0
+/insurance                         -> /insurance                         checked=41 marginal=0 FAIL=0
+/insurance/packet                  -> /insurance/packet                  checked=13 marginal=0 FAIL=0
+/museum                            -> /museum                            checked=25 marginal=0 FAIL=0
+/museum/new                        -> /museum/new                        checked=11 marginal=0 FAIL=0
+exhibition builder                 -> /museum/349c3a62-c8ad-4034-9d54-4a3d9bb5efd2 checked=24 marginal=0 FAIL=0
+item page                          -> /vault/item/qa_vz_mvx11rc5_2       checked=52 marginal=0 FAIL=0
+/museum/vltd                       -> /museum/vltd                       checked=4 marginal=0 FAIL=0
+/discover                          -> /discover                          checked=50 marginal=0 FAIL=0
+/events                            -> /events                            checked=49 marginal=0 FAIL=0
+/upcoming                          -> /upcoming                          checked=283 marginal=0 FAIL=0
+/market                            -> /market                            checked=7 marginal=0 FAIL=0
+/shop                              -> /shop                              checked=39 marginal=0 FAIL=0
+/sales                             -> /sales                             checked=16 marginal=0 FAIL=0
+/learn                             -> /learn                             checked=29 marginal=0 FAIL=0
+/learn/articles                    -> /learn/articles                    checked=12 marginal=0 FAIL=0
+/guide                             -> /guide                             checked=30 marginal=0 FAIL=0
+/guide/walkthrough                 -> /guide/walkthrough                 checked=9 marginal=0 FAIL=0
+/activity                          -> /activity                          checked=32 marginal=0 FAIL=0
+/messages                          -> /messages                          checked=5 marginal=0 FAIL=0
+/notifications                     -> /notifications                     checked=5 marginal=0 FAIL=0
+/favorites                         -> /favorites                         checked=5 marginal=0 FAIL=0
+/saved                             -> /saved                             checked=6 marginal=0 FAIL=0
+/watchlist                         -> /watchlist                         checked=14 marginal=0 FAIL=0
+/watchlist/checklist               -> /watchlist/checklist               checked=7 marginal=0 FAIL=0
+/clubs                             -> /clubs                             checked=5 marginal=0 FAIL=0
+/community-board                   -> /community-board                   checked=32 marginal=0 FAIL=0
+/lounge-preview                    -> /lounge-preview                    checked=15 marginal=1 FAIL=0
+/registry                          -> /community-board                   checked=32 marginal=0 FAIL=0
+/auction                           -> /auction                           checked=6 marginal=0 FAIL=0
+/kickstarter                       -> /kickstarter                       checked=11 marginal=4 FAIL=0
+/patreon                           -> /patreon                           checked=7 marginal=1 FAIL=0
+/redeem                            -> /account/billing                   checked=10 marginal=0 FAIL=0
+/account                           -> /account                           checked=11 marginal=0 FAIL=0
+/account/security                  -> /account/security                  checked=12 marginal=0 FAIL=0
+/account/billing                   -> /account/billing                   checked=10 marginal=0 FAIL=0
+/account/invite                    -> /account/invite                    checked=15 marginal=0 FAIL=0
+/account/roles                     -> /account                           checked=11 marginal=0 FAIL=0
+/account/team                      -> /account                           checked=11 marginal=0 FAIL=0
+/account/workspace                 -> /account                           checked=11 marginal=0 FAIL=0
+/museum/virtual-room               -> /museum/virtual-room               checked=5 marginal=0 FAIL=0
+/museum/virtual-room/guest         -> /museum/virtual-room/guest         checked=2 marginal=0 FAIL=0
+/museum/campus-prototype           -> /museum/campus-prototype           checked=4 marginal=0 FAIL=0
+/museum/builder                    -> /museum/builder                    checked=4 marginal=0 FAIL=0
+/account/business/new              -> /account/business/new              checked=8 marginal=0 FAIL=0
+/styles                            -> /styles                            checked=13 marginal=0 FAIL=0
+/ai/drafts                         -> /ai/drafts                         checked=10 marginal=0 FAIL=0
+/ai/review                         -> /ai/review                         checked=7 marginal=0 FAIL=0
+/ingest                            -> /ingest                            checked=11 marginal=0 FAIL=0
+/reports/weekly                    -> /reports/weekly                    checked=38 marginal=0 FAIL=0
+/reports/insurance                 -> /reports/insurance                 checked=8 marginal=0 FAIL=0
+/onboarding                        -> /dashboard                         checked=48 marginal=1 FAIL=0
+/collector                         -> /dashboard                         checked=48 marginal=1 FAIL=0
+(reproduction host) /dashboard     -> /dashboard                         checked=48 marginal=1 FAIL=0
+REPRODUCED controls: 9; hard failures among them: 0
+(signed out) /                     -> /                                  checked=19 marginal=0 FAIL=0
+(signed out) /login                -> /login                             checked=10 marginal=0 FAIL=0
+(signed out) /signup               -> /signup                            checked=8 marginal=0 FAIL=0
+(signed out) /forgot-password      -> /forgot-password                   checked=6 marginal=0 FAIL=0
+(signed out) /reset-password       -> /reset-password                    checked=8 marginal=0 FAIL=0
+DONE pages=75 controlsChecked=1675 hardFailures=0 marginal=10

@@ -1,0 +1,284 @@
+{
+ "a-desktop/home-add-item": [
+  "desktop:i-c1",
+  "desktop:d01",
+  "desktop:d02"
+ ],
+ "a-desktop/form-overview": [
+  "desktop:d03"
+ ],
+ "ad2-desktop/photo-area": [
+  "desktop:d04",
+  "desktop:d05",
+  "desktop:d12",
+  "desktop:d13",
+  "desktop:d15"
+ ],
+ "ad3-desktop/camera-header": [
+  "desktop:d05a",
+  "desktop:d05b",
+  "desktop:d05d",
+  "desktop:d05e",
+  "desktop:d05f"
+ ],
+ "ad3-desktop/frame-list": [
+  "desktop:d05c"
+ ],
+ "a-desktop/camera-dialog": [
+  "desktop:d06"
+ ],
+ "ad3-desktop/editor-overview": [
+  "desktop:d06a",
+  "desktop:d06c",
+  "desktop:d06d"
+ ],
+ "ad3-desktop/crop-handles": [
+  "desktop:d06b"
+ ],
+ "a-desktop/crop-editor": [
+  "desktop:d07",
+  "desktop:d08",
+  "desktop:d09"
+ ],
+ "ad3-desktop/fine-tune": [
+  "desktop:d09a"
+ ],
+ "a-desktop/photo-added": [
+  "desktop:d10",
+  "desktop:d11"
+ ],
+ "a-desktop/upload-added": [
+  "desktop:d14"
+ ],
+ "ad2-desktop/photos-rail": [
+  "desktop:d16"
+ ],
+ "ad2-desktop/photos-make-cover": [
+  "desktop:d17",
+  "desktop:d18"
+ ],
+ "ad2-desktop/photos-remove": [
+  "desktop:d19"
+ ],
+ "ad2-desktop/identity-fields": [
+  "desktop:d20",
+  "desktop:d21",
+  "desktop:d22",
+  "desktop:d23",
+  "desktop:d24",
+  "desktop:d25",
+  "desktop:d26",
+  "desktop:d27",
+  "desktop:d28"
+ ],
+ "ad2-desktop/identity-filled": [
+  "desktop:d29"
+ ],
+ "ad2-desktop/lock-unlocked": [
+  "desktop:d30"
+ ],
+ "ad2-desktop/lock-locked": [
+  "desktop:d31"
+ ],
+ "ad2-desktop/category-popculture": [
+  "desktop:d32",
+  "desktop:d33",
+  "desktop:d34"
+ ],
+ "ad2-desktop/category-tcg-rarity": [
+  "desktop:d35",
+  "desktop:d36"
+ ],
+ "ad2-desktop/location": [
+  "desktop:d37",
+  "desktop:d38"
+ ],
+ "ad2-desktop/value": [
+  "desktop:d39",
+  "desktop:d40",
+  "desktop:d41"
+ ],
+ "ad2-desktop/negative-cost": [
+  "desktop:d42"
+ ],
+ "ad2-desktop/documents": [
+  "desktop:d43"
+ ],
+ "ad2-desktop/save-bar": [
+  "desktop:d44",
+  "desktop:d45",
+  "desktop:d46"
+ ],
+ "a-desktop/name-required": [
+  "desktop:d47"
+ ],
+ "a-desktop/vault-after-save": [
+  "desktop:d48"
+ ],
+ "a-desktop/item-saved": [
+  "desktop:d49"
+ ],
+ "a-desktop/item-purchase-panel": [
+  "desktop:d50"
+ ],
+ "q-phone/home-bar": [
+  "phone:pi-c1",
+  "phone:p01",
+  "combined-phone-section:p01"
+ ],
+ "q-phone2/home-chooser": [
+  "phone:p02",
+  "combined-phone-section:p02",
+  "short-s1:s1-1"
+ ],
+ "a-phone/form": [
+  "phone:p03",
+  "phone:p04",
+  "combined-phone-section:p04",
+  "short-s1:s1-2"
+ ],
+ "ad2-phone/photo-area": [
+  "phone:p05",
+  "phone:p06",
+  "phone:p10",
+  "phone:p11",
+  "phone:p12",
+  "short-s6:s6-1",
+  "promo-pr1:pr1-2"
+ ],
+ "ad3-phone/camera-header": [
+  "phone:p06a",
+  "phone:p06b",
+  "phone:p06d",
+  "phone:p06e",
+  "phone:p06f"
+ ],
+ "ad3-phone/frame-list": [
+  "phone:p06c"
+ ],
+ "a-phone/camera": [
+  "phone:p07",
+  "combined-phone-section:p07",
+  "short-s1:s1-3",
+  "promo-pr1:pr1-1"
+ ],
+ "ad3-phone/editor-overview": [
+  "phone:p07a",
+  "phone:p07c",
+  "phone:p07d"
+ ],
+ "ad3-phone/crop-handles": [
+  "phone:p07b"
+ ],
+ "a-phone/keep": [
+  "phone:p08",
+  "phone:p09",
+  "short-s1:s1-4"
+ ],
+ "ad3-phone/fine-tune": [
+  "phone:p09a"
+ ],
+ "ad2-phone/photos-rail": [
+  "phone:p13",
+  "combined-phone-section:p13",
+  "short-s6:s6-2"
+ ],
+ "ad2-phone/photos-make-cover": [
+  "phone:p14",
+  "short-s6:s6-3"
+ ],
+ "ad2-phone/photos-remove": [
+  "phone:p15",
+  "short-s6:s6-4"
+ ],
+ "ad2-phone/identity-top": [
+  "phone:p16",
+  "phone:p17",
+  "phone:p18",
+  "phone:p19",
+  "short-s2:s2-1",
+  "short-s2:s2-2",
+  "short-s2:s2-3",
+  "promo-pr1:pr1-3"
+ ],
+ "ad2-phone/identity-cert": [
+  "phone:p20",
+  "phone:p21",
+  "phone:p22",
+  "phone:p23",
+  "short-s2:s2-4",
+  "short-s2:s2-5",
+  "short-s2:s2-6",
+  "promo-pr2:pr2-1"
+ ],
+ "ad2-phone/identity-notes": [
+  "phone:p24",
+  "short-s2:s2-7"
+ ],
+ "ad2-phone/lock-unlocked": [
+  "phone:p25",
+  "short-s4:s4-4"
+ ],
+ "ad2-phone/lock-locked": [
+  "phone:p26",
+  "short-s4:s4-5"
+ ],
+ "ad2-phone/category-popculture": [
+  "phone:p27",
+  "phone:p28",
+  "phone:p29",
+  "short-s3:s3-1",
+  "short-s3:s3-2",
+  "short-s3:s3-3",
+  "promo-pr2:pr2-2"
+ ],
+ "ad2-phone/category-tcg-rarity": [
+  "phone:p30",
+  "phone:p31",
+  "short-s3:s3-4",
+  "short-s3:s3-5"
+ ],
+ "ad2-phone/location": [
+  "phone:p32",
+  "phone:p33",
+  "short-s4:s4-1",
+  "short-s4:s4-2",
+  "short-s4:s4-3",
+  "promo-pr2:pr2-3"
+ ],
+ "ad2-phone/value": [
+  "phone:p34",
+  "phone:p35",
+  "phone:p36",
+  "short-s5:s5-1",
+  "short-s5:s5-2",
+  "short-s5:s5-3",
+  "short-s5:s5-4",
+  "promo-pr2:pr2-4"
+ ],
+ "ad2-phone/negative-cost": [
+  "phone:p37",
+  "short-s5:s5-5"
+ ],
+ "ad2-phone/documents": [
+  "phone:p38"
+ ],
+ "ad2-phone/save-bar": [
+  "phone:p39",
+  "phone:p40",
+  "phone:p41",
+  "combined-phone-section:p39",
+  "short-s1:s1-6",
+  "promo-pr1:pr1-4"
+ ],
+ "a-phone/saved": [
+  "phone:p42",
+  "short-s1:s1-7"
+ ],
+ "a-phone/named": [
+  "short-s1:s1-5"
+ ],
+ "ad2-phone/photos-cover-changed": [
+  "short-s6:s6-5"
+ ]
+}

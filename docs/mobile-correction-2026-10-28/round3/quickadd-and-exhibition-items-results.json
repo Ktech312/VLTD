@@ -1,0 +1,168 @@
+{
+ "tag": "QAFUNC218VQ",
+ "results": [
+  {
+   "test": "quick-add",
+   "step": "two pictures taken with the test camera (Finished (2))",
+   "ok": true,
+   "detail": "Finished (2)"
+  },
+  {
+   "test": "quick-add",
+   "step": "Finished opens the review: 2 items ready, Add 2 items to Vault",
+   "ok": true,
+   "detail": "2 items ready"
+  },
+  {
+   "test": "quick-add",
+   "step": "verify sheet shows two Item name fields and Save 2 items to Vault (AI buttons present but never pressed)",
+   "ok": true,
+   "detail": {
+    "names": 2,
+    "aiButtons": 0,
+    "save": "Save 2 items to Vault"
+   }
+  },
+  {
+   "test": "quick-add",
+   "step": "Save reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "reachable": true,
+    "clearOfBar": true,
+    "h": 44
+   }
+  },
+  {
+   "test": "quick-add",
+   "step": "after Save the app is in the Vault",
+   "ok": true,
+   "detail": "/vault"
+  },
+  {
+   "test": "quick-add",
+   "step": "both items are in the database with pictures",
+   "ok": true,
+   "detail": [
+    {
+     "title": "QAFUNC218VQ Quick One",
+     "image": true,
+     "via": "manual",
+     "cost": 7
+    },
+    {
+     "title": "QAFUNC218VQ Quick Two",
+     "image": true,
+     "via": "manual",
+     "cost": null
+    }
+   ]
+  },
+  {
+   "test": "quick-add",
+   "step": "typed names and cost were stored",
+   "ok": true,
+   "detail": [
+    {
+     "title": "QAFUNC218VQ Quick One",
+     "cost": 7
+    },
+    {
+     "title": "QAFUNC218VQ Quick Two",
+     "cost": null
+    }
+   ]
+  },
+  {
+   "test": "quick-add",
+   "step": "no AI request was made by the page",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "test": "quick-add",
+   "step": "after a reload the Vault lists both",
+   "ok": true,
+   "detail": {
+    "one": true,
+    "two": true
+   }
+  },
+  {
+   "test": "exhibition-items",
+   "step": "exhibition created",
+   "ok": true,
+   "detail": "/museum/a26b9c9f-4e0b-4ac1-a055-bdc201394687"
+  },
+  {
+   "test": "exhibition-items",
+   "step": "new exhibition starts with no items",
+   "ok": true,
+   "detail": 0
+  },
+  {
+   "test": "exhibition-items",
+   "step": "Edit/Add opens the item picker",
+   "ok": true,
+   "detail": true
+  },
+  {
+   "test": "exhibition-items",
+   "step": "two Vault items chosen in the picker",
+   "ok": true,
+   "detail": [
+    "QAFUNC218VQ Quick Two",
+    "QAFUNC218VQ Quick One"
+   ]
+  },
+  {
+   "test": "exhibition-items",
+   "step": "picker confirmed",
+   "ok": true,
+   "detail": "Add to Exhibit (2)"
+  },
+  {
+   "test": "exhibition-items",
+   "step": "builder shows the two items by name (and 16 of 18 slots empty)",
+   "ok": true,
+   "detail": {
+    "names": [
+     true,
+     true
+    ],
+    "emptySlots": 16
+   }
+  },
+  {
+   "test": "exhibition-items",
+   "step": "builder Save reachable with the keyboard up",
+   "ok": true,
+   "detail": {
+    "reachable": true,
+    "clearOfBar": true
+   }
+  },
+  {
+   "test": "exhibition-items",
+   "step": "two items are stored with the exhibition in the database",
+   "ok": true,
+   "detail": {
+    "rows": 2,
+    "matched": 2
+   }
+  },
+  {
+   "test": "exhibition-items",
+   "step": "after a reload the builder still shows both items (header count, names, empty slots)",
+   "ok": true,
+   "detail": {
+    "names": [
+     true,
+     true
+    ],
+    "emptySlots": 16,
+    "headerCount": null
+   }
+  }
+ ]
+}

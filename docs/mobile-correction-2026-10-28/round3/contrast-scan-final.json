@@ -1,0 +1,743 @@
+[
+ {
+  "page": "/dashboard",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Seasonal theme off",
+    "ratio": 3.77,
+    "tag": "BUTTON",
+    "cls": "vltd-tap-y flex items-center gap-1 text-[10px] transition hover:brightness-125"
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "/vault",
+  "landed": "/vault",
+  "checked": 59,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/for-sale",
+  "landed": "/vault/for-sale",
+  "checked": 24,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/sold",
+  "landed": "/vault/sold",
+  "checked": 21,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/quick",
+  "landed": "/vault/quick",
+  "checked": 9,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/bulk",
+  "landed": "/vault/bulk",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/halls",
+  "landed": "/vault/halls",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/frames",
+  "landed": "/vault/frames",
+  "checked": 45,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/import",
+  "landed": "/vault/import",
+  "checked": 19,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/add",
+  "landed": "/vault/add",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/readiness",
+  "landed": "/vault/readiness",
+  "checked": 25,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/vault/sync",
+  "landed": "/vault/sync",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/capture",
+  "landed": "/capture",
+  "checked": 15,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/portfolio",
+  "landed": "/portfolio",
+  "checked": 49,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/portfolio/insurance",
+  "landed": "/portfolio/insurance",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/goals",
+  "landed": "/goals",
+  "checked": 31,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/insurance",
+  "landed": "/insurance",
+  "checked": 41,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/insurance/packet",
+  "landed": "/insurance/packet",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum",
+  "landed": "/museum",
+  "checked": 25,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/new",
+  "landed": "/museum/new",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "exhibition builder",
+  "landed": "/museum/349c3a62-c8ad-4034-9d54-4a3d9bb5efd2",
+  "checked": 24,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "item page",
+  "landed": "/vault/item/qa_vz_mvx11rc5_2",
+  "checked": 52,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/vltd",
+  "landed": "/museum/vltd",
+  "checked": 4,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/discover",
+  "landed": "/discover",
+  "checked": 50,
+  "marginal": 0,
+  "skippedPhoto": 5,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/events",
+  "landed": "/events",
+  "checked": 49,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/upcoming",
+  "landed": "/upcoming",
+  "checked": 283,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/market",
+  "landed": "/market",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/shop",
+  "landed": "/shop",
+  "checked": 39,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/sales",
+  "landed": "/sales",
+  "checked": 16,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/learn",
+  "landed": "/learn",
+  "checked": 29,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/learn/articles",
+  "landed": "/learn/articles",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/guide",
+  "landed": "/guide",
+  "checked": 30,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/guide/walkthrough",
+  "landed": "/guide/walkthrough",
+  "checked": 9,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/activity",
+  "landed": "/activity",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/messages",
+  "landed": "/messages",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/notifications",
+  "landed": "/notifications",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/favorites",
+  "landed": "/favorites",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/saved",
+  "landed": "/saved",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/watchlist",
+  "landed": "/watchlist",
+  "checked": 14,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/watchlist/checklist",
+  "landed": "/watchlist/checklist",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/clubs",
+  "landed": "/clubs",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/community-board",
+  "landed": "/community-board",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/lounge-preview",
+  "landed": "/lounge-preview",
+  "checked": 15,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "View Room",
+    "ratio": 3.83,
+    "tag": "A",
+    "cls": "inline-flex min-h-10 items-center gap-2 rounded-[6px] border px-4 py-2 text-sm f"
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "/registry",
+  "landed": "/community-board",
+  "checked": 32,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/auction",
+  "landed": "/auction",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/kickstarter",
+  "landed": "/kickstarter",
+  "checked": 11,
+  "marginal": 4,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Newest",
+    "ratio": 3.93,
+    "tag": "BUTTON",
+    "cls": ""
+   },
+   {
+    "text": "Ending soon",
+    "ratio": 3.93,
+    "tag": "BUTTON",
+    "cls": ""
+   },
+   {
+    "text": "Most funded",
+    "ratio": 3.93,
+    "tag": "BUTTON",
+    "cls": ""
+   },
+   {
+    "text": "Most backed",
+    "ratio": 3.93,
+    "tag": "BUTTON",
+    "cls": ""
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "/patreon",
+  "landed": "/patreon",
+  "checked": 7,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Search",
+    "ratio": 3.42,
+    "tag": "BUTTON",
+    "cls": ""
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "/redeem",
+  "landed": "/account/billing",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/security",
+  "landed": "/account/security",
+  "checked": 12,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/billing",
+  "landed": "/account/billing",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/invite",
+  "landed": "/account/invite",
+  "checked": 15,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/roles",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/team",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/workspace",
+  "landed": "/account",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/virtual-room",
+  "landed": "/museum/virtual-room",
+  "checked": 5,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/virtual-room/guest",
+  "landed": "/museum/virtual-room/guest",
+  "checked": 2,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/campus-prototype",
+  "landed": "/museum/campus-prototype",
+  "checked": 4,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/museum/builder",
+  "landed": "/museum/builder",
+  "checked": 4,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/account/business/new",
+  "landed": "/account/business/new",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/styles",
+  "landed": "/styles",
+  "checked": 13,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/ai/drafts",
+  "landed": "/ai/drafts",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/ai/review",
+  "landed": "/ai/review",
+  "checked": 7,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/ingest",
+  "landed": "/ingest",
+  "checked": 11,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/reports/weekly",
+  "landed": "/reports/weekly",
+  "checked": 38,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/reports/insurance",
+  "landed": "/reports/insurance",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "/onboarding",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Seasonal theme off",
+    "ratio": 3.77,
+    "tag": "BUTTON",
+    "cls": "vltd-tap-y flex items-center gap-1 text-[10px] transition hover:brightness-125"
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "/collector",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Seasonal theme off",
+    "ratio": 3.77,
+    "tag": "BUTTON",
+    "cls": "vltd-tap-y flex items-center gap-1 text-[10px] transition hover:brightness-125"
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "(reproduction host) /dashboard",
+  "landed": "/dashboard",
+  "checked": 48,
+  "marginal": 1,
+  "skippedPhoto": 0,
+  "margList": [
+   {
+    "text": "Seasonal theme off",
+    "ratio": 3.77,
+    "tag": "BUTTON",
+    "cls": "vltd-tap-y flex items-center gap-1 text-[10px] transition hover:brightness-125"
+   }
+  ],
+  "fails": []
+ },
+ {
+  "page": "(reproductions)",
+  "landed": "/dashboard",
+  "checked": 9,
+  "marginal": 0,
+  "fails": [],
+  "reproduced": true
+ },
+ {
+  "page": "(signed out) /",
+  "landed": "/",
+  "checked": 19,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "(signed out) /login",
+  "landed": "/login",
+  "checked": 10,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "(signed out) /signup",
+  "landed": "/signup",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "(signed out) /forgot-password",
+  "landed": "/forgot-password",
+  "checked": 6,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ },
+ {
+  "page": "(signed out) /reset-password",
+  "landed": "/reset-password",
+  "checked": 8,
+  "marginal": 0,
+  "skippedPhoto": 0,
+  "margList": [],
+  "fails": []
+ }
+]
