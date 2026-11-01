@@ -21,3 +21,18 @@
 - Production deployment: not performed. Local preview: `http://localhost:3107/learn` while the task's local dev server is running.
 
 Do not label the unlisted hosting as secure subscriber-only video access: a signed-in viewer can share the YouTube link. The current app gate is ordinary VLTD account sign-in, including free accounts.
+
+## Production deployment and verification (2026-11-01)
+
+Integrated onto main as `11dad02` (the library commit applied on top of the latest mobile fixes, `12aa1bb`). Ten links were set as the server-only Vercel variable `LEARN_VIDEO_LINKS_JSON` (Production, secret type); nothing was committed and no `NEXT_PUBLIC` variable was used. Promo 2 and the five Quick Add entries have no link, so they show Coming soon and offer no playback.
+
+Checked locally (dev server) and again on https://vltd.app, in Chrome phone emulation (390 px) with a synthetic collector account (since deleted):
+
+- Each of the ten mapped videos resolves to a video whose public YouTube title matches its entry in the upload checklist; no two entries share a video.
+- The listing never contains a YouTube ID. A guide without sign-in, or with a forged token, is refused (401). Promo 1 is public. A video without a link is 404. All responses are `private, no-store`.
+- Before a video is chosen: zero iframes and zero requests to YouTube hosts, signed out and signed in.
+- Signed out: a guide shows "Sign in to watch this walkthrough" with no player; Promo 1 plays. Signed in: guides and quick tips play.
+- Real playback: the picture changes between frames 3.5 s apart after pressing play. Vertical videos use YouTube's own Shorts-style player, which has no fullscreen button, so fullscreen was checked on a landscape guide: it entered fullscreen on the player and came back out. The page permits fullscreen on vertical players.
+- Close, Escape and tapping outside each remove the player completely. Portrait and landscape players fit the phone screen.
+
+Not checked: audio (playback was verified by the picture, not by listening), a physical phone, the native YouTube app, iOS Safari, the installed PWA, and a full login round trip from the Sign in button (its destination was checked, not a complete sign-in). The first Learn page load right after the deployment was slower than the test's 6.5 s wait once; a second run passed. Unlisted links can still be shared by anyone who has them: this is sign-in gating inside VLTD, not secure subscriber-only hosting.
