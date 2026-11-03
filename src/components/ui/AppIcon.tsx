@@ -448,8 +448,8 @@ export function AppIcon({
   const nav = variant === "navTop" || variant === "navBottom";
   const artworkSize = nav ? Math.min(size, 28) : size;
   const box = variant === "feature" ? size + Math.round(size * 0.62) : size;
-  // Navigation Home and Vault keep the approved neon art in every style.
-  const neonOnly = nav && (name === "dashboard" || name === "vault");
+  // Classic is line art everywhere, including navigation Home and Vault.
+  const neonOnly = false;
   const approvedClass = neonOnly ? undefined : "vltd-icon-approved";
 
   const renderer = nav ? (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name] : undefined;

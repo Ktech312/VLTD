@@ -80,14 +80,14 @@ export function ThemePicker() {
           style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
           Appearance
         </p>
-        <div className="flex gap-3 rounded-xl p-2.5"
+        <div className="flex flex-col gap-3 rounded-xl p-2.5"
           style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
-          <div className="grid flex-1 grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 gap-2.5">
             {currentThemes.map(t => (
               <SwatchButton key={t.id} t={t} active={themeId === t.id} onSelect={setTheme} />
             ))}
           </div>
-          <div className="flex w-[58px] flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             {(['dark', 'light'] as ThemeMode[]).map(mode => {
               const active = currentMode === mode
               return (
@@ -205,7 +205,7 @@ function SwatchButton({
     <button
       type="button"
       onClick={() => onSelect(t.id)}
-      className="group relative min-h-[44px] overflow-hidden rounded-lg transition-all md:min-h-0"
+      className="group relative min-w-0 overflow-hidden rounded-lg transition-all"
       style={{
         aspectRatio: '4/3',
         // Renders the REAL theme.background (the same value ThemeContext
