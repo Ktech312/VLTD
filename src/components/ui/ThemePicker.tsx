@@ -32,11 +32,15 @@ const lightDefault: ThemeId = 'pearl-light'
 // cards, so "selected" reads the same everywhere in this panel instead of
 // each control inventing its own highlight.
 const SELECTED_RING = 'var(--data-color, #4FD3EE)'
-function selectedStyle(active: boolean): CSSProperties {
+// `tight` is for the closely packed swatch row, where the full glow spills
+// over the neighbouring swatches and the Dark/Light buttons.
+function selectedStyle(active: boolean, tight = false): CSSProperties {
   return active
     ? {
         border: `1.5px solid ${SELECTED_RING}`,
-        boxShadow: `0 0 0 2px color-mix(in srgb, ${SELECTED_RING} 30%, transparent), 0 0 12px color-mix(in srgb, ${SELECTED_RING} 45%, transparent)`,
+        boxShadow: tight
+          ? `0 0 0 1px color-mix(in srgb, ${SELECTED_RING} 30%, transparent), 0 0 5px color-mix(in srgb, ${SELECTED_RING} 40%, transparent)`
+          : `0 0 0 2px color-mix(in srgb, ${SELECTED_RING} 30%, transparent), 0 0 12px color-mix(in srgb, ${SELECTED_RING} 45%, transparent)`,
       }
     : {
         border: '1.5px solid rgba(255,255,255,0.08)',
@@ -76,14 +80,14 @@ export function ThemePicker() {
           style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
           Appearance
         </p>
-        <div className="flex gap-2 rounded-xl p-2"
+        <div className="flex gap-3 rounded-xl p-2.5"
           style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
-          <div className="grid flex-1 grid-cols-3 gap-1.5">
+          <div className="grid flex-1 grid-cols-3 gap-2.5">
             {currentThemes.map(t => (
               <SwatchButton key={t.id} t={t} active={themeId === t.id} onSelect={setTheme} />
             ))}
           </div>
-          <div className="flex w-[58px] flex-col gap-1.5">
+          <div className="flex w-[58px] flex-col gap-2">
             {(['dark', 'light'] as ThemeMode[]).map(mode => {
               const active = currentMode === mode
               return (
@@ -93,7 +97,7 @@ export function ThemePicker() {
                   onClick={() => pickMode(mode)}
                   className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg transition md:min-h-0"
                   style={{
-                    ...selectedStyle(active),
+                    ...selectedStyle(active, true),
                     background: active ? 'rgba(79,211,238,0.08)' : 'rgba(255,255,255,0.03)',
                     color: active ? SELECTED_RING : 'var(--theme-text-muted, #5A5040)',
                   }}
@@ -208,7 +212,7 @@ function SwatchButton({
         // writes to --theme-bg) instead of a separate hand-picked preview
         // gradient, so what EK sees here is what she gets after clicking.
         background: t.background,
-        ...selectedStyle(active),
+        ...selectedStyle(active, true),
       }}
       title={t.name}
     >

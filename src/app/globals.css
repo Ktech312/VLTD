@@ -215,18 +215,16 @@
    109-icon pack — see vltd-icon-sg / vltd-icon-sg-classic below.
 ========================================================= */
 
-.vltd-icon-simplified-glass,
-.vltd-icon-soft-sticker {
+/* Classic (line art) and Simple Glass (approved neon pack) are both in the
+   markup; the icon style on <html> decides which one shows. Classic is the
+   default until the saved style is read. */
+.vltd-icon-approved {
   display: none;
 }
-[data-vltd-icon-style="simplified-glass"] .vltd-icon-nav-concept-classic,
-[data-vltd-icon-style="soft-sticker"] .vltd-icon-nav-concept-classic {
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-classic {
   display: none !important;
 }
-[data-vltd-icon-style="simplified-glass"] .vltd-icon-simplified-glass {
-  display: block !important;
-}
-[data-vltd-icon-style="soft-sticker"] .vltd-icon-soft-sticker {
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-approved {
   display: block !important;
 }
 
@@ -264,14 +262,12 @@
 
 /* ThemePicker swatches always show the option they represent, even when a
    different icon style is active on the root document. */
-[data-vltd-icon-preview] .vltd-icon-nav-concept-classic,
-[data-vltd-icon-preview] .vltd-icon-simplified-glass,
-[data-vltd-icon-preview] .vltd-icon-soft-sticker {
+[data-vltd-icon-preview="classic"] .vltd-icon-approved,
+[data-vltd-icon-preview="simplified-glass"] .vltd-icon-classic {
   display: none !important;
 }
-[data-vltd-icon-preview="classic"] .vltd-icon-nav-concept-classic,
-[data-vltd-icon-preview="simplified-glass"] .vltd-icon-simplified-glass,
-[data-vltd-icon-preview="soft-sticker"] .vltd-icon-soft-sticker {
+[data-vltd-icon-preview="classic"] .vltd-icon-classic,
+[data-vltd-icon-preview="simplified-glass"] .vltd-icon-approved {
   display: block !important;
 }
 

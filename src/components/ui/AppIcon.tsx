@@ -424,11 +424,15 @@ export function universeGlyphName(universe: string): AppIconName {
   return "star";
 }
 
-// The approved SVG pack is shared by navigation, features and compact controls.
-// Its transparent interiors and vector edges remain sharp at the requested size.
+// Two icon sets share this one component. Classic is the original line-art
+// set (PATHS and the per-surface nav art above). Simple Glass is the approved
+// neon SVG pack (approvedIconArt). Both are rendered and
+// [data-vltd-icon-style] on <html> (see globals.css) decides which one shows,
+// so this stays a plain function usable from a server component. Home and
+// Vault in the navigation use the approved neon art in both styles.
 export function AppIcon({
   name, variant = "compact", size = 24, className, style,
-  filled = false,
+  strokeWidth = 1.6, filled = false, active = false,
 }: {
   name: AppIconName;
   variant?: IconVariant;
@@ -444,14 +448,57 @@ export function AppIcon({
   const nav = variant === "navTop" || variant === "navBottom";
   const artworkSize = nav ? Math.min(size, 28) : size;
   const box = variant === "feature" ? size + Math.round(size * 0.62) : size;
+  // Navigation Home and Vault keep the approved neon art in every style.
+  const neonOnly = nav && (name === "dashboard" || name === "vault");
+  const approvedClass = neonOnly ? undefined : "vltd-icon-approved";
+
+  const renderer = nav ? (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name] : undefined;
+  const classicSvg = (
+    <svg
+      className={variant === "feature" ? undefined : "vltd-icon-classic"}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled && !nav ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ display: "block" }}
+    >
+      {renderer ? renderer(active) : PATHS[name]}
+    </svg>
+  );
+  const classic = neonOnly ? null : variant === "feature" ? (
+    <span
+      className="vltd-icon-classic"
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "28%",
+        background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 60%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.25)",
+      }}
+    >
+      {classicSvg}
+    </span>
+  ) : classicSvg;
+
   return (
     <span className={className} style={{ display: "inline-grid", placeItems: "center", position: "relative", flexShrink: 0, width: box, height: box, lineHeight: 0, ...style }}>
+      {classic}
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"
+        className={approvedClass}
         data-approved-icon={name} aria-hidden="true" width={artworkSize} height={artworkSize}
-        style={{ display: "block", width: artworkSize, height: artworkSize }}
+        style={{ display: neonOnly ? "block" : undefined, width: artworkSize, height: artworkSize }}
         dangerouslySetInnerHTML={{ __html: art }}
       />
-      {filled && <span aria-hidden="true" style={{ position: "absolute", right: 0, bottom: 0, width: 7, height: 7, borderRadius: "50%", background: "var(--holiday-icon-100, #fc46e3)", border: "1px solid #08172c" }} />}
+      {filled && <span className={approvedClass} aria-hidden="true" style={{ position: "absolute", right: 0, bottom: 0, width: 7, height: 7, borderRadius: "50%", background: "var(--holiday-icon-100, #fc46e3)", border: "1px solid #08172c" }} />}
     </span>
   );
 }
