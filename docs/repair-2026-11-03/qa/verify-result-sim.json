@@ -1,7 +1,7 @@
 {
  "base": "http://localhost:3003",
  "sim": true,
- "at": "2026-11-04T02:20:43.164Z",
+ "at": "2026-11-04T02:36:39.048Z",
  "rows": [
   {
    "id": "O1",
@@ -46,7 +46,7 @@
   {
    "id": "M4",
    "what": "Member: header/menu clearly shows the business as active",
-   "ok": false
+   "ok": true
   },
   {
    "id": "M5",

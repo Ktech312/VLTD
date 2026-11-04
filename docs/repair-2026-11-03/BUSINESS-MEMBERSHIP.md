@@ -68,4 +68,35 @@ These come from the existing database rules and Team page text; no role system w
 
 ## Verification
 
-See the results section at the end of this file (filled in from the verification runs).
+How it was tested: three synthetic collectors (owner with a personal and a business profile, a member, an unrelated person) plus a signed-out visitor, each in its own isolated headless Chrome with its own profile folder and a real sign-in through the login form. Membership was created and removed **only with the Team page's own Add and Remove buttons**; the harness only created the accounts and seed items. Scripts: `docs/repair-2026-11-03/qa/` (`fixture.cjs`, `repro.cjs`, `probe.cjs`, `verify.cjs`, `degrade.cjs`; the passwords live in a manifest outside the repo).
+
+### Before the fix (live site, reproduced)
+Member signs in after the owner's Add: profile list = own profile only; forcing the business as the active profile snaps back to their own; `/account/team`, `/account/workspace` go to Settings. Direct database reads with the member's own login: items 3/3, exhibitions 1/1, roster 2/2, **business profile row 0/1**.
+
+### After the fix: one important limit on what was proven where
+The database function cannot be run against production by me (EK applies SQL by hand). So the app test below answers **only the one call to `list_member_profiles`** with the function's exact result, computed from the real tables with the service key (same logic as the migration, which is separately proven in a real in-process Postgres: 12 of 12). Every other request in these runs went to the real production database with each person's own login, so the database refusals, the roster, the Add and Remove, the items and exhibitions are all real. **After EK runs the SQL, `node docs/repair-2026-11-03/qa/verify.cjs --base=https://vltd.app` (no `--sim`) repeats the whole table with nothing simulated.**
+
+Safe before the SQL (no simulation, function absent in the real database, answers 404): the member sees their own profile, no business, no error page, own items only (`degrade.cjs`).
+
+### Result table (production build of the final code, `verify.cjs --sim`: 40 of 40 pass)
+
+| | Check | Result |
+|---|---|---|
+| a | Member's Account menu lists the business ("Business · team member") next to their own profile; own profile is still the one active on arrival | PASS |
+| a | Member switches with the Switch button; the business becomes active; the menu shows ACTIVE on it and the header names it | PASS |
+| a | Member in the business sees its 3 items, its exhibition, and the Team roster (owner + self) | PASS |
+| b | Owner clicks Remove on the Team page: roster and database row gone | PASS |
+| b | Same open member session, just reload: back on their own profile, business not in the menu, business items not shown, Team and Workspace URLs no longer open, this device's cached copy of the business items and exhibitions forgotten | PASS |
+| b | Removed member's data requests (profile, items, exhibitions, roster, roster function) = 0 rows; cannot add an item to it | PASS |
+| b | Added again with the Team page: business is back in the same open session, all 3 items load again | PASS |
+| c | Unrelated account: no business in the menu, forcing the business id as the active profile falls back to their own, Team and Workspace URLs do not open, guessed-id requests for profile / items / exhibitions / roster / roster function return 0 rows, cannot add itself to the team | PASS |
+| d | Owner: Team page with Invite box, Remove / role buttons and the transfer-ownership zone; Workspace Settings opens; business Vault shows the business items only; personal profile shows personal items only | PASS |
+| e | Member: no Invite box, no Remove / Make admin, no transfer zone; Workspace, Billing, Profile and Contact settings URLs all go to the Team page; Settings hides Profile and Billing; the identity cards are replaced by a notice; database refuses rename, delete of items, add person, transfer, change of plan columns | PASS |
+| f | Member in the business never sees their personal items; back in personal never sees business items; the owner's personal items never appear in the business | PASS |
+| g | Signed-out visitor: Vault, Team and Workspace URLs go to sign-in; data requests for the business id return 0 rows | PASS |
+| - | Member (re-added) can add an item to the business (the existing member rule) | PASS |
+
+Not browser-tested: the Vault's "move selected items" buttons (changed by reading the code only); admin-role screens (the admin path uses the same list and the existing admin rules; the function itself is proven for admin in Postgres).
+
+### Quality gates
+`tsc --noEmit` clean; `eslint` on every changed file: 0 errors (existing warnings only); `next build --webpack` clean; `npm run test:nav` 17/17; `npm run test:isolation` 85/85; `test:delete` 9/9; `test:vault-load` 18/18.
