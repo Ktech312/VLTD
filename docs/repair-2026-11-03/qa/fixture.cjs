@@ -2,6 +2,7 @@
 const crypto = require("crypto");
 const { admin, fs, MANIFEST, man, sleep, baseline } = require("./lib.cjs");
 const mode = process.argv[2];
+const TAG = process.env.BIZ_TAG || "biz1";
 (async () => {
   if (mode === "baseline") { console.log(await baseline()); return; }
   if (mode === "create") {
@@ -11,7 +12,7 @@ const mode = process.argv[2];
     const save = () => fs.writeFileSync(MANIFEST, JSON.stringify(m));
     save();
     for (const key of ["owner", "member", "stranger"]) {
-      const email = `vltdadmin+qa-biz1-${key}-${stamp}@gmail.com`;
+      const email = `vltdadmin+qa-${TAG}-${key}-${stamp}@gmail.com`;
       const password = "Qa!" + crypto.randomBytes(9).toString("base64url");
       const r = await admin.auth.admin.createUser({ email, password, email_confirm: true });
       if (r.error) throw r.error;
@@ -23,13 +24,13 @@ const mode = process.argv[2];
       await admin.from("profiles").update({ tier: "FULL" }).eq("id", r.data.id);
       m.profiles[key] = r.data.id; save();
     };
-    await mkProf("ownerPersonal", "owner", "personal", "qa_b1_op_" + stamp, "QA Owner Personal");
-    await mkProf("business", "owner", "business", "qa_b1_biz_" + stamp, "QA Biz Co");
-    await mkProf("memberPersonal", "member", "personal", "qa_b1_mp_" + stamp, "QA Member Personal");
-    await mkProf("strangerPersonal", "stranger", "personal", "qa_b1_sp_" + stamp, "QA Stranger Personal");
+    await mkProf("ownerPersonal", "owner", "personal", "qa_" + TAG + "_op_" + stamp, "QA Owner Personal");
+    await mkProf("business", "owner", "business", "qa_" + TAG + "_biz_" + stamp, "QA Biz Co");
+    await mkProf("memberPersonal", "member", "personal", "qa_" + TAG + "_mp_" + stamp, "QA Member Personal");
+    await mkProf("strangerPersonal", "stranger", "personal", "qa_" + TAG + "_sp_" + stamp, "QA Stranger Personal");
     const mkItems = async (prof, label, n) => {
       const rows = [];
-      for (let i = 1; i <= n; i++) rows.push({ id: `qa_biz1_${stamp}_${label}_${i}`, profile_id: m.profiles[prof], title: `${label} ITEM ${i}`, universe: "POP_CULTURE", category: "comics", category_label: "Comics", status: "COLLECTION", is_public: false, created_at: Date.now() - i * 86400e3, purchase_price: 10 + i });
+      for (let i = 1; i <= n; i++) rows.push({ id: `qa_${TAG}_${stamp}_${label}_${i}`, profile_id: m.profiles[prof], title: `${label} ITEM ${i}`, universe: "POP_CULTURE", category: "comics", category_label: "Comics", status: "COLLECTION", is_public: false, created_at: Date.now() - i * 86400e3, purchase_price: 10 + i });
       const r = await admin.from("vault_items").insert(rows);
       if (r.error) throw new Error(r.error.message);
       m.items.push(...rows.map((x) => x.id)); save();

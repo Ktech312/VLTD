@@ -1,6 +1,6 @@
 # Business member access: cause, fix, verification (2026-11-03)
 
-Status: **code fixed and checked. One small SQL file must be run by hand to switch the new access on** (see "What EK must do"). Until it is run the app behaves exactly as before for team members (nothing breaks, they just still do not see the business).
+Status: **fixed and verified end to end on https://vltd.app with the real database function (45 of 45, nothing simulated).** Code is live (55a49dd); EK ran `20261103_business_member_profiles.sql` and its checks on production.
 
 ## The defect
 
@@ -73,7 +73,7 @@ How it was tested: three synthetic collectors (owner with a personal and a busin
 ### Before the fix (live site, reproduced)
 Member signs in after the owner's Add: profile list = own profile only; forcing the business as the active profile snaps back to their own; `/account/team`, `/account/workspace` go to Settings. Direct database reads with the member's own login: items 3/3, exhibitions 1/1, roster 2/2, **business profile row 0/1**.
 
-### After the fix: one important limit on what was proven where
+### First round (before the SQL was applied): what was proven where
 The database function cannot be run against production by me (EK applies SQL by hand). So the app test below answers **only the one call to `list_member_profiles`** with the function's exact result, computed from the real tables with the service key (same logic as the migration, which is separately proven in a real in-process Postgres: 12 of 12). Every other request in these runs went to the real production database with each person's own login, so the database refusals, the roster, the Add and Remove, the items and exhibitions are all real. **After EK runs the SQL, `node docs/repair-2026-11-03/qa/verify.cjs --base=https://vltd.app` (no `--sim`) repeats the whole table with nothing simulated.**
 
 Safe before the SQL (no simulation, function absent in the real database, answers 404): the member sees their own profile, no business, no error page, own items only (`degrade.cjs`).
@@ -113,3 +113,17 @@ All three synthetic accounts, their 4 profiles, 8 items, 1 exhibition and member
 1. Open the Supabase SQL editor and run [supabase/migrations/20261103_business_member_profiles.sql](../../supabase/migrations/20261103_business_member_profiles.sql) (code is already live and safe without it; run the SQL any time, order does not matter).
 2. Optionally run [supabase/verification/20261103_business_member_profiles_checks.sql](../../supabase/verification/20261103_business_member_profiles_checks.sql) and send back the table (checks 1, 2, 5, 6, 7 should say PASS).
 3. Tell the video session to re-run `node docs/repair-2026-11-03/qa/verify.cjs --base=https://vltd.app` (no `--sim`) once the SQL is in: it repeats the whole table against the real function.
+
+## Final verification: real function, nothing simulated (live, after EK applied the SQL)
+
+Fresh synthetic accounts (tag `biz2`: owner with personal + business profile, member, unrelated person), separate isolated browsers, real login form, membership created and removed only with the Team page's Add and Remove buttons. `node docs/repair-2026-11-03/qa/verify.cjs --base=https://vltd.app` (no `--sim`): **45 of 45 pass** (record: `qa/verify-result-live.json`, `sim: false`). Nothing failed that had passed in the simulated round, so no further fix was needed.
+
+Extra checks that only exist with the real function:
+- F1: the real `list_member_profiles()` returns exactly the business for the member (role member) and none of the owner-only columns (contact, tax id, billing, user id, AI usage).
+- F2: an unrelated account gets an empty list. F3: signed-out (anon) is refused. F4: the owner gets nothing from it (own profiles come from the normal list).
+- R9: after the owner clicks Remove, the removed member's real call returns an empty list.
+- Before the owner's Add, the member's real call returned an empty list, so the function exists and does not hand out access by itself.
+
+All the table rows (a to g) above hold with the real function: the member finds the business in the Account menu ("Business · team member"), switches with the Switch button, the menu shows ACTIVE, the Vault shows the 3 business items and the Exhibitions page the business exhibition; the owner-only screens and database actions stay refused; the unrelated account is refused including by guessed ids; Remove takes access away in the already-open session after a reload and the device's cached copy is forgotten; Add again brings it back; personal and business collections never mix; signed-out visitors are refused.
+
+Clean-up of the `biz2` fixtures: 3 accounts, 4 profiles, 8 items, 1 exhibition, membership rows removed by exact id; no storage pictures uploaded. Counts after: 3,483 Vault items, 17 auth users, 46 public exhibitions. The 6 extra items and 1 extra account against the 3,477 / 16 baseline are not mine: they are the video session's temporary `qa-jr-…` collector (6 items), still present at that moment.

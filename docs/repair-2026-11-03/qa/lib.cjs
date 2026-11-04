@@ -16,7 +16,7 @@ const admin = createClient(URL, SERVICE, { auth: { persistSession: false } });
 const anonClient = () => createClient(URL, ANON, { auth: { persistSession: false } });
 const MANIFEST =
   process.env.BIZ_MANIFEST ||
-  "C:/Users/EK/AppData/Local/Temp/claude/2b44366d026371c3/7640caaf-e429-484b-9a61-9eabbaa10381/scratchpad/qa_biz1.json";
+  "C:/Users/EK/AppData/Local/Temp/claude/2b44366d026371c3/7640caaf-e429-484b-9a61-9eabbaa10381/scratchpad/qa_" + (process.env.BIZ_TAG || "biz1") + ".json";
 const man = () => JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function userClient(email, password) {

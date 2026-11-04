@@ -2,7 +2,7 @@
 //   node verify.cjs --base=http://localhost:3003 --sim     (--sim: answer only rpc/list_member_profiles with the function's result, for use BEFORE the SQL is applied)
 //   node verify.cjs --base=https://vltd.app                (after the SQL is applied: nothing simulated)
 // Membership is created and removed ONLY with the Team page's own Add / Remove controls. Prints a result table.
-const { man, userClient, admin, sleep } = require("./lib.cjs");
+const { man, userClient, admin, sleep, anonClient } = require("./lib.cjs");
 const { open, closeAll } = require("./br.cjs");
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || `--${k}=${d}`).split("=").slice(1).join("=");
 const base = arg("base", "http://localhost:3003");
@@ -95,6 +95,18 @@ async function localCopy(S, profileId) {
   rec("M11", "Member: privacy cards (owner's identity details) are replaced by a notice", has(sec, "belong to the business's owner"), flat(sec).slice(0, 200));
   // direct data-layer refusals for owner-only actions, with the member's own login
   const { sb: msb } = await userClient(m.users.member.email, m.users.member.password);
+  // the REAL database function (only meaningful when nothing is simulated)
+  const rf = await msb.rpc("list_member_profiles");
+  const rfRows = Array.isArray(rf.data) ? rf.data : [];
+  const forbidden = ["full_name","phone","address_line1","tax_id","stripe_customer_id","date_of_birth","user_id","bulk_scans_used"];
+  rec("F1", "REAL function: exists and returns exactly the business for the member, role member, no owner-only column", !sim ? (!rf.error && rfRows.length === 1 && rfRows[0].id === B && rfRows[0].member_role === "member" && !forbidden.some((k) => k in rfRows[0])) : true, JSON.stringify({ err: rf.error?.message, n: rfRows.length, keys: rfRows[0] && Object.keys(rfRows[0]) }));
+  const { sb: ssb0 } = await userClient(m.users.stranger.email, m.users.stranger.password);
+  const rf2 = await ssb0.rpc("list_member_profiles");
+  rec("F2", "REAL function: unrelated account gets an empty list", !sim ? (!rf2.error && Array.isArray(rf2.data) && rf2.data.length === 0) : true, JSON.stringify(rf2));
+  const rf3 = await anonClient().rpc("list_member_profiles");
+  rec("F3", "REAL function: signed-out (anon) cannot call it", !sim ? Boolean(rf3.error) || (Array.isArray(rf3.data) && rf3.data.length === 0) : true, JSON.stringify(rf3).slice(0, 200));
+  const rfo = await (await userClient(m.users.owner.email, m.users.owner.password)).sb.rpc("list_member_profiles");
+  rec("F4", "REAL function: the owner gets nothing from it (own profiles come from the normal list)", !sim ? (!rfo.error && Array.isArray(rfo.data) && rfo.data.length === 0) : true, JSON.stringify(rfo).slice(0, 200));
   const upd = await msb.from("profiles").update({ display_name: "HACKED" }).eq("id", B).select("id");
   const biz = (await admin.from("profiles").select("display_name").eq("id", B).single()).data;
   rec("M12", "Member cannot rename the business (database refuses; name unchanged)", (upd.data || []).length === 0 && biz.display_name === "QA Biz Co", JSON.stringify({ upd: upd.data, name: biz.display_name }));
@@ -144,7 +156,7 @@ async function localCopy(S, profileId) {
   const vp = {};
   for (const p of ["/vault", "/account/team", "/account/workspace"]) { await gw(V, p, { path: "^/login", timeout: 25000 }); vp[p] = await V.path(); }
   rec("V1", "Signed-out visitor: Vault, Team and Workspace URLs go to the sign-in page", Object.values(vp).every((x) => x.startsWith("/login")), JSON.stringify(vp));
-  const { anonClient } = require("./lib.cjs"); const asb = anonClient();
+  const asb = anonClient();
   const aq = await q(asb);
   rec("V2", "Signed-out data requests for the business id: 0 rows everywhere", Object.values(aq).every((x) => !x), JSON.stringify(aq));
 
@@ -176,10 +188,12 @@ async function localCopy(S, profileId) {
   rec("R6", "Removed member: this device's cached copy of the business items was forgotten", beforeLocal.items > 0 && afterLocal.items === 0 && afterLocal.galleries === 0, JSON.stringify({ beforeLocal, afterLocal }));
   const { sb: msb2 } = await userClient(m.users.member.email, m.users.member.password);
   const mq = await q(msb2);
+  const rfr = await msb2.rpc("list_member_profiles");
+  rec("R9", "REAL function after removal: the removed member gets an empty list", !sim ? (!rfr.error && Array.isArray(rfr.data) && rfr.data.length === 0) : true, JSON.stringify(rfr).slice(0, 200));
   rec("R7", "Removed member's data requests for the business: 0 rows (items, exhibitions, roster, roster function)", Object.values(mq).every((x) => !x), JSON.stringify(mq));
-  const ins = await msb2.from("vault_items").insert({ id: `qa_biz1_${m.stamp}_REMOVED_ADD`, profile_id: B, title: "SHOULD FAIL", created_at: Date.now(), status: "COLLECTION", is_public: false });
+  const ins = await msb2.from("vault_items").insert({ id: `qa_${m.stamp}_REMOVED_ADD`, profile_id: B, title: "SHOULD FAIL", created_at: Date.now(), status: "COLLECTION", is_public: false });
   rec("R8", "Removed member cannot add an item to the business any more (refused)", !!ins.error, JSON.stringify(ins.error?.message));
-  await admin.from("vault_items").delete().eq("id", `qa_biz1_${m.stamp}_REMOVED_ADD`);
+  await admin.from("vault_items").delete().eq("id", `qa_${m.stamp}_REMOVED_ADD`);
 
   // ───────── Add again with the Team page, member sees it again (full download after the forget)
   await gw(O, "/account/team", { text: "Invite a member" });
@@ -192,9 +206,9 @@ async function localCopy(S, profileId) {
   rec("A2", "Added again: all 3 business items load again", ["BIZCO ITEM 1", "BIZCO ITEM 2", "BIZCO ITEM 3"].every((t) => has(mv, t)), flat(mv).slice(0, 200));
 
   // member's allowed action (existing rule: members can add items)
-  const ok = await msb2.from("vault_items").insert({ id: `qa_biz1_${m.stamp}_BIZCO_MEMBERADD`, profile_id: B, title: "BIZCO MEMBER ADDED", created_at: Date.now(), status: "COLLECTION", is_public: false, universe: "POP_CULTURE", category: "comics", category_label: "Comics" });
+  const ok = await msb2.from("vault_items").insert({ id: `qa_${m.stamp}_BIZCO_MEMBERADD`, profile_id: B, title: "BIZCO MEMBER ADDED", created_at: Date.now(), status: "COLLECTION", is_public: false, universe: "POP_CULTURE", category: "comics", category_label: "Comics" });
   rec("A3", "Member (re-added) can add an item to the business (existing member rule)", !ok.error, ok.error?.message);
-  await admin.from("vault_items").delete().eq("id", `qa_biz1_${m.stamp}_BIZCO_MEMBERADD`);
+  await admin.from("vault_items").delete().eq("id", `qa_${m.stamp}_BIZCO_MEMBERADD`);
 
   for (const x of [O, M]) await x.close();
   const bad = rows.filter((r) => !r.ok);
