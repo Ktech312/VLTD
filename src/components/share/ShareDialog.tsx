@@ -162,12 +162,15 @@ export default function ShareDialog({
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   const [note, setNote] = useState("");
   // A private profile's public items cannot be opened by anyone else; the panel says so instead of offering a link nobody can use.
+  // An exhibition link does not depend on the profile: the link itself is the permission (checked on the server by its share token,
+  // and only while the exhibition is shared and active), so only item links carry this warning.
   const [profilePrivate, setProfilePrivate] = useState(false);
   useEffect(() => {
+    if (kind !== "item") return;
     let active = true;
     void getOnboardingStatus().then((status) => { if (active) setProfilePrivate(status.activeProfile?.is_public === false); }).catch(() => undefined);
     return () => { active = false; };
-  }, []);
+  }, [kind]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [photoBusy, setPhotoBusy] = useState<"" | "share" | "download">("");
   const [photoNote, setPhotoNote] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
@@ -422,7 +425,7 @@ export default function ShareDialog({
                 )}
               </div>
               <p className="mt-2 text-[11.5px] leading-relaxed text-white/55">These open the app or website with your link ready. Nothing is posted until you confirm it there.</p>
-              {profilePrivate ? (
+              {kind === "item" && profilePrivate ? (
                 <p role="alert" data-testid="share-profile-private" className="mt-2 rounded-xl bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-200 ring-1 ring-amber-400/25">
                   Your profile is private, so nobody else can open this link.
                 </p>
