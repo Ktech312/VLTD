@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { getCurrentSession } from "@/lib/auth";
 import { LEARN_VIDEOS, type LearnVideo } from "@/lib/learnVideos";
+import { learnVideoPreview } from "@/lib/learnVideoSelection";
 import { pillClassName } from "@/components/ui/PillButton";
 
 type VideoAvailability = { id: string; available: boolean };
@@ -76,7 +77,7 @@ export default function LearnVideoLibrary() {
 
   const filtered = LEARN_VIDEOS.filter(video => collection === "All videos" || video.collection === collection);
   const videos = collection === "All videos" && !expanded
-    ? ["quick-add-combined", "add-item-combined"].flatMap(id => filtered.filter(video => video.id === id))
+    ? learnVideoPreview(filtered, availability)
     : filtered;
 
   return (

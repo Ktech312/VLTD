@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
 import { configuredVideoIds, learnVideoResponse, youtubeVideoId } from "../src/lib/learnVideoAccess";
 import { LEARN_VIDEOS } from "../src/lib/learnVideos";
+import { learnVideoPreview } from "../src/lib/learnVideoSelection";
 
 async function main() {
   const id = "Abc_123-xYz"; // Synthetic ID; never used for a provider request.
   assert.equal(new Set(LEARN_VIDEOS.map(video => video.id)).size, LEARN_VIDEOS.length);
+  const readyPreview = learnVideoPreview(LEARN_VIDEOS, { "add-item-combined": true, "add-item-desktop": true, "add-item-promo-1": true });
+  assert.deepEqual(readyPreview.map(video => video.id), ["add-item-combined", "add-item-desktop"], "Unavailable preferred guides must not displace uploaded videos");
+  assert.deepEqual(learnVideoPreview(LEARN_VIDEOS, { "add-item-promo-1": true }).map(video => video.id), ["add-item-promo-1"], "One uploaded video must not be padded with an unavailable guide");
+  assert.deepEqual(learnVideoPreview(LEARN_VIDEOS, { "quick-add-combined": true, "add-item-combined": true }).map(video => video.id), ["quick-add-combined", "add-item-combined"]);
+  assert.equal(learnVideoPreview(LEARN_VIDEOS, {}).length, 2, "An unconfigured library keeps its compact coming-soon view");
   for (const link of [id, `https://youtu.be/${id}?si=abc`, `https://www.youtube.com/watch?v=${id}&list=abc`, `https://www.youtube.com/shorts/${id}`, `https://www.youtube-nocookie.com/embed/${id}`]) assert.equal(youtubeVideoId(link), id);
   for (const link of [`http://youtube.com/watch?v=${id}`, `https://youtube.com.evil.test/watch?v=${id}`, `https://evil.test/${id}`, `javascript:alert(1)`, `https://evil@youtube.com/watch?v=${id}`, "bad", null, `https://youtube.com/watch?v=${id}/extra`]) assert.equal(youtubeVideoId(link), null);
   assert.deepEqual(configuredVideoIds(undefined), {});
