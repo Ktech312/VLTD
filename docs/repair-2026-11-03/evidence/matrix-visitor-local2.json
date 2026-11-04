@@ -1,0 +1,14 @@
+{
+ "private": {
+  "tokenFrom": "database (the Share panel offered no link)",
+  "headline": "SHARED EXHIBITION Link not available This shared exhibition link is invalid or no longer available. Open Exhibitions Add to Home Screen",
+  "rpcReturnedRow": false,
+  "hits": {}
+ },
+ "adult": {
+  "tokenFrom": "share panel",
+  "headline": "This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page Step: page code did not start (10 s, online). hydration:stalled (app not started after 10 s; online); script:error (Error); perf:long-tasks (6 ove",
+  "rpcReturnedRow": false,
+  "hits": {}
+ }
+}

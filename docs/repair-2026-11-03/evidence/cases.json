@@ -1,0 +1,174 @@
+{
+ "public": {
+  "key": "public",
+  "title": "SHR Public Exhibit",
+  "mode": "public_gallery",
+  "items": [
+   1,
+   2,
+   3
+  ],
+  "gid": "c46b1e62-c32e-4327-b33a-923603472930",
+  "shareText": "Share\nSHR Public Exhibit\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "https://vltd.app/museum/share/pub_mw1f0hrj_vybemyxi",
+  "db": {
+   "vis": "PUBLIC",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": false,
+   "snaps": 3
+  }
+ },
+ "guest": {
+  "key": "guest",
+  "title": "SHR Guest View",
+  "mode": "guest_view",
+  "items": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "hideItem": 4,
+  "gid": "3c3bdc4f-e9cd-41c4-a0dc-9c73b542c83c",
+  "shareText": "Share\nSHR Guest View\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1deeti_jkabt42l",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": false,
+   "snaps": 4
+  }
+ },
+ "registered": {
+  "key": "registered",
+  "title": "SHR Registered Users",
+  "mode": "registered_users",
+  "items": [
+   1,
+   2
+  ],
+  "gid": "e6b3ca23-3ce5-4b53-b1c3-34d92629f465",
+  "shareText": "Share\nSHR Registered Users\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1dg3v2_bszqh9a1",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "guest",
+   "adult": false,
+   "snaps": 2
+  }
+ },
+ "private": {
+  "key": "private",
+  "title": "SHR Private",
+  "mode": "private",
+  "items": [
+   1,
+   2
+  ],
+  "gid": "89a76b98-8e39-4ece-8d41-11c2da2ccaa5",
+  "shareText": "Share\nSHR Private\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nTurn on public sharing?\n\nAnyone with the link can view this exhibition. It is not added to public discovery.\n\nYes\nNot now",
+  "link": null,
+  "db": {
+   "vis": "LOCKED",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": false,
+   "snaps": 2
+  }
+ },
+ "alias": {
+  "key": "alias",
+  "title": "SHR Guest View Alias",
+  "mode": "guest_view",
+  "items": [
+   1,
+   2
+  ],
+  "alias": "The Night Curator",
+  "gid": "41071525-6a29-42e4-9085-dc6eeb7e714a",
+  "shareText": "Share\nSHR Guest View Alias\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1djynb_6h8dwp5c",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": true,
+   "aliasName": "The Night Curator",
+   "gvm": "public",
+   "adult": false,
+   "snaps": 2
+  }
+ },
+ "adult": {
+  "key": "adult",
+  "title": "SHR Guest View 18+",
+  "mode": "guest_view",
+  "items": [
+   1
+  ],
+  "adult": true,
+  "gid": "e8ec4363-17d4-4ca3-9686-1eb1bb187e40",
+  "shareText": "Share\nSHR Guest View 18+\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1dlekl_ja87pu3i",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": true,
+   "snaps": 1
+  }
+ },
+ "leak": {
+  "key": "leak",
+  "title": "SHR Guest View Private Fields",
+  "mode": "guest_view",
+  "items": [
+   5,
+   6
+  ],
+  "gid": "d3a0b68f-04ef-47f6-a922-155bc6746fc8",
+  "shareText": "Share\nSHR Guest View Private Fields\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1dpbq0_up3gp8fb",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": false,
+   "snaps": 2
+  }
+ },
+ "draft": {
+  "key": "draft",
+  "title": "SHR Draft In Storage",
+  "mode": "guest_view",
+  "items": [
+   1
+  ],
+  "gid": "db50adf1-0009-452b-a91c-46fa523b52b8",
+  "shareText": "Share\nSHR Draft In Storage\nEXHIBITION\nSHARE PHOTOS\n\nSends only the pictures you pick. Works for private items too.\n\nShare 1 photo\nDownload to device\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+  "link": "http://localhost:3002/museum/share/pub_mw1ewgyf_abiwe720",
+  "db": {
+   "vis": "INVITE",
+   "state": "ACTIVE",
+   "alias": false,
+   "aliasName": null,
+   "gvm": "public",
+   "adult": false,
+   "snaps": 1
+  }
+ }
+}

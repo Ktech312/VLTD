@@ -1,0 +1,36 @@
+{
+ "label": "local",
+ "hidden": {
+  "shownAsHidden": true,
+  "realTitleInPage": false,
+  "realTitleInResponses": false,
+  "otherItemsShown": true
+ },
+ "profile visitor /u/": {
+  "text": " ⌘K G 404 This page could not be found.",
+  "realNameShown": false
+ },
+ "profile visitor /v/": {
+  "text": " ⌘K G 🗝️ Collector's Vault Share VLTD 🗝️ Collector Offline Follow Message Nothing public yet Collector hasn't made any items public. Items are private by default. Explore VLTD VLTD Track your co",
+  "realNameShown": false
+ },
+ "profile viewer /u/": {
+  "text": " ⌘K NOVICE Level 1 404 This page could not be found.",
+  "realNameShown": false
+ },
+ "profile viewer /v/": {
+  "text": " ⌘K NOVICE Level 1 🗝️ Collector's Vault Share VLTD 🗝️ Collector Offline Follow Message Nothing public yet Collector hasn't made any items public. Items are private by default. Explore VLTD VLTD ",
+  "realNameShown": false
+ },
+ "privatePanelBefore": "Share | SHR Private | EXHIBITION | SHARE PHOTOS | Sends only the pictures you pick. Works for private items too. | Share 1 photo | Download to device | SHARE PUBLIC LINK | Turn on public sharing? | Anyone with the link can view this exhibition. It is not added to public discovery. | Yes | Not now",
+ "privateLinkAfterYes": "http://localhost:3002/museum/share/pub_mw1did3w_6rrcw7cj",
+ "privatePanelAfter": "Share | SHR Private | EXHIBITION | SHARE PHOTOS | Sends only the pictures you pick. Works for private items too. | Share 1 photo | Download to device | SHARE PUBLIC LINK | Messages | Facebook | WhatsApp | X | Email | Reddit | Telegram | Instagram | These open the app or website with your link ready. Nothing is posted until you confirm it there. | Copy link",
+ "afterYes visitor": "SHARED EXHIBITION SHR Private Curated collection presentation 🗝️ Collector Share Save Info · 2 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0",
+ "afterYes viewer": "SHARED EXHIBITION SHR Private Curated collection presentation 🗝️ Collector Share Save Info · 2 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0",
+ "dbAfterOff": {
+  "visibility": "LOCKED",
+  "state": "ACTIVE"
+ },
+ "afterOff visitor": "SHARED EXHIBITION Link not available This shared exhibition link is invalid or no longer available. Open Exhibitions",
+ "afterOff viewer": "SHARED EXHIBITION Link not available This shared exhibition link is invalid or no longer available. Open Exhibitions"
+}

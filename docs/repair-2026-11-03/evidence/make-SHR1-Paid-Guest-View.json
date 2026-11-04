@@ -1,0 +1,20 @@
+{
+ "title": "SHR1 Paid Guest View",
+ "mode": "guest_view",
+ "pillsOnNew": [
+  "Private",
+  "Public Exhibit",
+  "Guest View",
+  "Registered Users"
+ ],
+ "afterCreate": "/museum/71f0125e-a068-497c-8465-d554d0ad917d",
+ "gid": "71f0125e-a068-497c-8465-d554d0ad917d",
+ "dialog": "Share\nSHR1 Paid Guest View\nEXHIBITION\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nYour profile is private, so nobody else can open this link.\n\nCopy link",
+ "link": "http://localhost:3002/museum/share/pub_mw1cxptm_5ap8mb19",
+ "row": {
+  "vis": "INVITE",
+  "state": "ACTIVE",
+  "token": "pub_mw1cxptm_5ap8mb19",
+  "guestViewMode": "public"
+ }
+}

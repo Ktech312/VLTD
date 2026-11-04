@@ -1,0 +1,75 @@
+{
+ "public": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Public Exhibit Curated collection presentation 🗝️ Collector Share Save Info · 3 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0 QA Album 3 - Original Motion Picture Soundtrack — 0",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "guest": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Guest View Curated collection presentation 🗝️ Collector Share Save Info · 4 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0 QA Album 3 - Original Motion Picture Soundtrack — 0 Hidden Item — 0",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "registered": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Registered Users Owner only allows registered users to access this exhibition. Create Free Account Guest access is disabled for this exhibition.",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "private": {
+  "tokenFrom": "database (the Share panel offered no link)",
+  "headline": "SHARED EXHIBITION Link not available This shared exhibition link is invalid or no longer available. Open Exhibitions",
+  "rpcReturnedRow": false,
+  "hits": {}
+ },
+ "alias": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Guest View Alias Curated collection presentation 🗝️ The Night Curator Share Save Info · 2 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0",
+  "rpcReturnedRow": true,
+  "hits": {}
+ },
+ "adult": {
+  "tokenFrom": "share panel",
+  "headline": "Home Vault Exhibitions Insights More ? Help ⌘K G 18+ CONTENT Adult content warning The owner marked this exhibition as intended for adults. Confirm that you are 18 or older to continue. I am 18+ — Continue Leave",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "leak": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Guest View Private Fields Curated collection presentation 🗝️ Collector Share Save Info · 2 items QA Album 5 - Original Motion Picture Soundtrack — 0 QA Album 6 - Original Motion Picture Soundtrack — 0",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "draft": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION Link not available This shared exhibition link is invalid or no longer available. Open Exhibitions",
+  "rpcReturnedRow": false,
+  "hits": {}
+ }
+}

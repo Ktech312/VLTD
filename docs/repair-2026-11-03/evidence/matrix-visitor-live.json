@@ -1,0 +1,30 @@
+{
+ "public": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Public Exhibit Curated collection presentation 🗝️ Collector Share Save Info · 3 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0 QA Album 3 - Original Motion Picture Soundtrack — 0",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "guest": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Guest View Curated collection presentation 🗝️ Collector Share Save Info · 4 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0 QA Album 3 - Original Motion Picture Soundtrack — 0 Hidden Item — 0",
+  "rpcReturnedRow": true,
+  "hits": {
+   "profileId": {
+    "text": false,
+    "net": true
+   }
+  }
+ },
+ "alias": {
+  "tokenFrom": "share panel",
+  "headline": "SHARED EXHIBITION SHR Guest View Alias Curated collection presentation 🗝️ The Night Curator Share Save Info · 2 items QA Album 1 - Original Motion Picture Soundtrack — 0 QA Album 2 - Original Motion Picture Soundtrack — 0",
+  "rpcReturnedRow": true,
+  "hits": {}
+ }
+}
