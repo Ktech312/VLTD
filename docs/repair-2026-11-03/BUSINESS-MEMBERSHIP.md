@@ -100,3 +100,16 @@ Not browser-tested: the Vault's "move selected items" buttons (changed by readin
 
 ### Quality gates
 `tsc --noEmit` clean; `eslint` on every changed file: 0 errors (existing warnings only); `next build --webpack` clean; `npm run test:nav` 17/17; `npm run test:isolation` 85/85; `test:delete` 9/9; `test:vault-load` 18/18.
+
+### On the live site (https://vltd.app), after the deploy of 55a49dd
+- Polled the live JavaScript until it contained the new code (found on the 14th check, about 2 minutes after the push).
+- No simulation, SQL not applied: the member's function call answers 404, they see their own profile only, no error page, own items only. Safe.
+- Full table with fresh synthetic accounts, function answer simulated: **40 of 40 pass** (`qa/verify-result-sim.json` is the live run's record).
+
+### Clean-up
+All three synthetic accounts, their 4 profiles, 8 items, 1 exhibition and membership rows were removed by exact id. Counts after: Vault items 3,477, auth users 16, public exhibitions 46 (the stated baseline), 0 leftover QA profiles or users, no storage pictures were ever uploaded. The temporary browser folders were deleted.
+
+### What EK must do
+1. Open the Supabase SQL editor and run [supabase/migrations/20261103_business_member_profiles.sql](../../supabase/migrations/20261103_business_member_profiles.sql) (code is already live and safe without it; run the SQL any time, order does not matter).
+2. Optionally run [supabase/verification/20261103_business_member_profiles_checks.sql](../../supabase/verification/20261103_business_member_profiles_checks.sql) and send back the table (checks 1, 2, 5, 6, 7 should say PASS).
+3. Tell the video session to re-run `node docs/repair-2026-11-03/qa/verify.cjs --base=https://vltd.app` (no `--sim`) once the SQL is in: it repeats the whole table against the real function.
