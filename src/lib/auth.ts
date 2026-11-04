@@ -39,7 +39,17 @@ export type ProfileRow = {
   age_verified?: boolean | null;
   marketing_opt_in?: boolean | null;
   onboarding_completed?: boolean | null;
+  /**
+   * Set only on a business this person was ADDED to (never on their own profiles): their role there, "admin" or "member".
+   * Such a profile is shared, not theirs: it carries none of the owner's private columns (contact, tax, billing).
+   */
+  member_role?: "admin" | "member" | null;
 };
+
+/** True for a business the signed-in person was added to as a team member (not one they own). */
+export function isSharedProfile(profile: { member_role?: string | null } | null | undefined): boolean {
+  return profile?.member_role === "admin" || profile?.member_role === "member";
+}
 
 import { currentLocalOwner, reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
 import { stillSignedInAs } from "./sessionGuard";
@@ -413,6 +423,50 @@ export async function signOut(options?: { scope?: "local" | "global" }): Promise
 
 const PROFILES_REUSE_MS = 8_000;
 
+// The businesses this person was ADDED to (they are on the roster, they do not own them). Read through a read-only database
+// function that returns only the columns needed to show and switch into the business (supabase/migrations/20261103_business_member_profiles.sql).
+// A failed or missing function means "unknown", never "none": the answer is then left out and nothing on this device is forgotten.
+async function listMemberProfiles(
+  supabase: NonNullable<ReturnType<typeof getSupabase>>
+): Promise<ProfileRow[] | null> {
+  try {
+    const result = await withTimeout(supabase.rpc("list_member_profiles").then((res) => res), "Team profile lookup");
+    if (result.error || !Array.isArray(result.data)) return null;
+    return (result.data as ProfileRow[]).filter(
+      (row) => row && typeof row.id === "string" && row.profile_type === "business" && isSharedProfile(row)
+    );
+  } catch {
+    return null;
+  }
+}
+
+// Which team businesses this device has shown this person. When one disappears from a successful answer the person was removed:
+// what this device cached of it (items, exhibitions) is forgotten, so it is gone from the device as well as from the account.
+const MEMBER_SEEN_KEY = "vltd_member_profiles_seen_v1";
+
+function settleMemberAccess(userId: string, current: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    let previous: string[] = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(MEMBER_SEEN_KEY) || "null") as { u?: string; ids?: string[] } | null;
+      if (saved && saved.u === userId && Array.isArray(saved.ids)) previous = saved.ids;
+    } catch {
+      previous = [];
+    }
+    const lost = previous.filter((id) => !current.includes(id));
+    localStorage.setItem(MEMBER_SEEN_KEY, JSON.stringify({ u: userId, ids: current }));
+    if (lost.length === 0) return;
+    void import("./vaultModel").then((m) => m.forgetLocalProfileData(lost)).catch(() => undefined);
+    void import("./galleryModel").then((m) => m.forgetLocalProfileGalleries(lost)).catch(() => undefined);
+    if (getStoredActiveProfileId() && lost.includes(getStoredActiveProfileId())) {
+      localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    }
+  } catch {
+    /* storage unavailable: nothing was remembered, nothing is forgotten */
+  }
+}
+
 export async function listMyProfiles() {
   const supabase = getSupabase();
   if (!supabase) {
@@ -446,7 +500,17 @@ export async function listMyProfiles() {
         "Profile list lookup"
       );
 
-      const rows = (result.data ?? []) as ProfileRow[];
+      const ownRows = (result.data ?? []) as ProfileRow[];
+      // Team businesses (added, not owned) follow this person's own profiles. Only asked once the person's own profiles were read.
+      let rows = ownRows;
+      if (!result.error) {
+        const shared = await listMemberProfiles(supabase);
+        if (shared && stillSignedInAs(userId)) {
+          settleMemberAccess(userId, shared.map((row) => row.id));
+          const ownIds = new Set(ownRows.map((row) => row.id));
+          rows = [...ownRows, ...shared.filter((row) => !ownIds.has(row.id))];
+        }
+      }
       // Profiles are known: settle whose data older browsers are holding (see localDataOwner.ts).
       // (Only if this person is still the one signed in: a slow answer for someone who has since signed out settles nothing.)
       if (!result.error && stillSignedInAs(userId)) resolveLegacyOwner(userId, rows.map((row) => row.id));

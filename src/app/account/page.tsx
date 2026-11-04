@@ -11,7 +11,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
-import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { getOnboardingStatus, isSharedProfile, updateProfile } from "@/lib/auth";
 import { USERNAME_TAKEN_MESSAGE, isUsernameTakenError } from "@/lib/friendlyError";
 import { displayNameProblem, usernameProblem } from "@/lib/profileRules";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -103,6 +103,11 @@ export default function AccountPage() {
         }
         if (status.needsOnboarding || !status.activeProfile) {
           router.replace("/onboarding");
+          return;
+        }
+        // A business this person was added to: its profile and contact details are the owner's. The team pages are theirs to open.
+        if (isSharedProfile(status.activeProfile) && (section === "profile" || section === "contact")) {
+          router.replace("/account/team");
           return;
         }
         setProfileId(status.activeProfile.id);

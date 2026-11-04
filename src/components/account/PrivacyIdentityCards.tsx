@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
-import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { getOnboardingStatus, isSharedProfile, updateProfile } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { showToast } from "@/lib/toast";
 
@@ -39,6 +39,7 @@ export default function PrivacyIdentityCards() {
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -46,6 +47,8 @@ export default function PrivacyIdentityCards() {
       try {
         const status = await getOnboardingStatus();
         if (!active || !status.activeProfile) return;
+        // These cards edit the active profile's own details (date of birth, public page): not for a business this person was added to.
+        setShared(isSharedProfile(status.activeProfile));
         setProfileId(status.activeProfile.id);
         setIsPublic(status.activeProfile.is_public !== false);
         setDob(status.activeProfile.date_of_birth ?? "");
@@ -92,6 +95,14 @@ export default function PrivacyIdentityCards() {
 
   if (!loaded) {
     return <div className={sectionClass + " text-sm text-[color:var(--muted)]"}>Loading privacy settings…</div>;
+  }
+
+  if (shared) {
+    return (
+      <div className={sectionClass + " text-sm text-[color:var(--muted)]"}>
+        These details belong to the business&apos;s owner. Switch to your own profile to change yours.
+      </div>
+    );
   }
 
   return (

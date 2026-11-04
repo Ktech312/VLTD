@@ -1,0 +1,207 @@
+{
+ "base": "http://localhost:3003",
+ "sim": true,
+ "at": "2026-11-04T02:20:43.164Z",
+ "rows": [
+  {
+   "id": "O1",
+   "what": "Owner: Team page shows Invite box + the member on the roster (added with the Team controls)",
+   "ok": true
+  },
+  {
+   "id": "O2",
+   "what": "Owner: transfer-ownership danger zone and Remove/Make admin buttons are there",
+   "ok": true
+  },
+  {
+   "id": "O3",
+   "what": "Owner: Workspace settings page opens (no redirect)",
+   "ok": true
+  },
+  {
+   "id": "O4",
+   "what": "Owner in the business: Vault shows the 3 business items and none of the owner's personal items",
+   "ok": true
+  },
+  {
+   "id": "O5",
+   "what": "Owner in the personal profile: only personal items, no business items",
+   "ok": true
+  },
+  {
+   "id": "M1",
+   "what": "Member: Account menu lists the business (Switch Profile) with 'team member' label",
+   "ok": true
+  },
+  {
+   "id": "M2",
+   "what": "Member: own personal profile is still listed and is the active one on arrival",
+   "ok": true
+  },
+  {
+   "id": "M3",
+   "what": "Member: switching works; the business is now the active profile",
+   "ok": true
+  },
+  {
+   "id": "M4",
+   "what": "Member: header/menu clearly shows the business as active",
+   "ok": false
+  },
+  {
+   "id": "M5",
+   "what": "Member in the business: sees all 3 business items; NONE of their personal items",
+   "ok": true
+  },
+  {
+   "id": "M6",
+   "what": "Member in the business: sees the business exhibition",
+   "ok": true
+  },
+  {
+   "id": "M7",
+   "what": "Member: Team page opens (roster visible: owner + self)",
+   "ok": true
+  },
+  {
+   "id": "M8",
+   "what": "Member: NO Invite box, NO Remove / Make admin buttons, NO transfer-ownership zone",
+   "ok": true
+  },
+  {
+   "id": "M9",
+   "what": "Member: Settings lists 'Workspace and team' but not Profile / Billing and contact",
+   "ok": true
+  },
+  {
+   "id": "M10",
+   "what": "Member: workspace, billing, profile and contact settings URLs all send them to the Team page",
+   "ok": true
+  },
+  {
+   "id": "M11",
+   "what": "Member: privacy cards (owner's identity details) are replaced by a notice",
+   "ok": true
+  },
+  {
+   "id": "M12",
+   "what": "Member cannot rename the business (database refuses; name unchanged)",
+   "ok": true
+  },
+  {
+   "id": "M13",
+   "what": "Member cannot delete the business's items (refused; all 3 still there)",
+   "ok": true
+  },
+  {
+   "id": "M14",
+   "what": "Member cannot add people to the team (refused by the database function)",
+   "ok": true
+  },
+  {
+   "id": "M15",
+   "what": "Member cannot transfer ownership (refused)",
+   "ok": true
+  },
+  {
+   "id": "M16",
+   "what": "Member cannot change the business's plan/billing columns (refused)",
+   "ok": true
+  },
+  {
+   "id": "M17",
+   "what": "Member back in their personal profile: only personal items; business items NOT shown",
+   "ok": true
+  },
+  {
+   "id": "S1",
+   "what": "Unrelated account: Account menu has no business and no Switch Profile block",
+   "ok": true
+  },
+  {
+   "id": "S2",
+   "what": "Unrelated account forcing the business id as active: falls back to own profile; no business items",
+   "ok": true
+  },
+  {
+   "id": "S3",
+   "what": "Unrelated account: Team and Workspace URLs do not open (sent to their own Settings)",
+   "ok": true
+  },
+  {
+   "id": "S4",
+   "what": "Unrelated account guessing the business id in data requests: 0 profile / items / exhibitions / roster rows",
+   "ok": true
+  },
+  {
+   "id": "S5",
+   "what": "Unrelated account cannot add itself to the team",
+   "ok": true
+  },
+  {
+   "id": "V1",
+   "what": "Signed-out visitor: Vault, Team and Workspace URLs go to the sign-in page",
+   "ok": true
+  },
+  {
+   "id": "V2",
+   "what": "Signed-out data requests for the business id: 0 rows everywhere",
+   "ok": true
+  },
+  {
+   "id": "R1",
+   "what": "Owner removed the member with the Team page's Remove button (member gone from roster)",
+   "ok": true
+  },
+  {
+   "id": "R2",
+   "what": "Membership row is really gone in the database",
+   "ok": true
+  },
+  {
+   "id": "R3",
+   "what": "Removed member, same open session after reload: business items not shown; back on own personal profile",
+   "ok": true
+  },
+  {
+   "id": "R4",
+   "what": "Removed member: the business is gone from the Account menu / switcher",
+   "ok": true
+  },
+  {
+   "id": "R5",
+   "what": "Removed member: Team and Workspace URLs no longer open",
+   "ok": true
+  },
+  {
+   "id": "R6",
+   "what": "Removed member: this device's cached copy of the business items was forgotten",
+   "ok": true
+  },
+  {
+   "id": "R7",
+   "what": "Removed member's data requests for the business: 0 rows (items, exhibitions, roster, roster function)",
+   "ok": true
+  },
+  {
+   "id": "R8",
+   "what": "Removed member cannot add an item to the business any more (refused)",
+   "ok": true
+  },
+  {
+   "id": "A1",
+   "what": "Added again: the business is back in the member's switcher (same open session, no new login)",
+   "ok": true
+  },
+  {
+   "id": "A2",
+   "what": "Added again: all 3 business items load again",
+   "ok": true
+  },
+  {
+   "id": "A3",
+   "what": "Member (re-added) can add an item to the business (existing member rule)",
+   "ok": true
+  }
+ ]
+}

@@ -1336,6 +1336,27 @@ function isNewestFirst(items: VaultItem[]) {
   return true;
 }
 
+/**
+ * A team business this person can no longer open (they were removed from its team): forget what this device kept of it. Only items
+ * of exactly those profiles go; everything else on the device is untouched. The "only newer items" download position for the
+ * profile is dropped too, so being added again later downloads the whole list.
+ */
+export function forgetLocalProfileData(profileIds: string[]) {
+  if (typeof window === "undefined" || profileIds.length === 0) return;
+  const drop = new Set(profileIds.map(String));
+  try {
+    const all = loadRawItems();
+    const remaining = all.filter((item) => !drop.has(String(item.profile_id ?? "")));
+    if (remaining.length !== all.length) {
+      writeVaultLocalJson(JSON.stringify(remaining));
+      window.dispatchEvent(new Event("vltd:vault-updated")); // the same event vaultEvents.ts emits
+    }
+    for (const id of drop) writePullCursor(id, null);
+  } catch {
+    /* nothing readable on the device: nothing to forget */
+  }
+}
+
 async function checkForceClearVault(profileId: string) {
   try {
     const { getSupabaseBrowserClient } = await import("@/lib/supabaseClient");

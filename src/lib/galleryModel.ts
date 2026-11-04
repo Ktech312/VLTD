@@ -1410,6 +1410,19 @@ function writeLocalCache(galleries: Gallery[], emit: boolean) {
   if (emit) emitGalleryChange();
 }
 
+/** Exhibitions of a team business this person can no longer open (removed from its team): forget this device's copy. Others are untouched. */
+export function forgetLocalProfileGalleries(profileIds: string[]) {
+  if (typeof window === "undefined" || profileIds.length === 0) return;
+  const drop = new Set(profileIds.map(String));
+  try {
+    const all = readStoredGallerySnapshot();
+    const remaining = all.filter((gallery) => !(gallery.profile_id && drop.has(String(gallery.profile_id))));
+    if (remaining.length !== all.length) writeLocalCache(remaining, true);
+  } catch {
+    /* nothing readable on the device: nothing to forget */
+  }
+}
+
 function readStoredGallerySnapshot() {
   if (typeof window === "undefined") return [] as Gallery[];
 

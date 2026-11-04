@@ -13,6 +13,7 @@ import {
   listMyProfiles,
   updateProfile,
   getStoredActiveProfileId,
+  isSharedProfile,
   setStoredActiveProfileId,
   type ProfileRow,
 } from "@/lib/auth";
@@ -88,6 +89,11 @@ export default function WorkspaceSettingsPage() {
       const active = rows.find((r) => r.id === aid) ?? rows[0];
       if (active?.profile_type !== "business") {
         router.replace("/account");
+        return;
+      }
+      // Workspace settings belong to the owner. A person added to the team sees the team pages only.
+      if (isSharedProfile(active)) {
+        router.replace("/account/team");
         return;
       }
       if (active) {

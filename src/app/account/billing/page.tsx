@@ -7,7 +7,7 @@ import Link from "next/link";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { RedeemCodeCard } from "@/components/account/RedeemCodeCard";
 import { showToast } from "@/lib/toast";
-import { getCurrentUser, getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
+import { getCurrentUser, getOnboardingStatus, getStoredActiveProfileId, isSharedProfile } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -77,6 +77,11 @@ export default function BillingPage() {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
     setCustomerId(getStoredStripeCustomerId(getStoredActiveProfileId() || undefined));
     void getOnboardingStatus().then(({ activeProfile }) => {
+      // Billing belongs to the business's owner: a person added to the team goes to the team pages.
+      if (isSharedProfile(activeProfile)) {
+        window.location.replace("/account/team");
+        return;
+      }
       setCurrentPlan(planForTier(getTierSafe()));
       const serverCustomerId = activeProfile?.stripe_customer_id;
       // This profile's own billing account, never another profile's.

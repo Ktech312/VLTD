@@ -14,6 +14,7 @@ import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
   getCurrentUser,
   initAuthListener,
+  isSharedProfile,
   listMyProfiles,
   onAuthStateChange,
   resolveActiveProfile,
@@ -76,6 +77,7 @@ type ProfileRow = {
   profile_type: "personal" | "business";
   avatar_emoji?: string | null;
   avatar_url?: string | null;
+  member_role?: "admin" | "member" | null;
 };
 
 
@@ -671,7 +673,7 @@ function TopNavInner() {
                               {p.display_name}
                             </div>
                             <div className="truncate text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
-                              @{p.username} · {p.profile_type === "business" ? "Business" : "Personal"}
+                              @{p.username} · {p.profile_type === "business" ? (isSharedProfile(p) ? `Business · team ${p.member_role}` : "Business") : "Personal"}
                             </div>
                           </div>
                           {active ? (

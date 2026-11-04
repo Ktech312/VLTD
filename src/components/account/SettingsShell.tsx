@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { PillSelect } from "@/components/ui/PillSelect";
 import { LocalNav } from "@/components/ui/LocalNav";
-import { getOnboardingStatus, listMyProfiles, setStoredActiveProfileId } from "@/lib/auth";
+import { getOnboardingStatus, isSharedProfile, listMyProfiles, setStoredActiveProfileId } from "@/lib/auth";
 
-type ProfileRow = { id: string; display_name: string; username: string; profile_type: "personal" | "business" };
+type ProfileRow = { id: string; display_name: string; username: string; profile_type: "personal" | "business"; member_role?: "admin" | "member" | null };
 
 type Category = {
   key: string;
@@ -77,7 +77,13 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
 
   const activeProfile = profiles.find((p) => p.id === activeId) ?? null;
   const isBusiness = activeProfile?.profile_type === "business";
-  const visible = useMemo(() => CATEGORIES.filter((c) => !c.businessOnly || isBusiness || !activeProfile), [isBusiness, activeProfile]);
+  // A business this person was added to (not one they own): its profile and billing belong to the owner, so only the team pages
+  // and the person's own device and security settings are offered while it is the active profile.
+  const shared = isSharedProfile(activeProfile);
+  const visible = useMemo(
+    () => CATEGORIES.filter((c) => (!c.businessOnly || isBusiness || !activeProfile) && !(shared && (c.key === "profile" || c.key === "billing"))),
+    [isBusiness, activeProfile, shared]
+  );
 
   // On phones the Settings landing is the category list. Everything else is a focused screen.
   const isLanding = pathname === "/account" && !section;
@@ -95,6 +101,7 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
               {activeProfile ? (
                 <span className="truncate text-[13px] text-[color:var(--muted)]">
                   @{activeProfile.username} · {activeProfile.profile_type === "business" ? "Business" : "Personal"}
+                  {shared ? ` · You are a team ${activeProfile.member_role}` : ""}
                 </span>
               ) : null}
             </div>
@@ -109,7 +116,7 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
               options={profiles.map((p) => ({
                 value: p.id,
                 label: p.display_name,
-                subtitle: p.profile_type === "business" ? "Business" : "Personal",
+                subtitle: p.profile_type === "business" ? (isSharedProfile(p) ? `Business · team ${p.member_role}` : "Business") : "Personal",
               }))}
               onChange={(next) => {
                 if (!next || next === activeId) return;
@@ -170,7 +177,7 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
                 <LocalNav
                   ariaLabel="Workspace and team"
                   activeKey={pathname.startsWith("/account/team") ? "team" : pathname.startsWith("/account/roles") ? "roles" : "workspace"}
-                  items={WORKSPACE_NAV}
+                  items={shared ? WORKSPACE_NAV.filter((item) => item.key !== "workspace") : WORKSPACE_NAV}
                 />
               </div>
             ) : null}

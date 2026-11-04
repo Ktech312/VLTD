@@ -47,7 +47,7 @@ import {
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere, moveItemsToProfileConfirmed } from "@/lib/vaultActions";
-import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
+import { getOnboardingStatus, getStoredActiveProfileId, isSharedProfile, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
@@ -2329,7 +2329,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                           <PillButton onClick={() => setConfirmProfileMove(null)}>No</PillButton>
                         </>
                       ) : (
-                        myProfiles.filter((profile) => profile.id !== activeProfileId).map((profile) => (
+                        // Moving items between profiles is for a person's OWN profiles: never into or out of a business they were added to.
+                        (isSharedProfile(myProfiles.find((profile) => profile.id === activeProfileId)) ? [] : myProfiles.filter((profile) => profile.id !== activeProfileId && !isSharedProfile(profile))).map((profile) => (
                           <PillButton key={profile.id} onClick={() => setConfirmProfileMove(profile)} title={`Move selected items to your ${profile.profile_type} profile`}>
                             <AppIcon name="next" size={16} /> {profile.display_name}
                           </PillButton>
