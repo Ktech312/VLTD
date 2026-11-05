@@ -650,6 +650,8 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
   if (error) throw error;
 
   profilesPromise = null;
+  // Every place that shows this profile's name or picture (the account menu, the settings header and the profile switcher) reloads it now, not only after the next navigation.
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("vltd:profile-updated"));
   return data as ProfileRow;
 }
 

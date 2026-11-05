@@ -69,9 +69,11 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
     }
     void load();
     window.addEventListener("vltd:active-profile", load);
+    window.addEventListener("vltd:profile-updated", load);
     return () => {
       active = false;
       window.removeEventListener("vltd:active-profile", load);
+      window.removeEventListener("vltd:profile-updated", load);
     };
   }, []);
 

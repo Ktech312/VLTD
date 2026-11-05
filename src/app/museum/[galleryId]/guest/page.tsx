@@ -20,6 +20,7 @@ import {
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { listMyProfiles } from "@/lib/auth";
 import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
 
@@ -49,6 +50,27 @@ export default function GuestGalleryPage() {
     async function resolveGuestPage() {
       let found = getGalleryById(galleryId);
 
+      // The profiles this person owns or was added to (empty when signed out). Only these can read a private exhibition, and an exhibition of theirs is a preview, not a visit.
+      let myProfileIds = new Set<string>();
+      try {
+        const mine = await listMyProfiles();
+        myProfileIds = new Set((mine.data ?? []).map((profile) => String(profile.id)));
+      } catch { /* signed out or the account did not answer: treated as a visitor */ }
+      const localProfileId = getLocalProfileId();
+      if (localProfileId) myProfileIds.add(localProfileId);
+
+      // A fresh session has none of the exhibition saved yet. An owner (or team member) reads their own exhibition from their account, so the preview of a PRIVATE exhibition opens.
+      // The read is limited to this person's own profiles (the database refuses it for anyone else), so a visitor still only ever gets a public exhibition through the public view below.
+      if (!found && myProfileIds.size > 0) {
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) {
+          try {
+            const { data } = await supabase.from("galleries").select("*").eq("id", galleryId).in("profile_id", Array.from(myProfileIds)).maybeSingle();
+            if (data) found = normalizeSupabaseGallery(data as Record<string, unknown>);
+          } catch { /* not readable: falls through to the public view */ }
+        }
+      }
+
       if (!found) {
         const supabase = getSupabaseBrowserClient();
         if (supabase) {
@@ -66,15 +88,12 @@ export default function GuestGalleryPage() {
       if (cancelled) return;
       setGallery(found);
 
-      if (found?.profile_id) {
-        const localProfileId = getLocalProfileId();
-        if (localProfileId && localProfileId === found.profile_id) {
-          setIsOwner(true);
-        }
-      }
+      const isMine = Boolean(found?.profile_id && myProfileIds.has(String(found.profile_id)));
+      if (isMine) setIsOwner(true);
 
       if (found) {
-        recordGalleryView(found.id);
+        // The owner (or a team member) looking at their own exhibition is previewing it: that is not a visit and is never counted in its views.
+        if (!isMine) recordGalleryView(found.id);
 
         if (found.profile_id) {
           const supabase = getSupabaseBrowserClient();

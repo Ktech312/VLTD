@@ -42,7 +42,8 @@
     "test:ai-scan": "tsx scripts/test-ai-scan-guard.ts",
     "test:ai-gate": "tsx scripts/test-ai-endpoints-gated.ts",
     "test:ai-ui": "tsx scripts/test-ai-ui-access.ts",
-    "test:insurance-pdf": "tsx scripts/test-insurance-pdf.ts"
+    "test:insurance-pdf": "tsx scripts/test-insurance-pdf.ts",
+    "test:shipping": "tsx scripts/test-shipping-advice.ts"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

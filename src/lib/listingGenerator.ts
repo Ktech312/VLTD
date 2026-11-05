@@ -1,3 +1,4 @@
+import { resolveCategoryLabel } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export type ListingInput = {
@@ -101,19 +102,51 @@ function conditionLanguage(input: ListingInput) {
   return "";
 }
 
-function shippingNote(input: ListingInput) {
+/**
+ * Packaging and shipping advice for the listing text, chosen by WHAT the item is (its category and subcategory), not only its Universe: a guitar and a record are both Music
+ * and need opposite packaging. Where the item is not recognised the advice stays general instead of guessing, and no cost is given for items whose size and weight decide it.
+ */
+export function shippingNote(input: ListingInput) {
   const universe = (input.universe ?? "").toUpperCase();
   const grade = (input.grade ?? "").toLowerCase();
   const isSlabbed = /psa|bgs|cgc|beckett|slab/.test(grade);
+  const category = resolveCategoryLabel({ universe: input.universe, category: input.category, categoryLabel: input.categoryLabel }).toLowerCase();
+  const sub = (input.subcategoryLabel ?? "").toLowerCase();
+  const place = `${category} ${sub}`;
+
+  // ── Music: formats, players, printed pieces and instruments each ship differently
+  if (universe === "MUSIC") {
+    if (/instruments|gear/.test(category)) {
+      if (/pedal|effect|microphone|dj/.test(sub)) return "Ships in a snug padded box, wrapped on every side. Shipping cost depends on the packed size and weight: get a carrier quote before listing.";
+      return "Ships in a hard case or a sturdy box padded on every side, with the neck, glass and controls protected. Large, heavy and fragile: get a carrier quote from the packed size and weight before listing.";
+    }
+    if (/audio players/.test(category)) return "Ships in a sturdy box padded on every side, with moving parts and any lid or glass secured. Get a carrier quote from the packed size and weight before listing.";
+    if (/audio formats/.test(category)) {
+      if (/shellac|78|acetate/.test(sub)) return "Ships in a rigid box with padding on both sides of the disc, never in a flat mailer. Fragile and breakable: insure it; shipping cost depends on size and weight.";
+      if (/vinyl|flexi/.test(sub)) return "Ships in a record mailer with cardboard stiffeners. Estimated $8-12 tracked.";
+      if (/cd|cassette|track|minidisc|reel|digital/.test(sub)) return "Ships in a padded mailer or small box with the case protected. Estimated $4-8 tracked.";
+      return "Ships in packaging made for its format, with the media protected. Shipping cost varies by size and destination.";
+    }
+    if (/print|ephemera/.test(category)) return "Ships flat between stiff boards in a rigid mailer (or rolled in a tube for a large poster). Estimated $5-10 tracked.";
+    return "Ships securely packaged for its size and fragility. Shipping cost varies by destination.";
+  }
+
+  // ── Flat paper: posters and prints in any universe
+  if (/poster|print|lithograph|sheet music|gig poster/.test(place)) return "Ships flat between stiff boards in a rigid mailer, or rolled in a sturdy tube. Estimated $5-12 tracked.";
 
   if (universe === "TCG" || universe === "SPORTS") {
     if (isSlabbed) return "Ships double-boxed with bubble wrap. Slab protection included. Estimated $8-14 tracked.";
-    return "Ships in top loader and team bag inside a bubble mailer. Estimated $4-6 tracked.";
+    if (/card/.test(place) || universe === "TCG") return "Ships in top loader and team bag inside a bubble mailer. Estimated $4-6 tracked.";
+    return "Ships in a sturdy box padded on every side. Shipping cost depends on the packed size and weight.";
   }
-  if (universe === "MUSIC") return "Ships in a record mailer with cardboard stiffeners. Estimated $8-12 tracked.";
+  if (universe === "POP_CULTURE" && /comic/.test(place)) {
+    if (isSlabbed) return "Ships double-boxed with bubble wrap. Slab protection included. Estimated $8-14 tracked.";
+    return "Ships bagged and boarded in a rigid mailer. Estimated $5-9 tracked.";
+  }
   if (universe === "GAMES") return "Ships boxed with bubble wrap. Estimated $6-12 depending on size.";
   if (universe === "POP_CULTURE") return "Ships boxed with padding. Estimated $6-14 depending on item size.";
   if (universe === "JEWELRY_APPAREL") return "Ships in a padded envelope or small box. Estimated $4-8 tracked.";
+  if (universe === "ART") return "Ships in a sturdy box with corner protection and padding on every side. Shipping cost depends on size, weight and any frame or glass.";
   return "Ships securely packaged. Shipping cost varies by destination.";
 }
 

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { SelectCircle } from "@/components/ui/SelectCircle";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import { type VaultItem } from "@/lib/vaultModel";
@@ -20,6 +21,12 @@ interface VaultWallViewProps {
   sortMode?: "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
   /** The Vault page's Show Sold switch (the wall no longer has a second one). */
   showSold?: boolean;
+  /** Select items: a tap on a tile selects it (instead of opening the item) and the tile shows the same select circle as the other views. */
+  selectMode?: boolean;
+  selectedIds?: ReadonlySet<string>;
+  onToggleSelect?: (id: string) => void;
+  /** The ids the wall is showing right now (its own filters applied), so "Select all" and the bulk actions only ever touch what is on screen. */
+  onVisibleIds?: (ids: string[]) => void;
 }
 
 /* ── Constants ─────────────────────────────────────────────────── */
@@ -50,23 +57,25 @@ const WALL_LIMIT_KEY = "vltd_wall_render_limit";
 
 /* ── Small cover tile ──────────────────────────────────────────── */
 
-function WallTile({
-  item,
-  isSold,
-}: {
-  item: VaultItem;
-  isSold: boolean;
-}) {
+const TILE_CLASS = "group relative block overflow-hidden rounded-[6px] bg-black/30 ring-1 ring-white/8 transition hover:ring-gold/40 hover:scale-[1.04]";
+
+// One tile: a link to the item, or (while selecting) a button that toggles the selection. Defined once, outside the tile, so the photo inside is not remounted on every render.
+function WallTileShell({ item, href, selectMode, selected, onToggleSelect, children }: { item: VaultItem; href: string; selectMode: boolean; selected: boolean; onToggleSelect?: (id: string) => void; children: React.ReactNode }) {
+  if (!selectMode) return <Link href={href} title={item.title} className={TILE_CLASS} style={{ aspectRatio: "2/3" }}>{children}</Link>;
+  return (
+    <button type="button" onClick={() => onToggleSelect?.(item.id)} aria-pressed={selected} aria-label={"Select " + item.title} title={item.title} className={TILE_CLASS + " w-full text-left"} style={{ aspectRatio: "2/3", outline: selected ? "2px solid #C8CDD2" : undefined }}>
+      {children}
+      <span className="absolute inset-0 z-10 flex items-start justify-end p-1" style={{ background: selected ? "rgba(203,208,213,0.22)" : "rgba(0,0,0,0.05)" }}><SelectCircle selected={selected} /></span>
+    </button>
+  );
+}
+
+const WallTile = memo(function WallTile({ item, isSold, selectMode = false, selected = false, onToggleSelect }: { item: VaultItem; isSold: boolean; selectMode?: boolean; selected?: boolean; onToggleSelect?: (id: string) => void }) {
   const image = useResolvedVaultImage(item);
   const href = isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`;
 
   return (
-    <Link
-      href={href}
-      title={item.title}
-      className="group relative block overflow-hidden rounded-[6px] bg-black/30 ring-1 ring-white/8 transition hover:ring-gold/40 hover:scale-[1.04]"
-      style={{ aspectRatio: "2/3" }}
-    >
+    <WallTileShell item={item} href={href} selectMode={selectMode} selected={selected} onToggleSelect={onToggleSelect}>
       {image ? (
         <ProgressiveImage
           src={image}
@@ -94,13 +103,13 @@ function WallTile({
           SOLD
         </span>
       )}
-    </Link>
+    </WallTileShell>
   );
-}
+});
 
 /* ── Main component ────────────────────────────────────────────── */
 
-export default function VaultWallView({ items, saleMap, sortMode = "newest", showSold = false }: VaultWallViewProps) {
+export default function VaultWallView({ items, saleMap, sortMode = "newest", showSold = false, selectMode = false, selectedIds, onToggleSelect, onVisibleIds }: VaultWallViewProps) {
   // Universe multi-select: empty Set = All
   const [selectedUniverses, setSelectedUniverses] = useState<Set<UniverseKey>>(new Set());
   const [cols, setCols] = useState(7);
@@ -259,6 +268,12 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
       letterRefs.current[letter]?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, end > renderLimit ? 80 : 0);
   }
+
+  // Tell the Vault page which items the wall is showing (its own filters applied), so Select all and the bulk actions never include a hidden item.
+  const onVisibleIdsRef = useRef(onVisibleIds);
+  onVisibleIdsRef.current = onVisibleIds;
+  const visibleKey = useMemo(() => filtered.map((item) => item.id).join("|"), [filtered]);
+  useEffect(() => { onVisibleIdsRef.current?.(visibleKey ? visibleKey.split("|") : []); }, [visibleKey]);
 
   const hasMoreToDraw = renderLimit < filtered.length;
   useEffect(() => {
@@ -530,7 +545,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
           {flat ? (
             <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {filtered.slice(0, renderLimit).map((item) => (
-                <WallTile key={item.id} item={item} isSold={Boolean(saleMap[item.id]) || item.status === "SOLD"} />
+                <WallTile key={item.id} item={item} isSold={Boolean(saleMap[item.id]) || item.status === "SOLD"} selectMode={selectMode} selected={selectedIds?.has(item.id) ?? false} onToggleSelect={onToggleSelect} />
               ))}
             </div>
           ) : null}
@@ -557,6 +572,9 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
                       key={item.id}
                       item={item}
                       isSold={Boolean(saleMap[item.id]) || item.status === "SOLD"}
+                      selectMode={selectMode}
+                      selected={selectedIds?.has(item.id) ?? false}
+                      onToggleSelect={onToggleSelect}
                     />
                   ))}
                 </div>

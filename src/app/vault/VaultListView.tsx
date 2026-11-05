@@ -1173,7 +1173,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [movingProfile, setMovingProfile] = useState(false);
   const [visibleItemCount, setVisibleItemCount] = useState(FIRST_PAINT_ITEM_COUNT);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  // The ids the Wall is showing (the Wall has its own filters). Select all and the bulk actions are limited to these while the Wall is the view.
   const [selectMode, setSelectMode] = useState(false);
+  const [wallVisibleIds, setWallVisibleIds] = useState<string[] | null>(null);
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
@@ -1975,6 +1977,18 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   }
 
   // Stable handlers for the memoised Gallery cells.
+  // What Select all may select: in the Wall view only the items the wall is showing (its own filters hide the rest); in Gallery and Flip all the filtered items.
+  const selectableItems = useMemo(() => {
+    if (vaultViewMode !== "wall" || wallVisibleIds === null) return filteredItems;
+    const visible = new Set(wallVisibleIds);
+    return filteredItems.filter((entry) => visible.has(entry.id));
+  }, [filteredItems, vaultViewMode, wallVisibleIds]);
+  // An item the wall filters out can no longer be selected: dropping it keeps Delete and Move from touching something the person cannot see.
+  useEffect(() => {
+    if (vaultViewMode !== "wall" || wallVisibleIds === null) return;
+    const visible = new Set(wallVisibleIds);
+    setSelectedIds((prev) => { let drop = false; for (const id of prev) if (!visible.has(id)) { drop = true; break; } return drop ? new Set(Array.from(prev).filter((id) => visible.has(id))) : prev; });
+  }, [vaultViewMode, wallVisibleIds]);
   const toggleSelectRef = useRef(toggleSelectItem);
   toggleSelectRef.current = toggleSelectItem;
   const onToggleSelectStable = useCallback((id: string) => toggleSelectRef.current(id), []);
@@ -2339,7 +2353,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     </>
                   )}
                   {selectMode && (
-                    <PillButton onClick={() => setSelectedIds(new Set(filteredItems.map((entry) => entry.id)))}>Select all {filteredItems.length}</PillButton>
+                    <PillButton onClick={() => setSelectedIds(new Set(selectableItems.map((entry) => entry.id)))}>Select all {selectableItems.length}</PillButton>
                   )}
                                     {selectMode && (
                     <PillButton onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}>Cancel</PillButton>
@@ -2441,7 +2455,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         ) : lockedUniverse && filteredItems.length === 0 && !hasItemFilters ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} universeName={universeDisplayName(lockedUniverse)} />
         ) : vaultViewMode === "wall" ? (
-          <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} />
+          <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={onToggleSelectStable} onVisibleIds={setWallVisibleIds} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} universeName={lockedUniverse && !hasItemFilters ? universeDisplayName(lockedUniverse) : undefined} />
         ) : vaultViewMode === "flip" ? (

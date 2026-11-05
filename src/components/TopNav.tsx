@@ -245,9 +245,11 @@ function TopNavInner() {
     });
     const reloadActiveProfile = () => void loadAuthState("auth-change");
     window.addEventListener("vltd:active-profile", reloadActiveProfile);
+    window.addEventListener("vltd:profile-updated", reloadActiveProfile);
     return () => {
       active = false;
       window.removeEventListener("vltd:active-profile", reloadActiveProfile);
+      window.removeEventListener("vltd:profile-updated", reloadActiveProfile);
       subscription.subscription.unsubscribe();
     };
   }, []);
