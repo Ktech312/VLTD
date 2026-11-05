@@ -298,11 +298,17 @@ export function saveInsuranceExcludedIds(ids: Set<string>) {
 export const EXCLUSIONS_DEVICE_NOTE = "Exclusions are saved on this device only. They do not follow your account.";
 export const EXCLUSIONS_WAITING_NOTE = "Some exclusions have not reached your account yet. They are kept on this device and will be sent when the connection is back.";
 
-/** What a page should say about where the exclusions live ("" when they follow the account and nothing is waiting). */
+export const EXCLUSIONS_UNREACHABLE_NOTE = "Your account could not be reached, so this device's copy of your exclusions is shown. Anything you change is kept here and sent when the connection is back.";
+
+/**
+ * What a page should say about where the exclusions live ("" when they follow the account and nothing is waiting). Changes waiting to be sent are always described
+ * as waiting: they do follow the account once it answers, so "this device only" is said only when the account cannot hold them at all.
+ */
 export function exclusionsNoteFor(m: ExclusionsMode, pending: number): string {
-  if (m === "account") return pending > 0 ? EXCLUSIONS_WAITING_NOTE : "";
-  if (m === "unknown") return "";
-  return EXCLUSIONS_DEVICE_NOTE;
+  if (m === "device") return EXCLUSIONS_DEVICE_NOTE;
+  if (pending > 0) return EXCLUSIONS_WAITING_NOTE;
+  if (m === "unreachable") return EXCLUSIONS_UNREACHABLE_NOTE;
+  return "";
 }
 
 /** "on this device" when the exclusions are not in the account, otherwise just "by you". */

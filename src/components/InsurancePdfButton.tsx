@@ -8,6 +8,7 @@ import { printInsurancePdf } from "@/lib/insurancePdf";
 import { insuranceScope, notCountedLine } from "@/lib/insuranceDocs";
 import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import type { VaultItem } from "@/lib/vaultModel";
+import { isSoldItem } from "@/lib/vaultStats";
 
 export default function InsurancePdfButton({
   items: allItems,
@@ -90,6 +91,7 @@ export default function InsurancePdfButton({
               <div className="mt-1 text-[12px]" style={{ color: "var(--muted)" }}>
                 {items.length} item{items.length !== 1 ? "s" : ""}. Opens print dialog so you can save as PDF.
                 {notCounted ? <span data-testid="pdf-not-counted"> {notCounted} {exclusionsNote}</span> : null}
+                {single && items.some(isSoldItem) ? <span data-testid="pdf-sold-note"> This item is sold: the document marks it as a historical record and does not count it as currently insured.</span> : null}
               </div>
             </div>
 

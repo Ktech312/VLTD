@@ -92,5 +92,6 @@ export function useInsuranceExclusions(): {
     setPending(result.pending);
   }, []);
 
-  return { excluded, mode, ready, note: ready ? exclusionsNoteFor(mode, pending) : "", where: excludedByYouWhere(mode), setExcluded };
+  return { excluded, mode, ready, // Changes still waiting to be sent are known from the device at once, so they are said at once (not only after the account has answered or the wait has run out).
+    note: pending > 0 && mode !== "device" ? exclusionsNoteFor(mode, pending) : ready ? exclusionsNoteFor(mode, pending) : "", where: excludedByYouWhere(mode), setExcluded };
 }

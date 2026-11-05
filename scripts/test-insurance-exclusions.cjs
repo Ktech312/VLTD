@@ -123,6 +123,14 @@ const signIn = (uid, pid) => { store.set("vltd-auth", JSON.stringify({ user: { i
   t("unreachable: re-including c1 is remembered as waiting to delete", r.pending >= 1 && setOf(X.readInsuranceExcludedIds()) === "a1", r);
   r = await X.syncInsuranceExclusions();
   t("while unreachable a sync shows the device list and does not resurrect c1", setOf(r.ids) === "a1" && r.pending >= 1, { ids: setOf(r.ids), pending: r.pending });
+  // a page reload while the account is still unreachable: the change is still waiting, and the page must say so (it follows the account once it answers)
+  delete require.cache[path.join(out, "insuranceExclusions.js")]; X = require(path.join(out, "insuranceExclusions.js")); // a page reload: the module starts over, the device storage and the account stay as they were
+  r = await X.syncInsuranceExclusions();
+  t("after a reload while unreachable: still shown from the device, still waiting", setOf(r.ids) === "a1" && r.mode === "unreachable" && r.pending >= 1, { ids: setOf(r.ids), mode: r.mode, pending: r.pending });
+  t("after a reload while unreachable: the note says waiting, never 'do not follow your account'", /have not reached your account/.test(X.exclusionsNoteFor(r.mode, r.pending)) && !/do not follow your account/.test(X.exclusionsNoteFor(r.mode, r.pending)), X.exclusionsNoteFor(r.mode, r.pending));
+  t("unreachable with nothing waiting: the note says the account could not be reached, not 'this device only'", /could not be reached/.test(X.exclusionsNoteFor("unreachable", 0)) && !/this device only|do not follow your account/.test(X.exclusionsNoteFor("unreachable", 0)));
+  t("device mode (the account cannot hold them) still says this device only, even with a count", /this device only/.test(X.exclusionsNoteFor("device", 2)));
+  t("account mode with nothing waiting has no note", X.exclusionsNoteFor("account", 0) === "" && X.exclusionsNoteFor("unknown", 0) === "");
   account.fail = null;
   r = await X.syncInsuranceExclusions();
   t("when the account answers again, the waiting changes are sent", r.pending === 0 && account.rows.some((x) => x.item_id === "a1") && !account.rows.some((x) => x.item_id === "c1" && x.profile_id === "P"), { pending: r.pending, rows: account.rows });
