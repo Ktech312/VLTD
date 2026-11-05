@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 
 type Item = ModelItem & {
   storageLocation?: string;
@@ -43,7 +43,7 @@ function itemUniverse(i: Item): UniverseKey {
   return (i.universe ?? "MISC") as UniverseKey;
 }
 function itemCategory(i: Item): string {
-  return i.categoryLabel ?? "Collector’s Choice";
+  return resolveCategoryLabel(i);
 }
 function itemSubcategory(i: Item): string | undefined {
   return i.subcategoryLabel;
@@ -159,7 +159,7 @@ export default function InsurancePacketPrintPage() {
               ) : null}
               <td className="border border-slate-300 p-1 align-top">
                 <div className="font-bold">{item.title}</div>
-                <div className="text-slate-700">{item.subtitle ? `${item.subtitle} • ` : ""}{item.number ?? ""}</div>
+                <div className="text-slate-700">{[item.subtitle, item.number].filter(Boolean).join(" • ")}</div>
               </td>
               <td className="border border-slate-300 p-1 align-top">{itemLabel(item)}</td>
               <td className="border border-slate-300 p-1 align-top">

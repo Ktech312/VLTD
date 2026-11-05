@@ -2,7 +2,7 @@ import type { AppIconName } from "@/components/ui/AppIcon";
 
 /**
  * Navigation has two arrangements that read this file:
- *  - DESKTOP (768px and wider, the top bar): Home, Vault, Exhibitions, Insights and a More menu (Discover, Events, VLT Lounge, Activity, Learn).
+ *  - DESKTOP (768px and wider, the top bar): Home, Vault, Exhibitions, Insights and a More menu (Discover, Events, VLTD Lounge, Activity, Learn).
  *  - PHONE (under 768px, the bottom bar): PRIMARY_NAV below, unchanged while the phone arrangement is reviewed. Every destination in More is
  *    still reachable on a phone (Discover and Lounge are tabs; Insights, Goals and Insurance are in the Vault bar; Events and Upcoming Comics
  *    are sections on Discover; Learn is in the Lounge bar; Activity is on Home).
@@ -40,7 +40,7 @@ export type MoreItem = { key: string; label: string; description: string; href: 
 export const MORE_ITEMS: MoreItem[] = [
   { key: "discover", label: "Discover", description: "Public collections, notable items and collectors", href: "/discover", match: ["/discover", "/market", "/shop", "/upcoming", "/kickstarter", "/patreon"] },
   { key: "events", label: "Events", description: "Conventions, card shows, auctions and drops", href: "/events", match: ["/events"] },
-  { key: "lounge", label: "VLT Lounge", description: "Community board and leaderboards", href: "/community-board", match: ["/community-board"] },
+  { key: "lounge", label: "VLTD Lounge", description: "Community board and leaderboards", href: "/community-board", match: ["/community-board"] },
   { key: "activity", label: "Activity", description: "Everything that changed in your vault", href: "/activity", match: ["/activity"], signedInOnly: true },
   { key: "learn", label: "Learn", description: "Guides and learning", href: "/learn", match: ["/learn"] },
 ];

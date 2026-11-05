@@ -2757,6 +2757,8 @@ html[data-load-stalled="1"] #vltd-load-stalled {
     top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
     height: auto !important; overflow: visible !important;
   }
+  /* the spacer that keeps the bug button off the last line on screen would print as an empty last page */
+  body:has(.vltd-print-document) .vltd-content-wrap::after { display: none !important; }
   html:has(.vltd-print-document), body:has(.vltd-print-document) { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; background-image: none !important; }
   body:has(.vltd-print-document)::before, body:has(.vltd-print-document)::after { display: none !important; }
   /* the theme sets the body background with [data-vltd-theme] body { ... !important }: this needs one more level of specificity to win */

@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 
 type Item = ModelItem & {
@@ -45,7 +45,7 @@ function itemUniverse(i: Item): UniverseKey {
   return (i.universe ?? "MISC") as UniverseKey;
 }
 function itemCategory(i: Item): string {
-  return i.categoryLabel ?? "Collector’s Choice";
+  return resolveCategoryLabel(i);
 }
 function itemSubcategory(i: Item): string | undefined {
   return i.subcategoryLabel;
@@ -224,8 +224,7 @@ export default function InsurancePacketPage() {
                   <td className="py-3 pl-4 pr-3">
                     <div className="font-black text-text-primary">{item.title}</div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      {item.subtitle ? `${item.subtitle} • ` : ""}
-                      {item.number ?? ""}
+                      {[item.subtitle, item.number].filter(Boolean).join(" • ")}
                     </div>
                   </td>
                   <td className="py-3 pr-3 text-[color:var(--muted)]">{itemLabel(item)}</td>

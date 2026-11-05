@@ -423,7 +423,7 @@ export default function VltLoungePage() {
   return (
     <>
       <PageHeader
-        title="VLT Lounge"
+        title="VLTD Lounge"
         contentClassName="max-w-[1480px]"
         description={
           <>

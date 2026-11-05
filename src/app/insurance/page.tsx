@@ -11,7 +11,7 @@ import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { REVIEW_CHECKLIST_NOTE, reviewCounts } from "@/lib/vaultReview";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -74,7 +74,7 @@ function itemUniverse(i: Item): UniverseKey {
   return (i.universe ?? "MISC") as UniverseKey;
 }
 function itemCategory(i: Item): string {
-  return i.categoryLabel ?? (i.category === "CUSTOM" ? i.customCategoryLabel ?? "Collector’s Choice" : "Collector’s Choice");
+  return resolveCategoryLabel(i);
 }
 function itemSubcategory(i: Item): string | undefined {
   return i.subcategoryLabel;
@@ -308,8 +308,7 @@ export default function InsuranceExportPage() {
                       <td className="py-3 pl-4 pr-3">
                         <div className="item-title font-black text-text-primary">{i.title}</div>
                         <div className="item-subtitle mt-0.5 text-xs text-[color:var(--muted)]">
-                          {i.subtitle ? `${i.subtitle} • ` : ""}
-                          {i.number ?? ""}
+                          {[i.subtitle, i.number].filter(Boolean).join(" • ")}
                         </div>
                         <div className="no-print mt-2">
                           <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4 vltd-tap-y">

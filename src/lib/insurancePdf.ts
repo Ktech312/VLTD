@@ -1,5 +1,5 @@
 import { formatPrice } from "@/lib/pricingMvp";
-import { UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceTotals, noEstimateNote } from "@/lib/insuranceDocs";
 import { isSoldItem } from "@/lib/vaultStats";
@@ -36,9 +36,14 @@ function safeDate(timestamp?: number) {
 }
 
 function universeLabel(item: VaultItem) {
-  const key = item.universe?.toUpperCase();
-  if (!key) return item.categoryLabel ?? "-";
+  // No Universe recorded reads "Misc", the same as the Insurance pages and the packet.
+  const key = (item.universe || "MISC").toUpperCase();
   return (UNIVERSE_LABEL as Record<string, string>)[key] ?? key;
+}
+
+/** The category as the rest of the app words it (a stored code such as "comics" reads "Comics"); nothing when none was recorded. */
+function categoryText(item: VaultItem) {
+  return item.categoryLabel || item.category || item.customCategoryLabel ? resolveCategoryLabel(item) : "";
 }
 
 function detailRow(label: string, value: unknown) {
@@ -91,7 +96,7 @@ function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
     <div class="item-title-block">
       ${isSoldItem(item) ? `<div class="sold-marker">Sold: historical record, not part of the current inventory</div>` : ""}
       <div class="item-title">${escapeHtml(item.title)}${item.subtitle ? ` - ${escapeHtml(item.subtitle)}` : ""}</div>
-      <div class="item-meta">${escapeHtml(universeLabel(item))}${item.categoryLabel ? ` | ${escapeHtml(item.categoryLabel)}` : ""}${item.number ? ` | #${escapeHtml(item.number)}` : ""}</div>
+      <div class="item-meta">${escapeHtml(universeLabel(item))}${categoryText(item) ? ` | ${escapeHtml(categoryText(item))}` : ""}${item.number ? ` | #${escapeHtml(item.number)}` : ""}</div>
     </div>
     <div class="item-value-block">
       <div class="item-value">${escapeHtml(fmtEstimate(insuranceEstimate(item)))}</div>

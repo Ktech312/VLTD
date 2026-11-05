@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, notCountedLine } from "@/lib/insuranceDocs";
 import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { isSoldItem } from "@/lib/vaultStats";
@@ -73,7 +73,7 @@ function itemUniverse(i: Item): UniverseKey {
   return (i.universe ?? "MISC") as UniverseKey;
 }
 function itemCategory(i: Item): string {
-  return i.categoryLabel ?? (i.category === "CUSTOM" ? i.customCategoryLabel ?? "Collector’s Choice" : "Collector’s Choice");
+  return resolveCategoryLabel(i);
 }
 function itemSubcategory(i: Item): string | undefined {
   return i.subcategoryLabel;
@@ -207,16 +207,16 @@ export default function InsuranceItemPage() {
                   <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
-                      <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? ""}</div>
-                      <div><span className="text-[color:var(--muted)]">Certificate #:</span> {item.certNumber ?? ""}</div>
-                      <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber ?? ""}</div>
+                      <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade || "-"}</div>
+                      <div><span className="text-[color:var(--muted)]">Certificate #:</span> {item.certNumber || "-"}</div>
+                      <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber || "-"}</div>
                     </div>
                   </div>
 
                   <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Storage</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
-                      <div><span className="text-[color:var(--muted)]">Location:</span> {item.storageLocation ?? ""}</div>
+                      <div><span className="text-[color:var(--muted)]">Location:</span> {item.storageLocation || "-"}</div>
                     </div>
                   </div>
 
@@ -232,9 +232,9 @@ export default function InsuranceItemPage() {
                   <div className="rounded-[14px] border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Appraisal</div>
                     <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
-                      <div><span className="text-[color:var(--muted)]">Source:</span> {item.valueSource ?? ""}</div>
-                      <div><span className="text-[color:var(--muted)]">Updated:</span> {item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : ""}</div>
-                      <div><span className="text-[color:var(--muted)]">Confidence:</span> {typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : ""}</div>
+                      <div><span className="text-[color:var(--muted)]">Source:</span> {item.valueSource || "-"}</div>
+                      <div><span className="text-[color:var(--muted)]">Updated:</span> {item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : "-"}</div>
+                      <div><span className="text-[color:var(--muted)]">Confidence:</span> {typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "-"}</div>
                     </div>
                   </div>
                 </div>

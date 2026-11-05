@@ -10,7 +10,7 @@ import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { TAXONOMY, UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 import { PillButton } from "@/components/ui/PillButton";
@@ -67,7 +67,7 @@ function itemUniverse(i: ModelItem): UniverseKey {
   return (i.universe ?? "MISC") as UniverseKey;
 }
 function itemCategory(i: ModelItem): string {
-  return i.categoryLabel ?? (i.category === "CUSTOM" ? i.customCategoryLabel ?? "Collector’s Choice" : "Collector’s Choice");
+  return resolveCategoryLabel(i);
 }
 function itemSubcategory(i: ModelItem): string | undefined {
   return i.subcategoryLabel;
@@ -152,7 +152,39 @@ export default function InsuranceReportPage() {
     <main className="vltd-print-document text-[color:var(--fg)]">
       {/* Print styles */}
       <style jsx global>{`
+        @page {
+          size: landscape;
+          margin: 10mm;
+        }
         @media print {
+          .report-wrap {
+            max-width: none !important;
+            padding: 0 !important;
+          }
+          .report-table-wrap {
+            overflow: visible !important;
+          }
+          .print-table {
+            table-layout: auto;
+            width: 100% !important;
+            font-size: 9px !important;
+          }
+          .print-table th,  .print-table td {
+            padding-right: 4px !important;
+          }
+          .print-table th {
+            white-space: nowrap;
+          }
+          .print-table td {
+            overflow-wrap: anywhere;
+          }
+          .print-table thead {
+            display: table-header-group;
+          }
+          .print-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
           .no-print {
             display: none !important;
           }
@@ -179,7 +211,7 @@ export default function InsuranceReportPage() {
         }
       `}</style>
 
-      <div className="mx-auto max-w-6xl px-5 py-10">
+      <div className="report-wrap mx-auto max-w-6xl px-5 py-10">
         {/* Top controls */}
         <div className="no-print flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -270,7 +302,7 @@ export default function InsuranceReportPage() {
                 <div key={u} className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-sm font-semibold">{UNIVERSE_LABEL[u]}</div>
                   <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    {pool.length} items • {fmtMoney(val)}{unvalued > 0 ? ` (${unvalued} with no estimate)` : ""}
+                    {pool.length} {pool.length === 1 ? "item" : "items"} • {fmtMoney(val)}{unvalued > 0 ? ` (${unvalued} with no estimate)` : ""}
                   </div>
                 </div>
               );
@@ -291,7 +323,7 @@ export default function InsuranceReportPage() {
             <div className="text-xs text-[color:var(--muted2)]">Sorted: {sortBy.replaceAll("_", " ")}</div>
           </div>
 
-          <div className="mt-4 overflow-x-auto">
+          <div className="report-table-wrap mt-4 overflow-x-auto">
             <table className="print-table w-full border-collapse text-sm">
               <thead>
                 <tr className="text-left">

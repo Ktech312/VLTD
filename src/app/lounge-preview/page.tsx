@@ -310,7 +310,7 @@ export default function LoungePreviewPage() {
             </p>
             <div className="mt-2 flex flex-wrap items-end gap-4">
               <h1 className="text-[54px] font-semibold leading-[0.88] md:text-[72px]" style={{ color: cream, fontFamily: serif }}>
-                VLT Lounge
+                VLTD Lounge
               </h1>
               <p className="max-w-xl pb-2 text-sm leading-6" style={{ color: muted }}>
                 Live collector talk, featured rooms, trusted answers, and universe tables. This is not Discover; this is where the community gathers.

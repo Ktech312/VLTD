@@ -27,8 +27,8 @@ test("the desktop header is Home, Vault, Exhibitions, Insights, then a More menu
   assert.match(top, /DESKTOP_NAV\.map/);
   assert.match(top, /ariaLabel="More"/);
 });
-test("More holds Discover, Events, VLT Lounge, Activity and Learn at their existing URLs", () => {
-  assert.deepEqual(MORE_ITEMS.map((i) => [i.label, i.href]), [["Discover", "/discover"], ["Events", "/events"], ["VLT Lounge", "/community-board"], ["Activity", "/activity"], ["Learn", "/learn"]]);
+test("More holds Discover, Events, VLTD Lounge, Activity and Learn at their existing URLs", () => {
+  assert.deepEqual(MORE_ITEMS.map((i) => [i.label, i.href]), [["Discover", "/discover"], ["Events", "/events"], ["VLTD Lounge", "/community-board"], ["Activity", "/activity"], ["Learn", "/learn"]]);
 });
 test("Activity is offered only to people who are signed in", () => {
   assert.deepEqual(MORE_ITEMS.filter((i) => i.signedInOnly).map((i) => i.key), ["activity"]);
@@ -133,7 +133,7 @@ test("Collector supplies & services is a labelled link in Marketplace; Kickstart
   assert.match(upcoming, /Patreon comics/);
   // no new header or More entry
   assert.deepEqual(DESKTOP_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions", "Insights"]);
-  assert.deepEqual(MORE_ITEMS.map((i) => i.label), ["Discover", "Events", "VLT Lounge", "Activity", "Learn"]);
+  assert.deepEqual(MORE_ITEMS.map((i) => i.label), ["Discover", "Events", "VLTD Lounge", "Activity", "Learn"]);
   for (const f of ["src/app/shop/page.tsx", "src/app/kickstarter/page.tsx", "src/app/patreon/page.tsx", "src/app/market/page.tsx", "src/app/upcoming/page.tsx"]) assert.ok(fs.existsSync(f), f + " still exists");
   // the destinations keep More (Discover) highlighted, and the phone bar's Discover
   for (const path of ["/shop", "/kickstarter", "/patreon"]) {
