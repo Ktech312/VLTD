@@ -18,10 +18,10 @@ import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
-import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
+import { appendItems, loadItems, saveItem, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { suggestAutoTags } from "@/lib/generateHashtags";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
-import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
+import { hasSupabaseEnv, uploadVaultImageToSupabase, upsertVaultItemToSupabase } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import {
   generateVaultImageKey,
@@ -367,6 +367,7 @@ export default function CapturePage() {
   // works) -- then routes the result through the same crop step the in-app
   // camera already gets, before it's added as a photo.
   const [pendingNativeFile, setPendingNativeFile] = useState<File | null>(null);
+  const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
   const [pendingNativeUrl, setPendingNativeUrl] = useState("");
   const [pendingNativeCrop, setPendingNativeCrop] = useState<ScanCropRect>(DEFAULT_NATIVE_CROP);
   const [isApplyingNativeCrop, setIsApplyingNativeCrop] = useState(false);
@@ -394,6 +395,7 @@ export default function CapturePage() {
   // and a second tap while a save is running must not create a second record.
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false); // set synchronously, so two quick taps in the same moment still save once
+  const pendingSaveIdRef = useRef<string | null>(null);
   const [saveError, setSaveError] = useState("");
   // Live-scan barcode enrichment -- fires the instant the Scan button reads a
   // code, before any photo is taken. Free lookups only (comic/vinyl/UPC/book
@@ -501,6 +503,7 @@ export default function CapturePage() {
   }, [fields, capturedImages]);
 
   const discardDraft = useCallback(() => {
+    pendingSaveIdRef.current = null;
     setFields({ ...draftBaselineRef.current });
     setCapturedImages([]);
     setIdentified(false);
@@ -542,7 +545,8 @@ export default function CapturePage() {
 
   // A photo just came back from the native camera app -- open the crop step
   // before it's added, instead of appending it straight away.
-  function handleNativeCameraFile(file: File) {
+  function handleNativeCameraFile(file: File, existingIndex: number | null = null) {
+    setPendingPhotoIndex(existingIndex);
     setPendingNativeFile(file);
     setPendingNativeUrl(URL.createObjectURL(file));
     setPendingNativeCrop(DEFAULT_NATIVE_CROP);
@@ -551,8 +555,20 @@ export default function CapturePage() {
   function closeNativeCropEditor() {
     if (pendingNativeUrl) URL.revokeObjectURL(pendingNativeUrl);
     setPendingNativeFile(null);
+    setPendingPhotoIndex(null);
     setPendingNativeUrl("");
     setPendingNativeCrop(DEFAULT_NATIVE_CROP);
+  }
+
+  function acceptAdjustedPhoto(file: File) {
+    if (pendingPhotoIndex === null) {
+      handleCapture(file);
+    } else {
+      const index = pendingPhotoIndex;
+      setCapturedImages((previous) => previous.map((photo, i) => i === index ? file : photo));
+      if (index === 0) setIdentified(false);
+    }
+    closeNativeCropEditor();
   }
 
   async function applyNativeCropEditor() {
@@ -562,8 +578,7 @@ export default function CapturePage() {
       const finalFile = isDefaultNativeCrop(pendingNativeCrop)
         ? pendingNativeFile
         : await cropImageFile(pendingNativeFile, pendingNativeCrop);
-      handleCapture(finalFile);
-      closeNativeCropEditor();
+      acceptAdjustedPhoto(finalFile);
     } catch {
       setErrorMsg("Couldn't crop that photo — try again.");
     } finally {
@@ -851,8 +866,11 @@ export default function CapturePage() {
     setSaveError("");
     savingRef.current = true;
     setSaving(true);
+    let saveStage: "photo" | "item" | "sync" = "photo";
     try {
-      const id = newId();
+      // A retry after a partial save updates the same item; it must not add a second copy.
+      const id = pendingSaveIdRef.current ?? newId();
+      pendingSaveIdRef.current = id;
       const imagePatch = capturedImages.length
         ? await persistCapturedImages(id, capturedImages)
         : {};
@@ -886,7 +904,9 @@ export default function CapturePage() {
       // caption hashtags, now saved as real data instead of computed fresh
       // each time. Only applied on create, never overwrites a later edit.
       item.tags = suggestAutoTags(item as VaultItem);
-      await appendItems([item as VaultItem]);
+      saveStage = "item";
+      if (loadItems().some((existing) => String(existing.id) === id)) saveItem(item as VaultItem);
+      else await appendItems([item as VaultItem]);
       emitVaultUpdate();
       // NYCC launch blocker: this was the one add-item entry point that
       // never enqueued a cloud sync for the item it just created — it sat
@@ -894,8 +914,17 @@ export default function CapturePage() {
       // it never showed up on a second device and was lost if local
       // storage was ever cleared. Every other add flow (Scan, manual Add,
       // spreadsheet/wishlist import) already does this.
-      enqueueVaultItemSync(id);
-      void processVaultSyncQueue();
+      saveStage = "sync";
+      try {
+        enqueueVaultItemSync(id);
+        void processVaultSyncQueue().catch((error) => console.error("[Capture] Background sync:", error));
+      } catch (queueError) {
+        // Browser storage can accept the vault and then refuse the queue write.
+        // Send the saved, profile-scoped row directly instead of claiming nothing was added.
+        const saved = loadItems().find((existing) => String(existing.id) === id);
+        if (!saved || saved.images?.some((image) => image.localOnly) || !hasSupabaseEnv() || !navigator.onLine) throw queueError;
+        await upsertVaultItemToSupabase(saved);
+      }
       // The item is saved: only now is the draft done with.
       await clearCaptureDraft(draftScopeRef.current);
       router.push("/vault");
@@ -909,11 +938,15 @@ export default function CapturePage() {
         return;
       }
       console.error("[Capture] Save error:", err);
-      setSaveError("Could not save. Nothing was added. Try again.");
+      setSaveError(saveStage === "sync"
+        ? "The item is on this device, but hasn't reached your account. Your details are still here. Try Save again to retry the same item."
+        : saveStage === "photo"
+          ? "Couldn't save the photo. Your picture and details are still here. Try Edit photo and Save, or choose another picture."
+          : "Couldn't save the item. Your picture and details are still here. Try again.");
       savingRef.current = false;
       setSaving(false);
     }
-  }, [capturedImages, fields, router]);
+  }, [capturedImages, fields, identified, router]);
 
   // Accordion open state — Identity open by default, like the record builder.
   const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([1]));
@@ -1125,6 +1158,17 @@ export default function CapturePage() {
                           <AppIcon name="expand" size={15} strokeWidth={1.7} />
                         </a>
                         <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const photo = capturedImages[selectedPreviewIndex];
+                              if (photo) handleNativeCameraFile(photo, selectedPreviewIndex);
+                            }}
+                            className="inline-flex min-h-11 items-center rounded-[7px] border px-3 text-xs font-semibold"
+                            style={{ background: "var(--theme-card, #101923)", borderColor: "var(--theme-gold-border)", color: "var(--fg)" }}
+                          >
+                            Edit photo
+                          </button>
                           {selectedPreviewIndex !== 0 ? (
                             <button
                               type="button"
@@ -1653,7 +1697,7 @@ export default function CapturePage() {
                   applyLabel="Save"
                   onApply={() => void applyNativeCropEditor()}
                   onReset={() => setPendingNativeCrop(DEFAULT_NATIVE_CROP)}
-                  onUseFull={() => { if (pendingNativeFile) handleCapture(pendingNativeFile); closeNativeCropEditor(); }}
+                  onUseFull={() => { if (pendingNativeFile) acceptAdjustedPhoto(pendingNativeFile); }}
                   onCancel={closeNativeCropEditor}
                   isApplying={isApplyingNativeCrop}
                   compact
