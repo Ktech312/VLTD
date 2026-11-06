@@ -5,6 +5,7 @@ import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 
 const AVATAR_PRESET_SRCS: Record<string, string> = {
@@ -348,24 +349,23 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
   const cleanProfileId = String(profileId ?? "").trim();
   if (!supabase || !cleanProfileId) return [];
 
-  const { data, error } = await supabase
-    .from("galleries")
-    .select("id, title, description, cover_image, layout, analytics, visibility, sections, exhibition_layout")
-    .eq("profile_id", cleanProfileId)
-    .eq("visibility", "PUBLIC")
-    .eq("state", "ACTIVE")
-    .order("created_at", { ascending: false });
+  // A public page reads exhibitions through the sanitised public view, with the columns that exist there. (This used to ask the galleries table for "analytics" and
+  // "sections", which are not columns: the request failed with a 400 and a profile's public exhibitions silently never appeared.)
+  const { data, error } = await queryPublicGalleries<Array<Record<string, unknown>>>(
+    supabase,
+    "id, title, description, cover_image, layout, analytics_views, visibility, exhibition_layout, created_at",
+    (q) => q.eq("profile_id", cleanProfileId).eq("visibility", "PUBLIC").eq("state", "ACTIVE").order("created_at", { ascending: false }),
+  );
 
   if (error) return [];
 
   return (data ?? []).map((row) => {
     const layout = typeof row.layout === "object" && row.layout ? row.layout as Record<string, unknown> : {};
     const itemIds = Array.isArray(layout.itemIds) ? layout.itemIds : [];
-    const analytics = typeof row.analytics === "object" && row.analytics ? row.analytics as Record<string, unknown> : {};
 
     // Sections may live directly on the row or nested under exhibition_layout - same
     // fallback the builder uses (chooseSectionSource), just inlined for a lightweight count.
-    const directSections = Array.isArray(row.sections) ? row.sections : [];
+    const directSections: unknown[] = [];
     const exhibitionLayout = typeof row.exhibition_layout === "object" && row.exhibition_layout
       ? row.exhibition_layout as Record<string, unknown>
       : {};
@@ -381,7 +381,7 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
       description: typeof row.description === "string" && row.description ? row.description : undefined,
       coverImage: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : undefined,
       itemCount: itemIds.length,
-      views: typeof analytics.views === "number" ? analytics.views : 0,
+      views: typeof row.analytics_views === "number" ? row.analytics_views : 0,
       visibility: String(row.visibility || "PUBLIC"),
       exhibitsCount: sections.length,
       featuredItemIds,

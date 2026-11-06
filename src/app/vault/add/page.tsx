@@ -3,7 +3,7 @@
 import { parseMoneyInput } from "@/lib/moneyInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useId, isValidElement, cloneElement } from "react";
 import { showToast } from "@/lib/toast";
 import { createPortal } from "react-dom";
 import UpgradeNudge, { isFreeTierLimitError } from "@/components/UpgradeNudge";
@@ -328,17 +328,22 @@ function Field({
   onToggleLock?: () => void;
   children: React.ReactNode;
 }) {
+  // The label is tied to the control (htmlFor/id) when the control is the Field's single child, so a screen reader reads the field's name.
+  const autoId = useId();
+  const only = isValidElement(children) ? (children as React.ReactElement<{ id?: string }>) : null;
+  const controlId = only?.props?.id ?? autoId;
+  const control = only && !only.props.id && typeof only.type === "string" && /^(input|select|textarea)$/.test(only.type) ? cloneElement(only, { id: autoId }) : children;
   return (
     <div className="grid min-w-0 grid-cols-1 gap-1">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
+        <label htmlFor={controlId} className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
           {label}
         </label>
         {onToggleLock ? (
           <LockButton locked={locked} onToggle={onToggleLock} />
         ) : null}
       </div>
-      {children}
+      {control}
     </div>
   );
 }

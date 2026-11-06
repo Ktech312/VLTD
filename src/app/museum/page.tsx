@@ -28,6 +28,7 @@ import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { totalsValue } from "@/lib/vaultStats";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
 import { getMuseumBetaStatus, requestMuseumBetaAccess, type MuseumBetaStatus } from "@/lib/museumBeta";
@@ -108,11 +109,22 @@ function formatGalleryDate(ms?: number) {
   }
 }
 
+/**
+ * An exhibition's value uses the SAME value rule as Home, the Vault and Insights (lib/vaultStats): an entered or looked-up valuation first, otherwise the recorded
+ * purchase cost counted as a grey "at cost" amount, otherwise nothing (excluded and disclosed, never read as $0). It used to add up only `currentValue` and treat a blank
+ * as $0, so an exhibition of un-priced items said "$0" while the Vault counted the same items at what they cost.
+ */
 function galleryValue(gallery: Gallery, itemsById: Map<string, VaultItem>) {
-  return gallery.itemIds.reduce((sum, itemId) => {
+  let amount = 0, atCost = 0, missing = 0, known = 0;
+  for (const itemId of gallery.itemIds) {
     const item = itemsById.get(itemId);
-    return sum + Number(item?.currentValue ?? 0);
-  }, 0);
+    if (!item) continue;
+    const v = totalsValue(item);
+    if (v.basis === "missing") { missing += 1; continue; }
+    known += 1; amount += v.amount;
+    if (v.isGhost) atCost += 1;
+  }
+  return { amount, atCost, missing, known };
 }
 
 function resolveGalleryImage(value?: string | null) {
@@ -426,7 +438,8 @@ export default function MuseumPage() {
   const scoredGalleries = useMemo(() => {
     return galleries.map((gallery) => {
       const score = getGalleryScore(gallery, items);
-      const totalValue = galleryValue(gallery, itemsById);
+      const valueInfo = galleryValue(gallery, itemsById);
+      const totalValue = valueInfo.amount;
       const views = gallery.analytics?.views ?? 0;
       const resolvedItems = gallery.itemIds
         .map((itemId) => itemsById.get(itemId))
@@ -436,6 +449,7 @@ export default function MuseumPage() {
         gallery,
         score,
         totalValue,
+        valueInfo,
         views,
         resolvedItems,
         itemCount: resolvedItems.length,
@@ -811,7 +825,7 @@ export default function MuseumPage() {
                 ) : null}
                 <div className={`mt-5 grid gap-3 ${selectedEntry ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
               {displayedGalleries.map((entry) => {
-                const { gallery, totalValue, itemCount } = entry;
+                const { gallery, totalValue, valueInfo, itemCount } = entry;
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
@@ -903,8 +917,9 @@ export default function MuseumPage() {
                       <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
                         Total Value
                       </div>
-                      <div className="text-sm font-medium text-[color:var(--data-color)]">
-                        {formatMoney(totalValue)}
+                      <div className="text-sm font-medium text-[color:var(--data-color)]" title={valueInfo.atCost > 0 ? `${valueInfo.atCost} item${valueInfo.atCost === 1 ? " is" : "s are"} counted at what you paid because no value has been entered.` : valueInfo.known === 0 && valueInfo.missing > 0 ? "No value or cost has been entered for these items." : undefined}>
+                        {valueInfo.known === 0 && valueInfo.missing > 0 ? <span className="text-[color:var(--muted)]">No value yet</span> : <span style={valueInfo.atCost > 0 ? { opacity: 0.7 } : undefined}>{formatMoney(totalValue)}</span>}
+                        {valueInfo.known > 0 && valueInfo.atCost > 0 ? <span className="ml-1 text-[10px] font-normal text-[color:var(--muted)]">{valueInfo.atCost === valueInfo.known ? "at cost" : "incl. at cost"}</span> : null}
                       </div>
                       <button
                         type="button"

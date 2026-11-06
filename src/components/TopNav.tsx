@@ -476,6 +476,7 @@ function TopNavInner() {
                   onFocus={() => setSearchExpanded(true)}
                   onBlur={() => { if (!input.trim()) setSearchExpanded(false); }}
                   placeholder="Search vault, exhibitions, collectors..."
+                  aria-label="Search the Vault, exhibitions and collectors"
                   className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none"
                   style={{ color: "var(--theme-text-primary, #ECEDEF)" }}
                 />

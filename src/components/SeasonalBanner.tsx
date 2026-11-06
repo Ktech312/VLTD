@@ -349,7 +349,7 @@ export default function SeasonalBanner() {
                 goTo(shownRef.current - 1, true);
               }}
               aria-label="Previous"
-              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125 [--tap-w:44px] [--tap-h:44px]"
               style={arrowStyle}
             >
               <Glyph name="back" size={12} strokeWidth={2} style={{ color: glyph }} />
@@ -413,7 +413,7 @@ export default function SeasonalBanner() {
                 goTo(shownRef.current + 1, true);
               }}
               aria-label="Next"
-              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125 [--tap-w:40px]"
+              className="vltd-tap flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125 [--tap-w:44px] [--tap-h:44px]"
               style={arrowStyle}
             >
               <Glyph name="next" size={12} strokeWidth={2} style={{ color: glyph }} />

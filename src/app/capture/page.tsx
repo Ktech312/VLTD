@@ -1342,7 +1342,7 @@ export default function CapturePage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <LockableLabel label="Item Name *" locked={locks.title} onToggleLock={() => toggleFieldLock("title")} />
-                        <input
+                        <input aria-label="Item Name"
                           id="capture-item-name"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -1358,7 +1358,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Alternate Name" locked={locks.subtitle} onToggleLock={() => toggleFieldLock("subtitle")} />
-                        <input
+                        <input aria-label="Alternate Name"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.subtitle}
@@ -1368,7 +1368,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Brand / Manufacturer / Publisher" locked={locks.brand} onToggleLock={() => toggleFieldLock("brand")} />
-                        <input
+                        <input aria-label="Brand / Manufacturer / Publisher"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.brand}
@@ -1378,7 +1378,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Set / Series" locked={locks.number} onToggleLock={() => toggleFieldLock("number")} />
-                        <input
+                        <input aria-label="Set / Series"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.number}
@@ -1388,7 +1388,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Certification Company" locked={locks.certCompany} onToggleLock={() => toggleFieldLock("certCompany")} />
-                        <select
+                        <select aria-label="Certification Company"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.certCompany}
@@ -1469,7 +1469,7 @@ export default function CapturePage() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div>
                         <LockableLabel label="Universe" locked={locks.universe} onToggleLock={() => toggleFieldLock("universe")} />
-                        <select
+                        <select aria-label="Universe"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.universe}
@@ -1487,7 +1487,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Category" locked={locks.categoryLabel} onToggleLock={() => toggleFieldLock("categoryLabel")} />
-                        <select
+                        <select aria-label="Category"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.categoryLabel}
@@ -1504,7 +1504,7 @@ export default function CapturePage() {
                       </div>
                       <div>
                         <LockableLabel label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => toggleFieldLock("subcategoryLabel")} />
-                        <select
+                        <select aria-label="Subcategory"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.subcategoryLabel}
@@ -1539,7 +1539,7 @@ export default function CapturePage() {
                     onToggle={() => toggleSection(3)}
                   >
                     <LockableLabel label="Storage location" locked={locks.storageLocation} onToggleLock={() => toggleFieldLock("storageLocation")} />
-                    <input
+                    <input aria-label="Storage location"
                       className={INPUT_CLS}
                       style={INPUT_STYLE}
                       value={fields.storageLocation}
