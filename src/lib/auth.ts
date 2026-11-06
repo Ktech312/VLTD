@@ -51,6 +51,13 @@ export function isSharedProfile(profile: { member_role?: string | null } | null 
   return profile?.member_role === "admin" || profile?.member_role === "member";
 }
 
+/** Owners (their own profiles) and admins may delete items; a team member (role "member") may add and edit but the database refuses deletes, so the app does not offer them. */
+export function canDeleteItemsIn(profile: { member_role?: string | null } | null | undefined): boolean {
+  return profile?.member_role !== "member";
+}
+
+export const DELETE_NOT_ALLOWED_NOTE = "Only the owner or an admin can delete items in a team profile.";
+
 import { currentLocalOwner, reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
 import { stillSignedInAs } from "./sessionGuard";
 import { resetCloudSaveStatus } from "./cloudSaveStatus";

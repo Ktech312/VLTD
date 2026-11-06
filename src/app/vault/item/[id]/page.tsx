@@ -57,6 +57,8 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
+import { useCanDeleteItems } from "@/lib/useCanDeleteItems";
+import { DELETE_NOT_ALLOWED_NOTE } from "@/lib/auth";
 import { reportPending } from "@/lib/cloudSaveStatus";
 import { isSpecsDeviceOnly, SPECS_DEVICE_ONLY_NOTE } from "@/lib/specsDeviceOnly";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
@@ -592,6 +594,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [auctionOpen, setAuctionOpen] = useState(false);
   const { trigger: shareTrigger, dismiss: dismissShareTrigger } = useAutoShareTrigger();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const canDeleteItems = useCanDeleteItems();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -1206,8 +1209,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>
             <div className="relative rounded-[14px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              {/* Delete button — top-right */}
-              <button
+              {/* Delete button — top-right (not offered to a team member: the database refuses it) */}
+              {canDeleteItems ? <button
                 type="button"
                 onClick={() => setDeleteConfirm(true)}
                 className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 transition-colors max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
@@ -1216,7 +1219,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 title="Delete item"
               >
                 <AppIcon name="delete" size={16} strokeWidth={1.75} />
-              </button>
+              </button> : null}
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               {headerEditing ? (
                 <>
@@ -1840,7 +1843,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     return;
                   }
                   setIsDeleting(false);
-                  setDeleteError(result.error || "Could not delete this item. Please try again.");
+                  setDeleteError(`${result.error || "Could not delete this item. Please try again."}${canDeleteItems ? "" : " " + DELETE_NOT_ALLOWED_NOTE}`);
                 }}
                 disabled={isDeleting}
                 className="flex-1"

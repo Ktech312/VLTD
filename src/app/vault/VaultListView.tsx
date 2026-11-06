@@ -47,7 +47,7 @@ import {
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere, moveItemsToProfileConfirmed } from "@/lib/vaultActions";
-import { getOnboardingStatus, getStoredActiveProfileId, isSharedProfile, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
+import { getOnboardingStatus, getStoredActiveProfileId, isSharedProfile, listMyProfiles, retryAccountLookups, type ProfileRow, canDeleteItemsIn, DELETE_NOT_ALLOWED_NOTE } from "@/lib/auth";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
@@ -427,6 +427,7 @@ function VaultCard({
   sale,
   onSaveItem,
   onDeleteItem,
+  canDelete = true,
   displayMode = "gallery",
 }: {
   item: VaultItem;
@@ -434,6 +435,8 @@ function VaultCard({
   sale: SaleInfo | null;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
+  /** False for a team member: the database refuses their deletes, so the card does not offer one. */
+  canDelete?: boolean;
   displayMode?: Exclude<VaultViewMode, "wall">;
 }) {
   const image = useResolvedVaultImage(item);
@@ -510,7 +513,7 @@ function VaultCard({
       </span>
 
       {/* Hover action buttons — top RIGHT, clear of status badge */}
-      <div className={"absolute right-1.5 top-1.5 z-20 items-center gap-1 " + (confirmingDelete ? "flex" : "hidden group-hover:flex [@media(hover:none)]:flex")}>
+      {canDelete ? <div className={"absolute right-1.5 top-1.5 z-20 items-center gap-1 " + (confirmingDelete ? "flex" : "hidden group-hover:flex [@media(hover:none)]:flex")}>
         {confirmingDelete ? (
           <span className="flex items-center gap-1.5 rounded-full bg-black/85 px-2.5 py-1 text-[10px] font-semibold text-white">
             Delete this?
@@ -533,7 +536,7 @@ function VaultCard({
             <AppIcon name="delete" size={15} strokeWidth={1.8} className="vltd-keep-color" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
           )}
         </button>
-      </div>
+      </div> : null}
 
       <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
         <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24 vltd-dark-surface">
@@ -651,6 +654,7 @@ const GalleryCell = memo(function GalleryCell({
   displayMode,
   onSaveItem,
   onDeleteItem,
+  canDelete,
   onToggleSelect,
   onOpenDetail,
 }: {
@@ -663,6 +667,7 @@ const GalleryCell = memo(function GalleryCell({
   displayMode: string;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
+  canDelete: boolean;
   onToggleSelect: (id: string) => void;
   onOpenDetail: (id: string) => void;
 }) {
@@ -697,6 +702,7 @@ const GalleryCell = memo(function GalleryCell({
         sale={sale}
         onSaveItem={onSaveItem}
         onDeleteItem={onDeleteItem}
+        canDelete={canDelete}
         displayMode={displayMode as never}
       />
       {missingText ? <div className="mt-1 px-1 text-[11px] font-medium text-amber-300">Missing: {missingText}</div> : null}
@@ -1176,6 +1182,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   // The ids the Wall is showing (the Wall has its own filters). Select all and the bulk actions are limited to these while the Wall is the view.
   const [selectMode, setSelectMode] = useState(false);
   const [wallVisibleIds, setWallVisibleIds] = useState<string[] | null>(null);
+  // A team member (role member) may add and edit but not delete: the database refuses it, so no Delete control is offered.
+  const canDeleteItems = canDeleteItemsIn(myProfiles.find((profile) => profile.id === activeProfileId));
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
@@ -1839,7 +1847,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       // deleteVaultItemEverywhere already restored the item in storage and
       // fired vltd:vault-updated, which hydrateAll() picks up — this just
       // surfaces why it came back instead of leaving it unexplained.
-      setSyncStatus(result.error || "Could not delete this item from the cloud.");
+      const why = result.error || "Could not delete this item from the cloud.";
+      setSyncStatus(why);
+      showToast(isSharedProfile(myProfiles.find((profile) => profile.id === activeProfileId)) ? `${why} ${DELETE_NOT_ALLOWED_NOTE}` : why, 9000);
     }
   }, []);
 
@@ -1870,7 +1880,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
       const result = await deleteVaultItemsEverywhere(toDelete.map((item) => item.id));
       if (!result.ok) {
-        setSyncStatus(result.error || "Could not delete some items from the cloud.");
+        const why = result.error || "Could not delete some items from the cloud.";
+        setSyncStatus(why);
+        showToast(isSharedProfile(myProfiles.find((profile) => profile.id === activeProfileId)) ? `${why} ${DELETE_NOT_ALLOWED_NOTE}` : why, 9000);
       }
     } finally {
       setIsDeleting(false);
@@ -2283,7 +2295,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                   </PillButton>
                   {selectMode && selectedIds.size > 0 && (
                     <>
-                      {deleteConfirmPending ? (
+                      {deleteConfirmPending && canDeleteItems ? (
                         <>
                           <span className="text-xs font-semibold" style={{ color: "#f87171" }}>
                             Delete {selectedIds.size} {selectedIds.size === 1 ? "item" : "items"}?
@@ -2294,7 +2306,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                           <PillButton onClick={() => setDeleteConfirmPending(false)} disabled={isDeleting}>Cancel</PillButton>
                         </>
                       ) : (
-                        <PillButton variant="danger" onClick={handleMassDelete}>Delete {selectedIds.size}</PillButton>
+                        canDeleteItems ? <PillButton variant="danger" onClick={handleMassDelete}>Delete {selectedIds.size}</PillButton> : <span className="text-xs" style={{ color: "var(--muted)" }}>{DELETE_NOT_ALLOWED_NOTE}</span>
                       )}
                       <select
                         value={moveTargetUniverse}
@@ -2498,6 +2510,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                   displayMode={vaultViewMode}
                   onSaveItem={handleSaveItem}
                   onDeleteItem={handleDeleteItem}
+                  canDelete={canDeleteItems}
                   onToggleSelect={onToggleSelectStable}
                   onOpenDetail={onOpenDetailStable}
                 />
