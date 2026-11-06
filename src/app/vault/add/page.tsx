@@ -2678,6 +2678,7 @@ export default function AddPage() {
 
               <Field label={detailLabel("subject", "Subject")} locked={locks.subject} onToggleLock={() => handleToggleLock("subject")}>
                 <input
+                  aria-label="Subject"
                   className={inputClass()}
                   value={values.subject}
                   onChange={(e) => setField("subject", e.target.value)}
@@ -2705,6 +2706,7 @@ export default function AddPage() {
                     value={values.certNumber}
                     onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("certNumber"); return n; }); setField("certNumber", e.target.value); }}
                     placeholder="Certification number"
+                    aria-label="Certification number"
                   />
                   <PillButton onClick={() => void runPSALookupForCode(values.certNumber)} disabled={!values.certNumber.trim() || isComicLookupRunning} title="Look up this PSA cert number">
                     {isComicLookupRunning ? "Looking up…" : "Look up"}
@@ -2799,6 +2801,7 @@ export default function AddPage() {
                     value={values.notes}
                     onChange={(e) => { setAiFilledFields((prev) => { const n = new Set(prev); n.delete("notes"); return n; }); setField("notes", e.target.value); }}
                     placeholder="Notes, artist, run info, or anything repeated until dedicated fields exist."
+                    aria-label="Notes"
                   />
                 </div>
               </div>
@@ -2815,6 +2818,7 @@ export default function AddPage() {
         />
         <input
           ref={mediaCameraInputRef}
+          aria-label="Take a photo"
           type="file"
           accept="image/*"
           className="fixed left-[-9999px] top-0 h-px w-px opacity-0"
