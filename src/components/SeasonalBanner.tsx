@@ -138,6 +138,8 @@ export default function SeasonalBanner() {
   // Rotate every 15 s with a fade; any manual move (arrow, dot, swipe, drag, key) starts the countdown over, so it never jumps again right after
   useEffect(() => {
     if (count <= 1) return;
+    // People who ask their device for reduced motion get a banner that stays put; the arrows, dots and swipe still move it.
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => goTo(shownRef.current + 1, false), ROTATE_MS);
     return () => clearInterval(id);
   }, [count, moves, goTo]);

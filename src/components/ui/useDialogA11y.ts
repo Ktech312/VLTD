@@ -20,10 +20,19 @@ export function useDialogA11y<T extends HTMLElement = HTMLDivElement>(open: bool
   const ref = useCallback((el: T | null) => setNode(el), []);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // The control that had focus when the dialog first rendered open. Read here, before the commit, because a sheet that focuses its own first field
+  // (autoFocus) would otherwise make that field the "opener", and focus would be lost when the sheet closes and the field is removed.
+  const [wasOpen, setWasOpen] = useState(false);
+  const [openerAtOpen, setOpenerAtOpen] = useState<HTMLElement | null>(null);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    const at = open && typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+    setOpenerAtOpen(at && at !== document.body ? at : null);
+  }
 
   useEffect(() => {
     if (!open || !node) return;
-    const opener = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+    const opener = openerAtOpen ?? (typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null);
 
     // Move focus into the dialog (the container itself when it has nothing focusable yet).
     const focusables = () => (node ? (Array.from(node.querySelectorAll(FOCUSABLE)) as HTMLElement[]).filter((el) => el.offsetParent !== null || el === document.activeElement) : []);
@@ -74,7 +83,7 @@ export function useDialogA11y<T extends HTMLElement = HTMLDivElement>(open: bool
         opener.focus({ preventScroll: true });
       }
     };
-  }, [open, node]);
+  }, [open, node, openerAtOpen]);
 
   return ref;
 }

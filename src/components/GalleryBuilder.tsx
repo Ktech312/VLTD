@@ -336,6 +336,19 @@ export default function GalleryBuilder({
   const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
+  const bgInfoBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // The background-picture help popover closes on Escape and hands focus back to its "i" button.
+  useEffect(() => {
+    if (!bgInfoOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setBgInfoOpen(false);
+      bgInfoBtnRef.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [bgInfoOpen]);
 
   // One-time backfill: if gallery has sections but unassigned items, seed them into section 0
   useEffect(() => {
@@ -1035,6 +1048,7 @@ export default function GalleryBuilder({
             <div className="relative">
               <button
                 type="button"
+                ref={bgInfoBtnRef}
                 onClick={() => setBgInfoOpen((open) => !open)}
                 className={cp("default", "w-8 px-0! md:w-7")}
                 aria-label="Background picture size and format"

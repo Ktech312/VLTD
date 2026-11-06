@@ -1407,6 +1407,7 @@ export default function CapturePage() {
                             value={fields.certNumber}
                             onChange={(e) => setFields((p) => ({ ...p, certNumber: e.target.value }))}
                             placeholder="Cert number"
+                            aria-label="Certification number"
                           />
                           {fields.certNumber.trim() ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#22C55E" }}>
@@ -1424,11 +1425,12 @@ export default function CapturePage() {
                             value={fields.grade}
                             onChange={(e) => setFields((p) => ({ ...p, grade: e.target.value }))}
                             placeholder="9"
+                            aria-label="Grade"
                           />
                         </div>
                         <div>
                           <label className={LABEL_CLS}>Condition</label>
-                          <select
+                          <select aria-label="Condition"
                             className={INPUT_CLS}
                             style={INPUT_STYLE}
                             value={fields.condition}
@@ -1448,6 +1450,7 @@ export default function CapturePage() {
                           maxLength={500}
                           onChange={(e) => setFields((p) => ({ ...p, description: e.target.value }))}
                           placeholder="Add any details about this item…"
+                          aria-label="Item details and notes"
                         />
                         <div className="mt-1 text-right text-[10px] text-[color:var(--muted2)]">{fields.description.length} / 500</div>
                       </div>
