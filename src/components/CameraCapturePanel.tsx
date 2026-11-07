@@ -997,7 +997,7 @@ export default function CameraCapturePanel({
                   <button
                     type="button"
                     onClick={() => setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS)}
-                    className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                    className="rounded-[6px] bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
                   >
                     Reset
                   </button>
@@ -1064,7 +1064,7 @@ export default function CameraCapturePanel({
                 onClick={onUseFileInstead}
                 title="Upload from file"
                 aria-label="Upload from file"
-                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[6px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
                 <Glyph name="upload" size={16} strokeWidth={1.8} />
@@ -1076,7 +1076,7 @@ export default function CameraCapturePanel({
                   onClick={toggleScan}
                   title={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
                   aria-label={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
-                  className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
+                  className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[6px] ring-1 transition"
                   style={
                     scanState === "scanning"
                       ? { background: "rgba(74,155,255,0.16)", borderColor: "rgba(74,155,255,0.5)", color: "#4A9BFF" }

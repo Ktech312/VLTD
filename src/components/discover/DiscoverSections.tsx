@@ -34,7 +34,7 @@ const cardStyle = { background: "var(--theme-card, rgba(15,25,45,0.85))", border
 const muted = { color: "var(--theme-text-muted,#61656B)" } as const;
 
 function Quiet({ children }: { children: ReactNode }) {
-  return <div className="rounded-[7px] border px-4 py-5 text-sm" style={{ ...cardStyle, ...muted }}>{children}</div>;
+  return <div className="rounded-[6px] border px-4 py-5 text-sm" style={{ ...cardStyle, ...muted }}>{children}</div>;
 }
 
 /* ── Notable Items: real public items, one card per item ─────────────────────────────── */
@@ -61,7 +61,7 @@ export function NotableItemsSection({ items, expanded, onToggle }: { items: Nota
           <Link
             key={item.id}
             href={`/museum/${item.roomId}/guest`}
-            className="group overflow-hidden rounded-[7px] border transition hover:-translate-y-0.5"
+            className="group overflow-hidden rounded-[6px] border transition hover:-translate-y-0.5"
             style={cardStyle}
             aria-label={`${item.title}, in ${item.roomTitle}`}
           >
@@ -97,7 +97,7 @@ export function MarketplaceSection() {
     <section className="mt-5" aria-label="Marketplace" data-testid="discover-marketplace">
       <SectionHead title="Marketplace" link={{ href: "/market", label: "Open Marketplace" }} />
       {items === null ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[1, 2, 3, 4].map((n) => <div key={n} className="h-[190px] animate-pulse rounded-[7px]" style={{ background: "var(--surface)" }} />)}</div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[1, 2, 3, 4].map((n) => <div key={n} className="h-[190px] animate-pulse rounded-[6px]" style={{ background: "var(--surface)" }} />)}</div>
       ) : items.length === 0 ? (
         <Quiet>{failed ? "Listings could not be loaded just now. " : "Nothing is listed for sale right now. "}<Link href="/market" className="font-semibold underline underline-offset-2" style={{ color: "var(--theme-gold)" }}>Open Marketplace</Link></Quiet>
       ) : (
@@ -107,10 +107,10 @@ export function MarketplaceSection() {
             const priced = typeof price === "number" && Number.isFinite(price) && price > 0;
             const image = getPrimaryImageUrl(item);
             return (
-              <Link key={item.id} href="/market" className="group overflow-hidden rounded-[7px] border transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${item.title}, for sale on Marketplace`}>
+              <Link key={item.id} href="/market" className="group overflow-hidden rounded-[6px] border transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${item.title}, for sale on Marketplace`}>
                 <div className="relative aspect-square w-full overflow-hidden bg-black/20">
                   {image ? <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-cover object-center transition group-hover:scale-105" /> : null}
-                  <span className="absolute left-2 top-2 rounded-[5px] bg-black/60 px-1.5 py-0.5 text-[9px] font-black tracking-wide" style={{ color: "#C8CDD2" }}>FOR SALE</span>
+                  <span className="absolute left-2 top-2 rounded-[6px] bg-black/60 px-1.5 py-0.5 text-[9px] font-black tracking-wide" style={{ color: "#C8CDD2" }}>FOR SALE</span>
                 </div>
                 <div className="p-2.5">
                   <div className="line-clamp-2 text-[12px] font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{item.title}</div>
@@ -144,14 +144,14 @@ export function EventsSection() {
     <section className="mt-5" aria-label="Events" data-testid="discover-events">
       <SectionHead title="Events" link={{ href: "/events", label: "See all events" }} />
       {events === null ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{[1, 2, 3, 4].map((n) => <div key={n} className="h-[96px] animate-pulse rounded-[7px]" style={{ background: "var(--surface)" }} />)}</div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{[1, 2, 3, 4].map((n) => <div key={n} className="h-[96px] animate-pulse rounded-[6px]" style={{ background: "var(--surface)" }} />)}</div>
       ) : events.length === 0 ? (
         <Quiet>{failed ? "Events could not be loaded just now. " : "No upcoming events are listed. "}<Link href="/events" className="font-semibold underline underline-offset-2" style={{ color: "var(--theme-gold)" }}>Open Events</Link></Quiet>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {events.map((event) => (
-            <Link key={event.id} href="/events" className="flex gap-3 rounded-[7px] border p-3 transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${event.name}, ${formatDateRange(event.starts_at, event.ends_at)}`}>
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-gold)" }}>
+            <Link key={event.id} href="/events" className="flex gap-3 rounded-[6px] border p-3 transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${event.name}, ${formatDateRange(event.starts_at, event.ends_at)}`}>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-gold)" }}>
                 <AppIcon name="events" size={20} />
               </span>
               <span className="min-w-0">
@@ -188,13 +188,13 @@ export function UpcomingComicsSection() {
     <section className="mt-5" aria-label="Upcoming Comics" data-testid="discover-upcoming">
       <SectionHead title="Upcoming Comics" link={{ href: "/upcoming", label: "Open Upcoming Comics" }} />
       {issues === null ? (
-        <div className="grid grid-cols-3 gap-3 md:grid-cols-6">{[1, 2, 3, 4, 5, 6].map((n) => <div key={n} className="aspect-[2/3] animate-pulse rounded-[7px]" style={{ background: "var(--surface)" }} />)}</div>
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-6">{[1, 2, 3, 4, 5, 6].map((n) => <div key={n} className="aspect-[2/3] animate-pulse rounded-[6px]" style={{ background: "var(--surface)" }} />)}</div>
       ) : issues.length === 0 ? (
         <Quiet>{failed ? "The release calendar could not be loaded just now. " : "No releases are listed for the next 30 days. "}<Link href="/upcoming" className="font-semibold underline underline-offset-2" style={{ color: "var(--theme-gold)" }}>Open Upcoming Comics</Link></Quiet>
       ) : (
         <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
           {issues.map((issue) => (
-            <Link key={issue.id} href="/upcoming" className="group overflow-hidden rounded-[7px] border transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${comicTitle(issue.series, issue.number)}, out ${formatStoreDate(issue.storeDate)}`}>
+            <Link key={issue.id} href="/upcoming" className="group overflow-hidden rounded-[6px] border transition hover:-translate-y-0.5" style={cardStyle} aria-label={`${comicTitle(issue.series, issue.number)}, out ${formatStoreDate(issue.storeDate)}`}>
               <div className="relative aspect-[2/3] w-full bg-black/20">
                 {issue.imageUrl ? <Image src={issue.imageUrl} alt={comicTitle(issue.series, issue.number)} fill sizes="(max-width: 768px) 30vw, 160px" style={{ objectFit: "cover" }} unoptimized /> : null}
               </div>

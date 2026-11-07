@@ -507,7 +507,7 @@ export default function DiscoverPage() {
         type="button"
         onClick={() => { setSelectedId(gallery.id); setPanelClosed(false); showPanelOnPhone(); }}
         onDoubleClick={() => openGallery(gallery)}
-        className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
+        className="group overflow-hidden rounded-[6px] border text-left transition hover:-translate-y-0.5"
         style={{
           background: "var(--theme-card, rgba(15,25,45,0.85))",
           borderColor: selectedGallery?.id === gallery.id ? "#4FD3EE" : "rgba(203,208,213,0.22)",
@@ -516,7 +516,7 @@ export default function DiscoverPage() {
         {!compact && (
           <div className="vltd-dark-surface relative h-[128px]" style={coverStyle(gallery)}>
             <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
-            <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
+            <span className="absolute left-3 top-3 rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-black/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
           </div>
@@ -552,7 +552,7 @@ export default function DiscoverPage() {
             Browsing public exhibitions from every collector. These filters do not change what your own Vault shows.
           </p>
           <div className={`mt-2 grid gap-3 ${signedIn ? "lg:grid-cols-[minmax(0,1fr)_170px_170px_auto]" : "lg:grid-cols-[minmax(0,1fr)_200px_200px]"}`}>
-            <label className="flex h-11 md:h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+            <label className="flex h-11 md:h-10 items-center gap-2 rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
@@ -589,7 +589,7 @@ export default function DiscoverPage() {
           </div>
 
           {fetchError && (
-            <div role="alert" data-testid="discover-load-failed" className="mt-3 flex flex-wrap items-center gap-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <div role="alert" data-testid="discover-load-failed" className="mt-3 flex flex-wrap items-center gap-3 rounded-[6px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               <span>We couldn&apos;t load the exhibitions just now. Check your connection and try again.</span>
               <PillButton size="compact" onClick={() => setAttempt((n) => n + 1)}>Try again</PillButton>
             </div>
@@ -609,19 +609,19 @@ export default function DiscoverPage() {
 
           {loading && (
             <div className="mt-5 grid gap-4 md:grid-cols-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="h-[180px] animate-pulse rounded-[7px]" style={{ background: "var(--surface)" }} />)}
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="h-[180px] animate-pulse rounded-[6px]" style={{ background: "var(--surface)" }} />)}
             </div>
           )}
 
           {isEmpty && (
-            <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
+            <section className="mt-5 rounded-[6px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
               <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="search" size={34} /></div>
               <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>No exhibitions match</h2>
               <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #61656B)" }}>
                 {hasActiveFilter ? "Clear the search or filters to see more public rooms." : "No public exhibitions yet. Be the first."}
               </p>
               {hasActiveFilter && (
-                <button type="button" onClick={() => { setActiveTab("All"); setQuery(""); }} className="mt-4 rounded-[7px] px-4 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
+                <button type="button" onClick={() => { setActiveTab("All"); setQuery(""); }} className="mt-4 rounded-[6px] px-4 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
                   Show All
                 </button>
               )}
@@ -660,10 +660,10 @@ export default function DiscoverPage() {
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Across Every Universe</h2>
                 <PillButton size="compact" onClick={() => setActiveTab("All")}>View all</PillButton>
               </div>
-              <div className="grid overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-4 xl:grid-cols-8" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+              <div className="grid overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.22)] md:grid-cols-4 xl:grid-cols-8" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
                 {universeCounts.map(({ key, count }) => (
                   <button key={key} type="button" onClick={() => setActiveTab(key)} className="flex min-h-[58px] items-center gap-2 border-r border-[rgba(203,208,213,0.16)] px-3 text-left transition hover:bg-[rgba(203,208,213,0.06)]">
-                    <img src={UNIVERSE_THUMB[key]} alt="" className="h-8 w-8 rounded-[5px] object-cover" />
+                    <img src={UNIVERSE_THUMB[key]} alt="" className="h-8 w-8 rounded-[6px] object-cover" />
                     <span className="min-w-0">
                       <span className="block truncate text-xs font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{UNIVERSE_LABEL[key]}</span>
                       <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{count.toLocaleString()} exhibitions</span>
@@ -680,11 +680,11 @@ export default function DiscoverPage() {
           <UpcomingComicsSection />
 
           {!loading && !signedIn && (
-            <section className="mt-6 flex flex-col items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-6 py-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
+            <section className="mt-6 flex flex-col items-center gap-3 rounded-[6px] border border-[rgba(203,208,213,0.22)] px-6 py-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
               <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #61656B)" }}>BUILD YOUR OWN</div>
               <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create a public exhibition</h2>
               <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #61656B)" }}>Vault your collection, curate an exhibition, and share it with one link.</p>
-              <Link href="/museum/new" className="rounded-[7px] px-5 py-2 text-sm font-black transition hover:brightness-105" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
+              <Link href="/museum/new" className="rounded-[6px] px-5 py-2 text-sm font-black transition hover:brightness-105" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
                 Create Exhibition
               </Link>
             </section>
@@ -697,9 +697,9 @@ export default function DiscoverPage() {
               <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Public Exhibition</div>
               <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
             </div>
-            <div className="mt-4 h-[230px] rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={coverStyle(selectedGallery)}>
+            <div className="mt-4 h-[230px] rounded-[6px] border border-[rgba(203,208,213,0.22)]" style={coverStyle(selectedGallery)}>
               <div className="flex h-full items-start p-3">
-                <span className="vltd-dark-surface rounded-[5px] border border-[rgba(82,214,244,0.35)] bg-black/55 px-2 py-0.5 text-xs font-bold text-[color:var(--info,#52D6F4)]">Public</span>
+                <span className="vltd-dark-surface rounded-[6px] border border-[rgba(82,214,244,0.35)] bg-black/55 px-2 py-0.5 text-xs font-bold text-[color:var(--info,#52D6F4)]">Public</span>
               </div>
             </div>
             <h2 className="mt-4 font-serif text-[28px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGallery.title}</h2>
@@ -757,12 +757,12 @@ export default function DiscoverPage() {
                 </div>
               ))}
             </div>
-            <Link href={`/museum/${selectedGallery.id}/guest`} className="mt-5 flex h-12 items-center justify-center rounded-[7px] text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
+            <Link href={`/museum/${selectedGallery.id}/guest`} className="mt-5 flex h-12 items-center justify-center rounded-[6px] text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
               View room
             </Link>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => shareGallery(selectedGallery)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share</button>
-              <button type="button" onClick={() => reportGallery(selectedGallery)} disabled={reporting} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400 disabled:opacity-50">{reporting ? "Sending..." : "Report"}</button>
+              <button type="button" onClick={() => shareGallery(selectedGallery)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share</button>
+              <button type="button" onClick={() => reportGallery(selectedGallery)} disabled={reporting} className="rounded-[6px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400 disabled:opacity-50">{reporting ? "Sending..." : "Report"}</button>
             </div>
           </aside>
         )}

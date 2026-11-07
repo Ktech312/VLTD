@@ -129,7 +129,7 @@ function Avatar({ name, size = 34, src, ring = "var(--border-strong, rgba(255,25
   const initials = name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase();
   return (
     <span
-      className="inline-grid shrink-0 place-items-center overflow-hidden rounded-[7px] font-black"
+      className="inline-grid shrink-0 place-items-center overflow-hidden rounded-[6px] font-black"
       style={{
         width: size, height: size, fontSize: size * 0.36, color: "var(--fg)",
         background: "linear-gradient(165deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
@@ -561,9 +561,9 @@ export default function VltLoungePage() {
                     <article key={post.id} style={{ borderColor: "var(--border)", background: expanded ? "var(--table-row-hover)" : "transparent" }}>
                       <div className="grid grid-cols-[46px_minmax(0,1fr)] gap-3 px-4 py-4 sm:grid-cols-[52px_minmax(0,1fr)] sm:px-5">
                         <div className="flex flex-col items-center gap-1">
-                          <button type="button" disabled={!viewerProfileId} aria-label="Upvote" onClick={() => void handleVote(post, 1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === 1 ? "rgba(79,211,238,0.16)" : "var(--pill)", color: post.viewerVote === 1 ? CYAN : "var(--muted)" }}><AppIcon name="chevronUp" size={14} strokeWidth={2.5} /></button>
+                          <button type="button" disabled={!viewerProfileId} aria-label="Upvote" onClick={() => void handleVote(post, 1)} className="grid h-7 w-7 place-items-center rounded-[6px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === 1 ? "rgba(79,211,238,0.16)" : "var(--pill)", color: post.viewerVote === 1 ? CYAN : "var(--muted)" }}><AppIcon name="chevronUp" size={14} strokeWidth={2.5} /></button>
                           <span className="text-[12px] font-black" style={{ color: post.score > 0 ? CYAN : "var(--fg)" }}>{post.score}</span>
-                          <button type="button" disabled={!viewerProfileId} aria-label="Downvote" onClick={() => void handleVote(post, -1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === -1 ? "rgba(248,113,113,0.13)" : "var(--pill)", color: post.viewerVote === -1 ? "#f87171" : "var(--muted)" }}><AppIcon name="chevronDown" size={14} strokeWidth={2.5} /></button>
+                          <button type="button" disabled={!viewerProfileId} aria-label="Downvote" onClick={() => void handleVote(post, -1)} className="grid h-7 w-7 place-items-center rounded-[6px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === -1 ? "rgba(248,113,113,0.13)" : "var(--pill)", color: post.viewerVote === -1 ? "#f87171" : "var(--muted)" }}><AppIcon name="chevronDown" size={14} strokeWidth={2.5} /></button>
                         </div>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2 text-[10px]" style={{ color: "var(--muted2)" }}>
@@ -591,7 +591,7 @@ export default function VltLoungePage() {
                               {comments.map((comment) => {
                                 const canModerateComment = viewerProfileId === comment.profileId || viewerProfileId === post.profileId;
                                 return (
-                                  <div key={comment.id} className="flex gap-2.5 rounded-[7px] p-3" style={{ marginLeft: comment.parentId ? 28 : 0, background: "var(--surface)", border: "1px solid var(--border)" }}>
+                                  <div key={comment.id} className="flex gap-2.5 rounded-[6px] p-3" style={{ marginLeft: comment.parentId ? 28 : 0, background: "var(--surface)", border: "1px solid var(--border)" }}>
                                     <Avatar name={comment.authorName} size={28} src={comment.authorAvatarSrc} />
                                     <div className="min-w-0 flex-1">
                                       <div className="flex flex-wrap items-center gap-2 text-[10px]" style={{ color: "var(--muted2)" }}><span className="font-bold" style={{ color: "var(--fg)" }}>{comment.authorName}</span><span>{timeAgoShort(comment.createdAt)}</span></div>
@@ -609,9 +609,9 @@ export default function VltLoungePage() {
 
                           {viewerProfileId ? (
                             <div className="mt-4">
-                              {replyTo ? <div className="mb-2 flex items-center justify-between rounded-[5px] px-2.5 py-1.5 text-[10px]" style={{ background: "var(--pill)", color: "var(--muted)" }}><span>Replying to {replyTo.authorName}</span><button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div> : null}
+                              {replyTo ? <div className="mb-2 flex items-center justify-between rounded-[6px] px-2.5 py-1.5 text-[10px]" style={{ background: "var(--pill)", color: "var(--muted)" }}><span>Replying to {replyTo.authorName}</span><button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div> : null}
                               <div className="flex gap-2">
-                                <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value.slice(0, 2000))} placeholder="Add to the discussion…" className="min-h-20 flex-1 resize-y rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)] focus:outline-none" />
+                                <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value.slice(0, 2000))} placeholder="Add to the discussion…" className="min-h-20 flex-1 resize-y rounded-[6px] bg-[color:var(--pill)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)] focus:outline-none" />
                                 <button type="button" disabled={!commentBody.trim() || commentPosting} onClick={() => void handleComment()} className="vltd-primary-button self-end rounded-[6px] px-4 py-2 text-[11px] font-black disabled:opacity-50">{commentPosting ? "Posting…" : "Reply"}</button>
                               </div>
                             </div>
@@ -637,7 +637,7 @@ export default function VltLoungePage() {
                 <div className="col-span-full py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No new members yet.</div>
               ) : (
                 members.map((m, i) => (
-                  <Link key={m.username || `${m.name}-${i}`} href={m.username ? `/u/${m.username}` : "/discover"} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center transition hover:-translate-y-0.5" style={{ border: "1px solid var(--border)" }}>
+                  <Link key={m.username || `${m.name}-${i}`} href={m.username ? `/u/${m.username}` : "/discover"} className="flex flex-col items-center gap-2 rounded-[6px] p-3 text-center transition hover:-translate-y-0.5" style={{ border: "1px solid var(--border)" }}>
                     <Avatar name={m.name} size={44} src={m.src} />
                     <div className="text-[12px] font-bold leading-tight">{m.name}</div>
                     <div className="text-[10px]" style={{ color: "var(--muted2)" }}>{m.joined}</div>
@@ -665,7 +665,7 @@ export default function VltLoungePage() {
                 {mvp.map((m, i) => (
                   <li key={m.profile_id} style={{ borderBottom: "1px solid var(--border)" }}>
                     <Link href={m.username ? `/u/${m.username}` : "/discover"} className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-[color:var(--table-row-hover)]">
-                      <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: i < 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: i < 3 ? "#0B0C0E" : "var(--muted)" }}>{i + 1}</span>
+                      <span className="grid h-6 w-6 place-items-center rounded-[6px] text-[11px] font-black" style={{ background: i < 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: i < 3 ? "#0B0C0E" : "var(--muted)" }}>{i + 1}</span>
                       <Avatar name={m.name} size={26} src={resolveAvatarSrc({ avatarEmoji: m.avatarEmoji, profileId: m.profile_id, displayName: m.name })} />
                       <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
                       <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.items)}</span>
@@ -804,7 +804,7 @@ export default function VltLoungePage() {
                   onChange={(e) => setComposerTitle(e.target.value.slice(0, 160))}
                   placeholder="Thread title"
                   autoFocus
-                  className="mt-3 h-11 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-[13px] font-bold ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="mt-3 h-11 w-full rounded-[6px] bg-[color:var(--pill)] px-3 text-[13px] font-bold ring-1 ring-[color:var(--border)] focus:outline-none"
                   style={{ color: "var(--fg)" }}
                 />
                 <select
@@ -823,7 +823,7 @@ export default function VltLoungePage() {
                   value={composerBody}
                   onChange={(e) => setComposerBody(e.target.value.slice(0, 2000))}
                   placeholder={composerKind === "question" ? "What do you want to ask the Lounge?" : "What's the update?"}
-                  className="mt-3 h-28 w-full resize-none rounded-[7px] bg-[color:var(--pill)] px-3 py-2.5 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="mt-3 h-28 w-full resize-none rounded-[6px] bg-[color:var(--pill)] px-3 py-2.5 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none"
                   style={{ color: "var(--fg)" }}
                 />
                 <div className="mt-3 flex items-center justify-between">

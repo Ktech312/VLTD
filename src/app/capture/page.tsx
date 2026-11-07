@@ -1164,7 +1164,7 @@ export default function CapturePage() {
                               const photo = capturedImages[selectedPreviewIndex];
                               if (photo) handleNativeCameraFile(photo, selectedPreviewIndex);
                             }}
-                            className="inline-flex min-h-11 items-center rounded-[7px] border px-3 text-xs font-semibold"
+                            className="inline-flex min-h-11 items-center rounded-[6px] border px-3 text-xs font-semibold"
                             style={{ background: "var(--theme-card, #101923)", borderColor: "var(--theme-gold-border)", color: "var(--fg)" }}
                           >
                             Edit photo
@@ -1173,7 +1173,7 @@ export default function CapturePage() {
                             <button
                               type="button"
                               onClick={() => makeCover(selectedPreviewIndex)}
-                              className="rounded-[7px] px-2.5 py-1 text-[11px] font-semibold"
+                              className="rounded-[6px] px-2.5 py-1 text-[11px] font-semibold"
                               style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B" }}
                             >
                               Make Cover

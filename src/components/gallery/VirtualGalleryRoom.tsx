@@ -3835,7 +3835,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                             openUniverseRoom(room);
                             setRoomSwitcherOpen(false);
                           }}
-                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
+                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] px-2.5 py-2 text-left text-xs font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
                         >
                           <span className="truncate">{room.title}</span>
                           <span className="text-[10px] font-black text-white/45">{room.items.length} pcs</span>
@@ -3927,7 +3927,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   type="button"
                   onClick={() => setHallNoticeDismissed(true)}
                   aria-label="Dismiss"
-                  className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']"
+                  className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[6px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']"
                 >
                   <AppIcon name="close" size={14} />
                 </button>
@@ -4193,7 +4193,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 type="button"
                 onClick={() => setRoomPanelOpen((current) => !current)}
                 aria-label={roomPanelOpen ? "Collapse room settings" : "Expand room settings"}
-                className="grid h-6 w-6 place-items-center rounded-[5px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className="grid h-6 w-6 place-items-center rounded-[6px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
               >
                 {roomPanelOpen ? <AppIcon name="chevronUp" size={14} /> : <AppIcon name="chevronDown" size={14} />}
               </button>
@@ -4230,7 +4230,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 <select
                   value={roomStyle}
                   onChange={(event) => setRoomStyle(event.target.value as RoomStyle)}
-                  className="h-6 w-auto rounded-[5px] bg-[color:var(--input)] px-2 text-[10px] font-black leading-none ring-1 ring-[color:var(--border)]"
+                  className="h-6 w-auto rounded-[6px] bg-[color:var(--input)] px-2 text-[10px] font-black leading-none ring-1 ring-[color:var(--border)]"
                 >
                   <option value="vault">Vault</option>
                   <option value="loft">Industrial Loft</option>
@@ -4238,7 +4238,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   <option value="arcade">Arcade</option>
                   <option value="blue">Blue</option>
                 </select>
-                <label className="flex h-6 items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
+                <label className="flex h-6 items-center gap-1.5 rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
                   <input
                     type="checkbox"
                     checked={showValues}
@@ -4247,7 +4247,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   />
                   Values
                 </label>
-                <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
+                <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
                   <AppIcon name="paintbrush" size={12} />
                   {wallTextureUrl ? "Wallpaper" : "Wallpaper"}
                   <input
@@ -4264,7 +4264,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   <button
                     type="button"
                     onClick={() => setWallTextureUrl("")}
-                    className="flex h-6 items-center rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                    className="flex h-6 items-center rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                   >
                     Remove
                   </button>
@@ -4675,7 +4675,7 @@ function Segmented({
 }) {
   return (
     <div
-      className="grid h-6 rounded-[5px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
+      className="grid h-6 rounded-[6px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map(([optionValue, label]) => (

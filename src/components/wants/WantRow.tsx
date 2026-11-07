@@ -108,9 +108,9 @@ export default function WantRow({
   );
   const chips = (
     <span className="flex flex-wrap gap-1.5">
-      {want.category ? <span className="rounded-[5px] border px-1.5 text-[11px]" style={{ borderColor: line }}>{want.category}</span> : null}
-      {qtyChip ? <span className="rounded-[5px] border px-1.5 text-[11px]" style={{ borderColor: line, fontVariantNumeric: "tabular-nums" }}>{qtyChip}</span> : null}
-      {want.priority === "high" && status !== "skipped" ? <span className="rounded-[5px] border px-1.5 text-[11px]" style={{ borderColor: "rgba(224,166,76,0.5)", color: "#e0a64c" }}>High</span> : null}
+      {want.category ? <span className="rounded-[6px] border px-1.5 text-[11px]" style={{ borderColor: line }}>{want.category}</span> : null}
+      {qtyChip ? <span className="rounded-[6px] border px-1.5 text-[11px]" style={{ borderColor: line, fontVariantNumeric: "tabular-nums" }}>{qtyChip}</span> : null}
+      {want.priority === "high" && status !== "skipped" ? <span className="rounded-[6px] border px-1.5 text-[11px]" style={{ borderColor: "rgba(224,166,76,0.5)", color: "#e0a64c" }}>High</span> : null}
     </span>
   );
   return (
@@ -163,7 +163,7 @@ export function WatchingRow({ item, onAdd, onStop, added }: { item: WatchlistIte
         <span className="block truncate text-[13.5px] font-semibold">{item.title}</span>
         <span className="block truncate text-[12px]" style={{ color: "var(--muted)" }}>Someone else&apos;s item{item.collectorName ? ` · ${item.collectorName}` : ""}{item.currentValue ? ` · listed value ${formatMoney(item.currentValue)}` : ""} · <SourceLink url={source}>Source</SourceLink></span>
       </div>
-      <span className="rounded-[5px] border px-1.5 text-[11px] font-semibold" style={{ borderColor: "rgba(82,214,244,0.5)", color: "var(--info, #52d6f4)" }}>Watching</span>
+      <span className="rounded-[6px] border px-1.5 text-[11px] font-semibold" style={{ borderColor: "rgba(82,214,244,0.5)", color: "var(--info, #52d6f4)" }}>Watching</span>
       <PillButton size="compact" onClick={onAdd} disabled={added}>{added ? "In my wants" : "Add to my wants"}</PillButton>
       <PillButton size="compact" onClick={onStop} ariaLabel={`Stop watching ${item.title}`}>Stop watching</PillButton>
     </div>

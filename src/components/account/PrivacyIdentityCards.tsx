@@ -25,7 +25,7 @@ function computeAge(dobStr: string) {
   return age;
 }
 
-const sectionClass = "mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]";
+const sectionClass = "mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]";
 const labelClass = "text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1";
 
 export default function PrivacyIdentityCards() {

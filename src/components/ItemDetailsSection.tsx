@@ -262,7 +262,7 @@ export default function ItemDetailsSection({
           onClick={() => (all ? void saveAll() : startAll())}
           aria-label={all ? "Save details" : "Edit details"}
           title={all ? "Save (Esc to cancel)" : "Edit details"}
-          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[6px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
           style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
         >
           <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />

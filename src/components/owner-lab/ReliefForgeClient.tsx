@@ -733,7 +733,7 @@ export default function ReliefForgeClient() {
 
           <div className="mt-5 flex flex-wrap gap-2">
             <button
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[7px] border border-[rgba(79,211,238,0.42)] bg-[#EDEFF1] px-4 py-2 text-sm font-black text-[#0B0D10] shadow-[0_0_18px_rgba(79,211,238,0.16)] transition hover:bg-white disabled:cursor-not-allowed disabled:border-[color:var(--border)] disabled:bg-[color:var(--input)] disabled:text-[color:var(--muted2)] disabled:shadow-none disabled:opacity-70"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-[rgba(79,211,238,0.42)] bg-[#EDEFF1] px-4 py-2 text-sm font-black text-[#0B0D10] shadow-[0_0_18px_rgba(79,211,238,0.16)] transition hover:bg-white disabled:cursor-not-allowed disabled:border-[color:var(--border)] disabled:bg-[color:var(--input)] disabled:text-[color:var(--muted2)] disabled:shadow-none disabled:opacity-70"
               disabled={isWorking || !imageUrl}
               onClick={handleGenerate}
               type="button"
@@ -742,7 +742,7 @@ export default function ReliefForgeClient() {
               {isWorking ? "Generating..." : "Generate STL"}
             </button>
             <button
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--input)] px-4 py-2 text-sm font-black disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--input)] px-4 py-2 text-sm font-black disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!result}
               onClick={handleDownload}
               type="button"

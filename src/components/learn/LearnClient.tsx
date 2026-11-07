@@ -102,7 +102,7 @@ export default function LearnClient() {
             >
               <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_420px]">
                 <div className="p-6">
-                  <span className="inline-flex rounded-[5px] border border-[rgba(203,208,213,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+                  <span className="inline-flex rounded-[6px] border border-[rgba(203,208,213,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
                     Featured
                   </span>
                   <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight tracking-[-0.02em] text-text-primary sm:text-4xl">
@@ -215,7 +215,7 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
     >
       <div className="relative h-24">
         <Thumb article={a} className="h-24" />
-        <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-[rgba(0,0,0,0.6)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
+        <span className="absolute left-2.5 top-2.5 rounded-[6px] bg-[rgba(0,0,0,0.6)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
           {a.category}
         </span>
       </div>

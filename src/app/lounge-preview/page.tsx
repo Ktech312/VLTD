@@ -187,7 +187,7 @@ function ActionButton({
 
 function EmptyState({ icon, title, copy }: { icon: GlyphName; title: string; copy: string }) {
   return (
-    <div className="flex min-h-[132px] items-center gap-4 rounded-[7px] border p-5" style={{ borderColor: borderSoft, background: panel2 }}>
+    <div className="flex min-h-[132px] items-center gap-4 rounded-[6px] border p-5" style={{ borderColor: borderSoft, background: panel2 }}>
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[6px] border" style={{ borderColor: border, color: gold }}>
         <Glyph name={icon} size={24} />
       </div>
@@ -331,7 +331,7 @@ export default function LoungePreviewPage() {
                 <p className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: gold }}>Lounge Live</p>
                 <p className="mt-1 text-xs" style={{ color: quiet }}>Real activity plus future discussions and item chatter.</p>
               </div>
-              <span className="rounded-[5px] border px-2 py-1 text-xs font-black" style={{ borderColor: borderSoft, color: green }}>
+              <span className="rounded-[6px] border px-2 py-1 text-xs font-black" style={{ borderColor: borderSoft, color: green }}>
                 {activity.length} live
               </span>
             </div>
@@ -341,7 +341,7 @@ export default function LoungePreviewPage() {
                   <Link
                     key={event.id}
                     href={event.href || "/activity"}
-                    className="grid grid-cols-[42px_1fr_auto] gap-3 rounded-[7px] border p-3 transition hover:brightness-110"
+                    className="grid grid-cols-[42px_1fr_auto] gap-3 rounded-[6px] border p-3 transition hover:brightness-110"
                     style={{ borderColor: borderSoft, background: "rgba(255,255,255,0.028)" }}
                     title="Opens the source item, exhibition, or activity record."
                   >
@@ -483,7 +483,7 @@ export default function LoungePreviewPage() {
                 Alerts linked
               </Link>
             </div>
-            <div className="mt-4 rounded-[7px] border p-4" style={{ borderColor: borderSoft, background: panel2 }}>
+            <div className="mt-4 rounded-[6px] border p-4" style={{ borderColor: borderSoft, background: panel2 }}>
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-[6px] border" style={{ borderColor: border, color: gold }}>
                   <Glyph name="users" size={22} />
@@ -515,7 +515,7 @@ export default function LoungePreviewPage() {
                     title="Opens the universe board for collectors in this category."
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={universeThumb[row.key]} alt="" className="h-10 w-10 rounded-[5px] object-cover" />
+                    <img src={universeThumb[row.key]} alt="" className="h-10 w-10 rounded-[6px] object-cover" />
                     <span className="min-w-0 truncate text-sm font-black" style={{ color: cream }}>{UNIVERSE_LABEL[row.key]}</span>
                     <span className="text-xs font-black" style={{ color: cyan }}>{row.rooms}</span>
                   </Link>
@@ -541,7 +541,7 @@ export default function LoungePreviewPage() {
                     href={spotlight.link_url || "#"}
                     target={spotlight.link_url ? "_blank" : undefined}
                     rel="noopener noreferrer"
-                    className="grid grid-cols-[58px_1fr] gap-3 rounded-[7px] border p-3"
+                    className="grid grid-cols-[58px_1fr] gap-3 rounded-[6px] border p-3"
                     style={{ borderColor: borderSoft, background: panel2 }}
                     title="Approved collector, artist, or brand spotlight."
                   >

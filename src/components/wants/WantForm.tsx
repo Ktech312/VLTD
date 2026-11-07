@@ -171,7 +171,7 @@ export default function WantForm({
           ))}
         </div>
       ) : null}
-      <Field label="Notes (private)"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full min-w-0 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3 py-2 text-sm outline-none" /></Field>
+      <Field label="Notes (private)"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full min-w-0 rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 py-2 text-sm outline-none" /></Field>
       {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
         {onCancel ? <PillButton onClick={onCancel}>Cancel</PillButton> : null}

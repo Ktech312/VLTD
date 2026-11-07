@@ -215,7 +215,7 @@ export default function SecurityPage() {
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
                         placeholder="new@email.com"
-                        className="h-9 min-w-0 flex-1 rounded-[7px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-9 min-w-0 flex-1 rounded-[6px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: "var(--fg)" }}
                       />
                       <PillButton onClick={() => void handleChangeEmail()} disabled={emailChangeSaving}>

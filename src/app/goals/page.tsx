@@ -154,7 +154,7 @@ function StatPanel({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-[116px] rounded-[7px] border border-[rgba(203,208,213,0.26)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+    <div className="min-h-[116px] rounded-[6px] border border-[rgba(203,208,213,0.26)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
       <div className="flex h-full items-center gap-4">
         {icon}
         <div className="min-w-0 flex-1">
@@ -183,7 +183,7 @@ function GoalRow({
     <button
       type="button"
       onClick={onSelect}
-      className="grid min-h-[110px] w-full grid-cols-[82px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5 lg:grid-cols-[108px_minmax(220px,1.2fr)_minmax(250px,1fr)_220px] lg:gap-5"
+      className="grid min-h-[110px] w-full grid-cols-[82px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-[6px] border p-4 text-left transition hover:-translate-y-0.5 lg:grid-cols-[108px_minmax(220px,1.2fr)_minmax(250px,1fr)_220px] lg:gap-5"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
@@ -241,8 +241,8 @@ function GoalRow({
         <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.type === "setup" ? "Not set up" : goal.type === "value" ? (goal.missing > 0 ? `${money(goal.missing)} short` : "Reached") : goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
         {goal.type === "setup" ? (
           <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices">
-            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("count"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items</button>
-            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("value"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ($)</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("count"); }} className="rounded-[6px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("value"); }} className="rounded-[6px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ($)</button>
           </div>
         ) : null}
         {goal.type === "count" ? <button
@@ -253,7 +253,7 @@ function GoalRow({
           }}
           disabled={goal.missing <= 0}
           title={goal.missing > 0 ? "Adds what is missing from this goal to your wishlist" : "Nothing is missing: this goal is complete"}
-          className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black max-md:min-h-11 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 rounded-[6px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black max-md:min-h-11 disabled:cursor-not-allowed disabled:opacity-60"
           style={{ color: "var(--theme-gold,#C8CDD2)" }}
         >
           {goal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
@@ -433,12 +433,12 @@ export default function GoalsPage() {
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
           {legacyHeld > 0 ? (
-            <div role="status" data-testid="goals-legacy-note" className="mt-2 rounded-[7px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+            <div role="status" data-testid="goals-legacy-note" className="mt-2 rounded-[6px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
               {legacyHeld} goal{legacyHeld === 1 ? "" : "s"} saved on this device by an older version cannot be matched to your account, so {legacyHeld === 1 ? "it was" : "they were"} not added. {legacyHeld === 1 ? "It is" : "They are"} kept on this device, untouched.
             </div>
           ) : null}
           {waiting.saves + waiting.deletes > 0 ? (
-            <div role="status" data-testid="goals-waiting" className="mt-2 flex flex-wrap items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+            <div role="status" data-testid="goals-waiting" className="mt-2 flex flex-wrap items-center gap-3 rounded-[6px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
               <span>
                 {[waiting.saves > 0 ? `${waiting.saves} goal ${waiting.saves === 1 ? "change is" : "changes are"} saved on this device only` : "", waiting.deletes > 0 ? `${waiting.deletes} deleted ${waiting.deletes === 1 ? "goal is" : "goals are"} still on your account` : ""].filter(Boolean).join("; ")}. Sync pending.
               </span>
@@ -456,7 +456,7 @@ export default function GoalsPage() {
             </div>
           ) : null}
 
-          <div className="mt-5 grid gap-0 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.28)] lg:grid-cols-[1.2fr_1.15fr_1fr_1fr]" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+          <div className="mt-5 grid gap-0 overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.28)] lg:grid-cols-[1.2fr_1.15fr_1fr_1fr]" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
             <StatPanel label="Overall Progress" icon={<Ring pct={averageProgress} size={98} />}>
               <div className="mt-1 text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <strong>{measured.filter((goal) => goal.pct > 0).length}</strong> of <strong>{measured.length}</strong> goals active<br />
@@ -506,12 +506,12 @@ export default function GoalsPage() {
           <div className="mt-3 space-y-2">
             {loadFailed && goalViews.length > 0 ? <StaleDataNotice onRetry={retryGoalsLoad} /> : null}
             {visibleGoals.length === 0 && !goalsLoaded && (
-              <div role="status" className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
+              <div role="status" className="grid min-h-[220px] place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
                 Loading your goals…
               </div>
             )}
             {visibleGoals.length === 0 && goalsLoaded && goalViews.length > 0 && (
-              <div className="grid min-h-[160px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] p-6 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }} data-testid="goals-filter-empty">
+              <div className="grid min-h-[160px] place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] p-6 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }} data-testid="goals-filter-empty">
                 <div>
                   <h2 className="text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No {GOAL_FILTERS.find(([key]) => key === filter)?.[1] ?? ""} goals</h2>
                   <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>You have {goalViews.length} {goalViews.length === 1 ? "goal" : "goals"}, but none of this type.</p>
@@ -526,7 +526,7 @@ export default function GoalsPage() {
               <LoadErrorCard what="goals" onRetry={retryGoalsLoad} />
             )}
             {visibleGoals.length === 0 && goalsLoaded && goalViews.length === 0 && !loadFailed && (
-              <div className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+              <div className="grid min-h-[220px] place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                   <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No goals yet</h2>
@@ -573,8 +573,8 @@ export default function GoalsPage() {
               <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.progressText}</div>
               {selectedGoal.needsSetup ? (
                 <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices-panel">
-                  <button type="button" onClick={() => void configureGoal(selectedGoal, "count")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items ({selectedGoal.targetCount.toLocaleString()} items)</button>
-                  <button type="button" onClick={() => void configureGoal(selectedGoal, "value")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ({money(selectedGoal.targetCount)})</button>
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "count")} className="rounded-[6px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items ({selectedGoal.targetCount.toLocaleString()} items)</button>
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "value")} className="rounded-[6px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ({money(selectedGoal.targetCount)})</button>
                 </div>
               ) : null}
             </div>
@@ -616,7 +616,7 @@ export default function GoalsPage() {
               <div className="mb-3 flex justify-between">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Next Work ({selectedGoal.missing})</h3>
               </div>
-              <div className="rounded-[7px] border border-[rgba(203,208,213,0.14)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+              <div className="rounded-[6px] border border-[rgba(203,208,213,0.14)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <div className="font-black">{selectedGoal.nextAction}</div>
                 <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                   {selectedGoal.needsSetup
@@ -634,7 +634,7 @@ export default function GoalsPage() {
               <h3 className="mb-3 text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Suggested Action</h3>
               <Link
                 href="/vault"
-                className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.16)] p-3 text-left transition hover:border-[rgba(203,208,213,0.4)]"
+                className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[6px] border border-[rgba(203,208,213,0.16)] p-3 text-left transition hover:border-[rgba(203,208,213,0.4)]"
               >
                 <Glyph name="target" size={20} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                 <span>
@@ -663,12 +663,12 @@ export default function GoalsPage() {
             </section>
 
             <div className="mt-5 grid gap-3">
-              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} disabled={selectedGoal.type !== "count" || selectedGoal.missing <= 0} className="rounded-[7px] px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
+              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} disabled={selectedGoal.type !== "count" || selectedGoal.missing <= 0} className="rounded-[6px] px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
                 {selectedGoal.type === "setup" ? "Set up the goal first" : selectedGoal.type === "value" ? "Wishlist is for item goals" : selectedGoal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
               </button>
               <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share goal</button>
-                <button type="button" onClick={() => void handleDeleteGoal(selectedGoal)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Delete goal</button>
+                <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share goal</button>
+                <button type="button" onClick={() => void handleDeleteGoal(selectedGoal)} className="rounded-[6px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Delete goal</button>
               </div>
             </div>
           </aside>

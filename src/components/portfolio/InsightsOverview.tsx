@@ -407,7 +407,7 @@ function ItemThumb({ item, className = "" }: { item: VaultItem; className?: stri
   const fallback = getUniverseThumbnail(item.universe || item.categoryLabel || item.category);
   return (
     <div
-      className={`shrink-0 overflow-hidden rounded-[7px] ${className}`}
+      className={`shrink-0 overflow-hidden rounded-[6px] ${className}`}
       style={{
         background: "rgba(255,255,255,0.035)",
         border: "1px solid rgba(203,208,213,0.34)",
@@ -435,7 +435,7 @@ function RowItem({
   meta?: ReactNode;
 }) {
   return (
-    <Link href={`/vault/item/${encodeURIComponent(item.id)}`} className="grid grid-cols-[50px_minmax(0,1fr)_auto] items-center gap-3 rounded-[7px] p-2 transition hover:bg-white/[0.035]">
+    <Link href={`/vault/item/${encodeURIComponent(item.id)}`} className="grid grid-cols-[50px_minmax(0,1fr)_auto] items-center gap-3 rounded-[6px] p-2 transition hover:bg-white/[0.035]">
       <ItemThumb item={item} className="h-[58px] w-[50px]" />
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
@@ -502,7 +502,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
   return (
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="grid min-w-[210px] grid-cols-[60px_minmax(0,1fr)] gap-3 rounded-[7px] p-2.5 transition hover:bg-white/[0.035]"
+      className="grid min-w-[210px] grid-cols-[60px_minmax(0,1fr)] gap-3 rounded-[6px] p-2.5 transition hover:bg-white/[0.035]"
       style={{ border: "1px solid rgba(203,208,213,0.34)", background: "var(--surface)" }}
     >
       <ItemThumb item={item} className="h-[78px] w-[58px]" />
@@ -510,7 +510,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
         <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
         <div className="mt-3 text-xs" style={{ color: AMBER }}>{reason}</div>
-        <div className="mt-2.5 inline-flex h-7 items-center rounded-[7px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(203,208,213,0.44)", color: GOLD }}>
+        <div className="mt-2.5 inline-flex h-7 items-center rounded-[6px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(203,208,213,0.44)", color: GOLD }}>
           Review
         </div>
       </div>
@@ -893,7 +893,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                     />
                   ))}
                   {movers.filter((row) => row.gain < 0).length === 0 ? (
-                    <div className="grid min-h-[62px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.14)" }}>
+                    <div className="grid min-h-[62px] place-items-center rounded-[6px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.14)" }}>
                       No decliners in this view
                     </div>
                   ) : null}
@@ -1001,13 +1001,13 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             {reviewItems.length > 0 ? (
               reviewItems.map((row) => <ReviewCard key={row.item.id} item={row.item} reason={row.reason} />)
             ) : (
-              <div className="rounded-[7px] px-4 py-3 text-sm" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.22)" }}>
+              <div className="rounded-[6px] px-4 py-3 text-sm" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.22)" }}>
                 Nothing urgent right now.
               </div>
             )}
             <Link
               href="/vault?review=needs_review"
-              className="grid min-w-[190px] place-items-center rounded-[7px] p-4 text-center"
+              className="grid min-w-[190px] place-items-center rounded-[6px] p-4 text-center"
               style={{ color: GOLD, border: "1px dashed rgba(203,208,213,0.38)", background: "var(--surface)" }}
             >
               <div>

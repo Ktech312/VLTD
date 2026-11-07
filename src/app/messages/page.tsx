@@ -389,7 +389,7 @@ export default function MessagesPage() {
                         }
                       }}
                       placeholder="Write a message…"
-                      className="h-10 flex-1 rounded-[7px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-10 flex-1 rounded-[6px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                       style={{ color: "var(--fg)" }}
                     />
                     <button
@@ -433,7 +433,7 @@ export default function MessagesPage() {
               value={composeQuery}
               onChange={(e) => setComposeQuery(e.target.value)}
               placeholder="Search collectors by name…"
-              className="mt-3 h-10 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="mt-3 h-10 w-full rounded-[6px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
               style={{ color: "var(--fg)" }}
             />
             <div className="mt-3 max-h-[280px] overflow-y-auto">
@@ -449,7 +449,7 @@ export default function MessagesPage() {
                     key={r.profileId}
                     type="button"
                     onClick={() => void handleStartConversation(r.profileId)}
-                    className="flex w-full items-center gap-3 rounded-[7px] px-2 py-2 text-left transition hover:bg-[color:var(--pill)]"
+                    className="flex w-full items-center gap-3 rounded-[6px] px-2 py-2 text-left transition hover:bg-[color:var(--pill)]"
                   >
                     <Avatar src={r.avatarSrc} name={r.name} size={32} />
                     <span className="text-sm font-bold">{r.name}</span>

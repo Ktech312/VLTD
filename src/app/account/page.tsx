@@ -375,7 +375,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <main className="px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-[9px] border border-[color:var(--border)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]" style={{ background: "var(--theme-card)" }}>
+        <div className="mx-auto max-w-4xl rounded-[6px] border border-[color:var(--border)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]" style={{ background: "var(--theme-card)" }}>
           Loading account...
         </div>
       </main>
@@ -509,7 +509,7 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <aside className="rounded-[9px] p-5" style={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)' }}>
+            <aside className="rounded-[6px] p-5" style={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)' }}>
               {/* Small, quiet — EK's ask: local-vs-cloud + a sync button,
                   nothing louder than that. */}
               {localItemCount != null ? (
@@ -588,7 +588,7 @@ export default function AccountPage() {
 
         {/* Avatar */}
         {section === "profile" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Avatar
           </div>
@@ -699,7 +699,7 @@ export default function AccountPage() {
 
 
         {section === "preferences" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
             Appearance
           </div>
@@ -710,7 +710,7 @@ export default function AccountPage() {
 
         {/* Notifications */}
         {section === "preferences" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Notifications
           </div>
@@ -738,7 +738,7 @@ export default function AccountPage() {
         ) : null}
 
         {section === "data" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Vault Maintenance
           </div>
@@ -758,7 +758,7 @@ export default function AccountPage() {
 
         {/* Contact Info */}
         {section === "contact" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Contact Information
           </div>
@@ -869,7 +869,7 @@ export default function AccountPage() {
 
         {/* Data Controls */}
         {section === "data" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
             Data Controls
           </div>

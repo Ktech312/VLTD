@@ -820,7 +820,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             onClick={toggleScan}
             title={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
             aria-label={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
-            className="vltd-tap inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
+            className="vltd-tap inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] ring-1 transition"
             style={
               scanState === "scanning"
                 ? { background: "rgba(74,155,255,0.16)", borderColor: "rgba(74,155,255,0.5)", color: "#4A9BFF" }

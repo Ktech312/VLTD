@@ -346,7 +346,7 @@ function deltaPct(event: ActivityEvent) {
 function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?: boolean }) {
   const size = large ? "h-[164px] w-[128px]" : "h-[76px] w-[64px]";
   return (
-    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.28)] bg-black/30`}>
+    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-black/30`}>
       {event.imageUrl ? (
         <img src={event.imageUrl} alt="" className="h-full w-full object-contain" />
       ) : (
@@ -365,7 +365,7 @@ function ActivityRow({ event, selected, onSelect, basic }: { event: ActivityEven
     <button
       type="button"
       onClick={onSelect}
-      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[7px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] md:gap-4 md:p-4"
+      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[6px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] md:gap-4 md:p-4"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
@@ -422,8 +422,8 @@ function EmptyState() {
         Add items, update prices, publish exhibitions, or log a sale and this page will become your vault timeline.
       </p>
       <div className="mt-5 flex justify-center gap-3">
-        <Link href="/vault/add" className="rounded-[7px] px-5 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Add item</Link>
-        <Link href="/vault" className="rounded-[7px] border border-[rgba(203,208,213,0.26)] px-5 py-2 text-sm font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Open vault</Link>
+        <Link href="/vault/add" className="rounded-[6px] px-5 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Add item</Link>
+        <Link href="/vault" className="rounded-[6px] border border-[rgba(203,208,213,0.26)] px-5 py-2 text-sm font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Open vault</Link>
       </div>
     </div>
   );
@@ -717,7 +717,7 @@ export default function ActivityPage() {
               <button
                 type="button"
                 onClick={() => setVisibleCount((count) => count + 20)}
-                className="rounded-[7px] border border-[rgba(203,208,213,0.3)] px-14 py-3 text-sm font-bold"
+                className="rounded-[6px] border border-[rgba(203,208,213,0.3)] px-14 py-3 text-sm font-bold"
                 style={{ color: "var(--theme-gold,#C8CDD2)" }}
               >
                 Load more ({filteredEvents.length - visibleCount} left)
@@ -788,7 +788,7 @@ export default function ActivityPage() {
               )}
 
               {showSelectedEvidence && (
-                <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-4">
+                <section className="mt-5 rounded-[6px] border border-[rgba(203,208,213,0.22)] p-4">
                   <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Source & Evidence</h3>
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     {typeof selected.comps === "number" && selected.comps > 0 && (
@@ -825,21 +825,21 @@ export default function ActivityPage() {
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Related Activity</h3>
                 <div className="mt-3 grid gap-2">
                   {allEvents.filter((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id).slice(0, 2).map((event) => (
-                    <button key={event.id} type="button" onClick={() => { setSelectedId(event.id); setPanelClosed(false); }} className="flex items-center justify-between rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
+                    <button key={event.id} type="button" onClick={() => { setSelectedId(event.id); setPanelClosed(false); }} className="flex items-center justify-between rounded-[6px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
                       <span>{event.subtitle}</span>
                       <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
                     </button>
                   ))}
                   {!allEvents.some((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id) && (
-                    <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>No related activity yet.</div>
+                    <div className="rounded-[6px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>No related activity yet.</div>
                   )}
                 </div>
               </section>
 
               <div className="mt-6 grid grid-cols-3 gap-3">
-                <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Open record</Link>
-                <Link href="/watchlist" className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
-                <button type="button" onClick={() => { setSelectedId(null); setPanelClosed(true); }} title="Closes this panel. Your activity history is not changed." className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Close</button>
+                <Link href={selected.href ?? "/vault"} className="rounded-[6px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Open record</Link>
+                <Link href="/watchlist" className="rounded-[6px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
+                <button type="button" onClick={() => { setSelectedId(null); setPanelClosed(true); }} title="Closes this panel. Your activity history is not changed." className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Close</button>
               </div>
             </>
           ) : (

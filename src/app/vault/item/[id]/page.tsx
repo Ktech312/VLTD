@@ -319,7 +319,7 @@ function InlineEditSection({
           onClick={() => (all ? void saveAll() : startAll())}
           aria-label={all ? `Save ${title.toLowerCase()}` : `Edit ${title.toLowerCase()}`}
           title={all ? "Save (Esc to cancel)" : `Edit ${title.toLowerCase()}`}
-          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[6px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
           style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
         >
           <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />
@@ -1731,7 +1731,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   onClick={() => { setNotesDraft(item.notes ?? ""); setIsEditingNotes(true); }}
                   aria-label="Edit notes"
                   title="Edit notes"
-                  className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                  className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[6px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                   style={{ color: "var(--muted)" }}
                 >
                   <AppIcon name="edit" size={14} strokeWidth={1.8} />
@@ -1780,7 +1780,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     <button
                       type="button"
                       onClick={() => void persist({ ...item, notes: "" })}
-                      className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-[''] rounded-[7px] px-3 py-1.5 text-xs font-semibold text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                      className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-[''] rounded-[6px] px-3 py-1.5 text-xs font-semibold text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
                     >
                       Clear
                     </button>

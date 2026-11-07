@@ -1041,9 +1041,9 @@ function VaultSelectionDrawer({
             </div>
             <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "#B9AE86" }}>{itemMeta(item)}</div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {item.grade ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.grade}</span> : null}
-              {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
-              <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
+              {item.grade ? <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.grade}</span> : null}
+              {item.variant ? <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
+              <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
             <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: value > 0 ? "#44D9F2" : "#8C9298" }} title={!hasExplicitValue(item) && paid > 0 ? "At purchase cost. Not valued yet." : undefined}>{hasExplicitValue(item) ? formatMoney(value) : hasRecordedCost(item) ? `${formatMoney(paid)} at purchase cost` : "Missing value"}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
@@ -1115,7 +1115,7 @@ function VaultSelectionDrawer({
             <ItemVisibilityToggle item={item} />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[6px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
               Export Data
             </button>
           </div>
@@ -2219,7 +2219,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             </div>
           </div>
 
-          <div className="mt-3 rounded-[9px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+          <div className="mt-3 rounded-[6px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
             <div className="flex flex-wrap items-center gap-2">
               {items.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2 rounded-[8px] bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
@@ -2311,7 +2311,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       <select
                         value={moveTargetUniverse}
                         onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
-                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[6px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
                       >
                         <option value="">Move {selectedIds.size} to…</option>
@@ -2322,7 +2322,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       <select
                         value={moveTargetCategory}
                         onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
-                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[6px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetUniverse}
                       >
@@ -2334,7 +2334,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       <select
                         value={moveTargetSubcategory}
                         onChange={(e) => setMoveTargetSubcategory(e.target.value)}
-                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[6px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetCategory}
                       >
@@ -2521,7 +2521,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <button
                   type="button"
                   onClick={() => startTransition(() => setVisibleItemCount((count) => count + VISIBLE_ITEM_INCREMENT))}
-                  className="min-h-11 rounded-[9px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="min-h-11 rounded-[6px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                   style={{ background: "var(--pill)", color: "var(--text)" }}
                 >
                   Show {Math.min(VISIBLE_ITEM_INCREMENT, filteredItems.length - visibleItems.length)} more

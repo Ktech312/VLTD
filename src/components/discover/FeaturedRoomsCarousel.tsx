@@ -75,7 +75,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
 
   return (
     <div
-      className="vltd-dark-surface relative overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)]"
+      className="vltd-dark-surface relative overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.22)]"
       role="region"
       aria-roledescription="carousel"
       aria-label="Featured rooms"
@@ -133,7 +133,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                   <div className="mt-3 flex gap-1.5" data-testid="slide-previews">
                     {slide.previews.slice(0, 4).map((p, k) => (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={k} src={p.src} alt={p.title} draggable={false} className="h-12 w-12 rounded-[5px] border border-[rgba(203,208,213,0.35)] object-cover" />
+                      <img key={k} src={p.src} alt={p.title} draggable={false} className="h-12 w-12 rounded-[6px] border border-[rgba(203,208,213,0.35)] object-cover" />
                     ))}
                   </div>
                 ) : null}
@@ -144,7 +144,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                   src={slide.coverUrl}
                   alt=""
                   draggable={false}
-                  className="hidden h-[150px] w-[150px] shrink-0 rounded-[7px] border border-[rgba(203,208,213,0.35)] object-cover shadow-lg sm:block"
+                  className="hidden h-[150px] w-[150px] shrink-0 rounded-[6px] border border-[rgba(203,208,213,0.35)] object-cover shadow-lg sm:block"
                 />
               ) : null}
             </div>

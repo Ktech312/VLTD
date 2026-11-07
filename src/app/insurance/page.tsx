@@ -155,7 +155,7 @@ export default function InsuranceExportPage() {
           <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--muted2)" }}>INSURANCE</div>
           <h1 className="mt-2 text-2xl font-semibold">Insurance export</h1>
           <div
-            className="mt-8 rounded-[9px] p-8 text-center"
+            className="mt-8 rounded-[6px] p-8 text-center"
             style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(203,208,213,0.12))" }}
           >
             <div className="flex justify-center opacity-40" style={{ color: "var(--theme-gold)" }}>
@@ -247,11 +247,11 @@ export default function InsuranceExportPage() {
             <PillButton size="compact" onClick={includeAll}>Include all</PillButton>
             <PillButton size="compact" onClick={excludeZeroValue}>Exclude $0 value</PillButton>
           </div>
-          <div className="no-print mt-3 rounded-[9px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="no-print mt-3 rounded-[6px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Checked items are included in the inventory, the policy packet and the reports. {exclusionsNote} Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
-          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-[9px] border border-[color:var(--border)] bg-vault-card">
+          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-[6px] border border-[color:var(--border)] bg-vault-card">
             <table className="w-full border-collapse text-sm text-[color:var(--fg)]">
               <thead>
                 <tr className="border-b border-[color:var(--border)] text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">

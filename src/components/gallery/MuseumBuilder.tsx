@@ -1177,7 +1177,7 @@ export default function MuseumBuilder() {
                       />
                     </div>
                   </div>
-                  <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
+                  <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
                     <input
                       type="checkbox"
                       checked={wallShelvesEnabled}
@@ -1192,7 +1192,7 @@ export default function MuseumBuilder() {
                 </div>
                 {selectedItem ? (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
+                    <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
                       <input
                         type="checkbox"
                         checked={Boolean(selectedItem.show_value)}
@@ -1261,7 +1261,7 @@ export default function MuseumBuilder() {
                   {frameStyleSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
+                  <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[6px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
                     <AppIcon name="paintbrush" size={12} />
                     {backgroundUploading ? "Uploading…" : "Wallpaper"}
                     <input
@@ -1444,7 +1444,7 @@ function Segmented({
 }: { value: string; options: [string, string][]; onChange: (value: string) => void }) {
   return (
     <div
-      className="grid h-6 rounded-[5px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
+      className="grid h-6 rounded-[6px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map(([optionValue, label]) => (

@@ -456,6 +456,14 @@
 .theme-light :focus-visible,
 .theme-light select:focus-visible { outline-color: color-mix(in srgb, var(--accent) 50%, #000); }
 
+/* The Home banner changes between dark photo slides and light graphic slides, so its keyboard focus is a white ring with a black edge: visible on both. */
+[data-seasonal-banner] :focus-visible,
+[data-seasonal-banner]:focus-visible { outline: 2px solid #fff !important; outline-offset: 1px; box-shadow: 0 0 0 4px #000 !important; }
+
+/* Text fields that switch their outline off and rely on a faint ring (12% alpha) get a real, visible focus outline. */
+:is(input, textarea):focus-visible:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]) { outline: 2px solid color-mix(in srgb, var(--accent) 70%, white 30%) !important; outline-offset: 2px !important; }
+.theme-light :is(input, textarea):focus-visible:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]) { outline-color: color-mix(in srgb, var(--accent) 50%, #000) !important; }
+
 /* Accent colour used as TEXT (for example the active tab label): the theme's own accent on dark pages, a darker mix of it on light pages so small text reaches 4.5:1. */
 :root { --theme-gold-text: var(--theme-gold); }
 .theme-light { --theme-gold-text: color-mix(in srgb, var(--theme-gold) 70%, #000); }

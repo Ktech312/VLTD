@@ -32,7 +32,7 @@ export function Sheet({ title, onClose, children, wide = false }: { title: strin
   );
 }
 
-export const inputClass = "h-10 w-full min-w-0 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3 text-sm outline-none focus:border-[rgba(82,214,244,0.6)]";
+export const inputClass = "h-10 w-full min-w-0 rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 text-sm outline-none focus:border-[rgba(82,214,244,0.6)]";
 
 export function Field({ label, children, hint, className = "" }: { label: string; children: ReactNode; hint?: string; className?: string }) {
   return (

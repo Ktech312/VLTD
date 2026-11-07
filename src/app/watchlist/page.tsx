@@ -169,7 +169,7 @@ export default function WatchlistPage() {
             {tabButton("follow", "Following", activeRules)}
             {tab !== "follow" ? (
               <div className="flex w-full min-w-0 flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                <label className="flex h-10 min-w-[180px] items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+                <label className="flex h-10 min-w-[180px] items-center gap-2 rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
                   <Glyph name="search" size={15} className="opacity-60" />
                   <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search wants" aria-label="Search wants" className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
                 </label>

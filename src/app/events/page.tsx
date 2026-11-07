@@ -171,7 +171,7 @@ function EventArt({
     // went dark-on-dark here, unreadable over this image. One class here
     // instead of tagging each usage.
     <div
-      className={`vltd-dark-surface ${hasPositionOverride ? "" : "relative"} overflow-hidden rounded-[7px] border ${className}`}
+      className={`vltd-dark-surface ${hasPositionOverride ? "" : "relative"} overflow-hidden rounded-[6px] border ${className}`}
       style={hasImage ? { borderColor: `color-mix(in srgb, ${accent} 52%, transparent)` } : eventArtStyle(event)}
     >
       {hasImage ? (
@@ -180,7 +180,7 @@ function EventArt({
       ) : (
         <>
           <div className="absolute -right-8 top-4 h-28 w-28 rotate-12 rounded-[18px] border border-white/10 bg-black/20 shadow-[0_20px_70px_rgba(0,0,0,0.5)]" />
-          <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[5px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
+          <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[6px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
         </>
       )}
       {/* ONE readability gradient -- compact gets the small corner radial
@@ -201,7 +201,7 @@ function EventArt({
         }}
       />
       {!decorative ? (
-        <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
+        <div className="absolute left-4 top-4 rounded-[6px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
           {categoryLabel(category)}
         </div>
       ) : null}
@@ -236,7 +236,7 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
   const activeDay = start.getUTCDate();
 
   return (
-    <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+    <aside className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{monthName}</div>
       </div>
@@ -326,7 +326,7 @@ function SaveButton({
       // same as EventArt's category badge, so its icon/label use the same
       // fixed light color rather than the theme-following gold accent
       // that goes dark-on-dark in light mode over the same backdrop.
-      className={`vltd-dark-surface inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 ${compact ? "relative h-8 w-8 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']" : "h-11 gap-2 px-3 text-[13px] font-medium md:h-9"}`}
+      className={`vltd-dark-surface inline-flex items-center justify-center rounded-[6px] border border-[color:var(--border)] bg-black/30 ${compact ? "relative h-8 w-8 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']" : "h-11 gap-2 px-3 text-[13px] font-medium md:h-9"}`}
     >
       <AppIcon name="favorite" size={15} filled={saved} />
       {!compact && <span>{saved ? "Saved" : "Save Event"}</span>}
@@ -355,7 +355,7 @@ function EventCard({
       role="button"
       tabIndex={0}
       onClick={onSelect}
-      className="group cursor-pointer overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
+      className="group cursor-pointer overflow-hidden rounded-[6px] border text-left transition hover:-translate-y-0.5"
       style={{
         background: "var(--theme-card)",
         borderColor: selected ? "var(--theme-gold)" : "var(--border)",
@@ -398,7 +398,7 @@ function EventRow({
       role="button"
       tabIndex={0}
       onClick={onSelect}
-      className="grid w-full cursor-pointer grid-cols-[72px_minmax(0,1fr)_32px] gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 text-left"
+      className="grid w-full cursor-pointer grid-cols-[72px_minmax(0,1fr)_32px] gap-3 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 text-left"
     >
       <EventArt event={event} compact className="h-16" />
       <div className="min-w-0 self-center">
@@ -424,9 +424,9 @@ function EventSuggestionCard({
   onSave: () => void;
 }) {
   return (
-    <div className="grid gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-3 md:grid-cols-[112px_minmax(0,1fr)_auto]">
+    <div className="grid gap-3 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-3 md:grid-cols-[112px_minmax(0,1fr)_auto]">
       <div
-        className="h-24 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] bg-cover bg-center"
+        className="h-24 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--pill)] bg-cover bg-center"
         style={{
           backgroundImage: suggestion.thumbnail
             ? `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url(${suggestion.thumbnail})`
@@ -436,7 +436,7 @@ function EventSuggestionCard({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="line-clamp-1 text-sm font-black text-[color:var(--fg)]">{suggestion.title}</h3>
-          <span className="rounded-[5px] border border-[color:var(--border)] bg-black/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+          <span className="rounded-[6px] border border-[color:var(--border)] bg-black/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
             {suggestion.source}
           </span>
         </div>
@@ -452,7 +452,7 @@ function EventSuggestionCard({
         <button
           type="button"
           onClick={onSave}
-          className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-3 text-xs font-black text-[color:var(--theme-gold)]"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-3 text-xs font-black text-[color:var(--theme-gold)]"
         >
           <AppIcon name="addItem" size={14} />
           {saved ? "Saved" : "Save"}
@@ -462,7 +462,7 @@ function EventSuggestionCard({
             href={suggestion.ticketLink ?? suggestion.link ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-black/20 px-3 text-xs font-black text-[color:var(--fg)]"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border border-[color:var(--border)] bg-black/20 px-3 text-xs font-black text-[color:var(--fg)]"
           >
             Open <AppIcon name="externalLink" size={13} />
           </a>
@@ -642,7 +642,7 @@ export default function EventsPage() {
       <div className="mx-auto max-w-[1360px]">
         {featuredEvent ? (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="relative overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">
+          <div className="relative overflow-hidden rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_238px]">
               {/* vltd-dark-surface here too, on the wrapper: EventArt's own
                   scrim covers its own DOM, but this text block is a SIBLING
@@ -651,10 +651,10 @@ export default function EventsPage() {
                   anchored, sized for this whole text block) is now the
                   ONLY readability gradient -- this used to stack a second
                   bg-gradient-to-r on top of EventArt's own overlay. */}
-              <div className="vltd-dark-surface relative min-h-[292px] overflow-hidden rounded-[7px] border border-[color:var(--border)] sm:min-h-[250px] md:min-h-[210px]">
+              <div className="vltd-dark-surface relative min-h-[292px] overflow-hidden rounded-[6px] border border-[color:var(--border)] sm:min-h-[250px] md:min-h-[210px]">
                 <EventArt event={featuredEvent} decorative className="absolute inset-0 rounded-none border-0" />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
-                  <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
+                  <div className="mb-2 inline-flex rounded-[6px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
                     Featured Event
                   </div>
                   <h2 className="max-w-2xl text-2xl font-black leading-tight md:text-3xl">{featuredEvent.name}</h2>
@@ -677,7 +677,7 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <aside className="hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:block">
+          <aside className="hidden rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{savedEvents.length ? "Saved Events" : "Coming Up"}</h2>
             </div>
@@ -687,7 +687,7 @@ export default function EventsPage() {
                   key={event.id}
                   type="button"
                   onClick={() => selectEvent(event.id, true)}
-                  className="grid w-full grid-cols-[44px_minmax(0,1fr)] gap-2 rounded-[7px] border border-[color:var(--border)] bg-black/10 p-2 text-left"
+                  className="grid w-full grid-cols-[44px_minmax(0,1fr)] gap-2 rounded-[6px] border border-[color:var(--border)] bg-black/10 p-2 text-left"
                 >
                   <EventArt event={event} compact className="h-11" />
                   <div className="min-w-0">
@@ -726,7 +726,7 @@ export default function EventsPage() {
           </PillButton>
         </section>
 
-        <section className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4" data-testid="live-lookup-paused">
+        <section className="mt-4 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4" data-testid="live-lookup-paused">
           <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
           <p className="mt-1 text-xs text-[color:var(--muted)]">Live event lookup is paused for now. Search and filter the events already listed below, by name, city, type or universe.</p>
         </section>
@@ -747,15 +747,15 @@ export default function EventsPage() {
             </div>
 
             {loading ? (
-              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
+              <div className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
                 Loading events...
               </div>
             ) : error ? (
-              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-red-300">
+              <div className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-red-300">
                 {error}
               </div>
             ) : filteredEvents.length === 0 ? (
-              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
+              <div className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
                 {showSavedOnly
                   ? "You haven't saved any events yet."
                   : "No events match these filters. Try another universe, city or event name."}
@@ -785,12 +785,12 @@ export default function EventsPage() {
                     />
                   ))}
                 </div>
-                {filteredEvents.length > visibleCount && <button type="button" onClick={() => setVisibleCount(count => count + 30)} className="mt-4 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] p-3 text-sm font-bold">Show more events ({filteredEvents.length - visibleCount} remaining)</button>}
+                {filteredEvents.length > visibleCount && <button type="button" onClick={() => setVisibleCount(count => count + 30)} className="mt-4 w-full rounded-[6px] border border-[color:var(--border)] bg-[color:var(--pill)] p-3 text-sm font-bold">Show more events ({filteredEvents.length - visibleCount} remaining)</button>}
               </>
             )}
           </section>
 
-          <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:hidden">
+          <aside className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:hidden">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{savedEvents.length ? "Saved Events" : "Coming Up"}</h2>
             </div>
@@ -811,7 +811,7 @@ export default function EventsPage() {
         {selectedEvent ? (
         <section
           ref={detailRef}
-          className="mt-5 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
+          className="mt-5 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
         >
           <div className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Event Highlight</div>
           <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_240px]">
@@ -827,13 +827,13 @@ export default function EventsPage() {
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {(selectedEvent.relevant_universes ?? ["collectibles"]).slice(0, 3).map((universe) => (
-                  <span key={universe} className="rounded-[5px] border border-[color:var(--border)] bg-[color:var(--pill)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[color:var(--theme-gold)]">
+                  <span key={universe} className="rounded-[6px] border border-[color:var(--border)] bg-[color:var(--pill)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[color:var(--theme-gold)]">
                     {normalizeUniverse(universe)}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="rounded-[7px] border border-[color:var(--border)] bg-black/10 p-3">
+            <div className="rounded-[6px] border border-[color:var(--border)] bg-black/10 p-3">
               <h3 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">Details</h3>
               <div className="space-y-2 text-sm text-[color:var(--fg)]">
                 <div className="flex items-center gap-2">
