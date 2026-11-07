@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 import {
   getAllCommands,
@@ -91,6 +92,7 @@ export default function CommandPalette({
 }: Props) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -196,6 +198,10 @@ export default function CommandPalette({
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search and commands"
         className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[14px] border border-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
         style={{
           // Guaranteed-opaque base (no theme var can make it transparent), with the

@@ -42,6 +42,7 @@ export default function WatchlistPage() {
   const [rules, setRules] = useState<PullRule[]>(() => loadPullRules());
   const [inAccount, setInAccount] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [retryTick, setRetryTick] = useState(0);
   const [retrying, setRetrying] = useState(false);
   const [suggestions, setSuggestions] = useState<CatalogRelease[]>([]);
@@ -70,7 +71,7 @@ export default function WatchlistPage() {
       const [w, wl, pr] = await Promise.all([syncWishlistFromSupabase(), syncWatchlistFromSupabase(), syncPullRulesFromSupabase()]);
       if (!active) return;
       setWishlist(w); setWatching(wl); setRules(pr.rules); setInAccount(pr.inAccount);
-      setLoadFailed(wishlistReadFailed()); setRetrying(false);
+      setLoadFailed(wishlistReadFailed()); setRetrying(false); setLoaded(true);
       // Check Following comic rules (at most every six hours per rule); adds nothing for paused or stopped rules.
       const outcome = await refreshPullRules();
       if (!active) return;
@@ -113,7 +114,10 @@ export default function WatchlistPage() {
   const openWants = useMemo(() => wishlist.filter(isOpen), [wishlist]);
   const pullCount = useMemo(() => groupPullList(wishlist).reduce((n, g) => n + g.items.length, 0), [wishlist]);
   // Nothing saved here and the account did not answer: that is a failed load, not an empty wishlist.
-  const blocked = loadFailed && wishlist.length === 0 && watching.length === 0 && rules.length === 0;
+  const nothingHere = wishlist.length === 0 && watching.length === 0 && rules.length === 0;
+  const blocked = loadFailed && nothingHere;
+  // Until the account has answered, an empty device is not an empty wishlist.
+  const waiting = !loaded && nothingHere;
   const retry = () => { setRetrying(true); setRetryTick((n) => n + 1); };
   const visibleTotals = plannedTotals(tab === "pull" ? pullGroups.flatMap((g) => g.items) : wants);
 
@@ -195,9 +199,10 @@ export default function WatchlistPage() {
             )}
           </div>
 
+          {waiting ? <div role="status" className="rounded-[8px] px-6 py-8 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>Loading your wishlist…</div> : null}
           {blocked ? <LoadErrorCard what="wishlist" onRetry={retry} busy={retrying} /> : null}
           {loadFailed && !blocked ? <StaleDataNotice onRetry={retry} busy={retrying} /> : null}
-          {!blocked && tab === "wishlist" ? (
+          {!blocked && !waiting && tab === "wishlist" ? (
             <section aria-label="Wishlist" className="flex flex-col gap-1.5">
               {wants.length === 0 && watchRows.length === 0 ? (
                 <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
@@ -221,7 +226,7 @@ export default function WatchlistPage() {
             </section>
           ) : null}
 
-          {!blocked && tab === "pull" ? (
+          {!blocked && !waiting && tab === "pull" ? (
             <section aria-label="Pull List" className="flex flex-col gap-1.5">
               {pullGroups.length === 0 ? (
                 <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
@@ -240,7 +245,7 @@ export default function WatchlistPage() {
             </section>
           ) : null}
 
-          {!blocked && tab === "follow" ? (
+          {!blocked && !waiting && tab === "follow" ? (
             <FollowTab
               rules={rules}
               wants={rawWishlist}
