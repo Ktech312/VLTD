@@ -318,7 +318,8 @@ export async function syncGoalsFromSupabaseChecked(): Promise<{ goals: Collectio
       for (const id of needTypeUpload) queued.add(id);
       writeIdSet(LS_PENDING, pid, queued);
     }
-    const merged = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid), readIdSet(LS_SYNCED, pid));
+    // The account answered without error for a person who was signed in the whole time, so an EMPTY answer is a real answer (every goal was deleted elsewhere), not a lapsed session.
+    const merged = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid), readIdSet(LS_SYNCED, pid), Boolean(startedAs));
     // What the account holds is now known to this device.
     const synced = readIdSet(LS_SYNCED, pid);
     for (const g of fromCloud) synced.add(g.id);
@@ -439,10 +440,6 @@ export async function deleteGoal(id: string): Promise<GoalWriteResult> {
   return { ok: false, error: `The goal was not deleted: ${r.message}` };
 }
 
-function activeItems(items: VaultItem[]) {
-  return items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST");
-}
-
 /** The items a goal covers: its subject, else its category, else everything owned. Scope only: never decides how the goal is measured. */
 function inScope(goal: CollectionGoal, items: VaultItem[]): VaultItem[] {
   if (goal.subject?.trim()) {
@@ -468,7 +465,8 @@ export function computeGoalProgress(goal: CollectionGoal, vaultItems: VaultItem[
     // What the owned items in scope are worth, by the one value rule the Vault and Insights use (un-priced items count at what was paid).
     ownedCount = Math.round(summarizeValues(inScope(goal, ownedItems(vaultItems))).totalValue);
   } else {
-    ownedCount = inScope(goal, activeItems(vaultItems)).length;
+    // Same owned-collectible filter as the Vault and the value goals: sold (by status, date or price), wishlist and supplies are not owned.
+    ownedCount = inScope(goal, ownedItems(vaultItems)).length;
   }
 
   const pct = Math.min(100, Math.round((ownedCount / targetCount) * 100));

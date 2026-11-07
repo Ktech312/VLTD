@@ -46,22 +46,32 @@ async function applyTier(
   customerId?: string
 ) {
   const sb = serviceClient();
-  if (!sb || !profileId) return;
+  if (!sb) throw new Error("Billing database is not configured.");
+  if (!profileId) return;
   const update: Record<string, unknown> = { tier, tier_source: "stripe", tier_expires_at: expiresAt };
   if (customerId) update.stripe_customer_id = customerId;
 
-  const { error } = await sb.from("profiles").update(update).eq("id", profileId);
+  // What the profile has now, so a replayed event (same tier again) writes the same values and adds no second change record.
+  const { data: before } = await sb.from("profiles").select("tier").eq("id", profileId).limit(1);
+  const currentTier = Array.isArray(before) && before.length ? (before[0] as { tier?: string }).tier : undefined;
+
+  let { error } = await sb.from("profiles").update(update).eq("id", profileId);
   if (error && customerId && error.message.toLowerCase().includes("stripe_customer_id")) {
     // 20260812_profiles_stripe_customer_id.sql not run yet -- retry without
     // it so tier sync (the part that already worked) doesn't start failing
     // because of an unrelated, not-yet-run migration.
     delete update.stripe_customer_id;
-    await sb.from("profiles").update(update).eq("id", profileId);
+    ({ error } = await sb.from("profiles").update(update).eq("id", profileId));
   }
+  // A tier that could not be stored must not be answered with success: the failure goes back to Stripe, which retries the event.
+  if (error) throw new Error(`Could not store the ${tier} tier: ${error.message}`);
 
-  await sb
-    .from("tier_changes")
-    .insert({ profile_id: profileId, new_tier: tier, source: "stripe", reason: "stripe webhook" });
+  if (currentTier !== tier) {
+    const { error: logError } = await sb
+      .from("tier_changes")
+      .insert({ profile_id: profileId, new_tier: tier, source: "stripe", reason: "stripe webhook" });
+    if (logError) throw new Error(`Could not record the tier change: ${logError.message}`);
+  }
 }
 
 function periodEndIso(sub: Stripe.Subscription): string | null {
@@ -98,8 +108,10 @@ export async function POST(req: NextRequest) {
         if (tier) await applyTier(profileId, tier, periodEndIso(sub), customerIdFrom(session.customer));
       }
     } else if (event.type === "customer.subscription.updated") {
-      const sub = event.data.object as Stripe.Subscription;
-      const profileId = (sub.metadata?.profile_id || "") as string;
+      const eventSub = event.data.object as Stripe.Subscription;
+      // The subscription as Stripe has it now, not as it was when this event was written: a late or replayed older event cannot put back an older state.
+      const sub = eventSub?.id ? await stripe.subscriptions.retrieve(eventSub.id) : eventSub;
+      const profileId = (sub.metadata?.profile_id || eventSub.metadata?.profile_id || "") as string;
       if (profileId) {
         const active = sub.status === "active" || sub.status === "trialing";
         const tier = tierForPriceId(sub.items.data[0]?.price?.id);

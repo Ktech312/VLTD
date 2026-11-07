@@ -14,6 +14,7 @@ const ALLOWED_HOSTS = [
 ];
 
 const MAX_BYTES = 15 * 1024 * 1024;
+const MAX_REDIRECTS = 3;
 
 function isAllowedUrl(urlString: string): boolean {
   try {
@@ -34,18 +35,36 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(url, {
-      // Let Vercel edge cache the image
-      next: { revalidate: 3600 },
-    });
+    // Redirects are followed by hand, a few at a time: every destination is checked BEFORE it is requested, so a redirect to a host
+    // outside the allowed list (or to a plain-http / internal address) is never contacted.
+    let current = url;
+    let upstream: Response | null = null;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const res: Response = await fetch(current, {
+        redirect: "manual",
+        // Let Vercel edge cache the image
+        next: { revalidate: 3600 },
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get("location");
+        if (!location) return new NextResponse(null, { status: 502 });
+        let next: string;
+        try {
+          next = new URL(location, current).toString();
+        } catch {
+          return new NextResponse(null, { status: 400 });
+        }
+        if (!isAllowedUrl(next)) return new NextResponse(null, { status: 400 });
+        current = next;
+        continue;
+      }
+      upstream = res;
+      break;
+    }
+    if (!upstream) return new NextResponse(null, { status: 508 });
 
     if (!upstream.ok) {
       return new NextResponse(null, { status: upstream.status });
-    }
-
-    // A redirect must not take us somewhere outside the allowed hosts.
-    if (upstream.url && !isAllowedUrl(upstream.url)) {
-      return new NextResponse(null, { status: 400 });
     }
 
     const contentType = upstream.headers.get("Content-Type") ?? "image/jpeg";

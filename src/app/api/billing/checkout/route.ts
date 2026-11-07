@@ -24,13 +24,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad_request", message: "Missing returnUrl." }, { status: 400 });
   }
 
-  // The profile being upgraded has to belong to the person asking.
-  if (profileId) {
-    const svc = getServiceClient();
-    const userId = svc ? await getSignedInUserId(req, svc) : null;
-    if (!svc || !userId) {
-      return NextResponse.json({ error: "not_signed_in", message: "Sign in to upgrade." }, { status: 401 });
-    }
+  // Every checkout needs a verified signed-in person and a profile that is theirs. Nothing is sent to Stripe before both are confirmed,
+  // and a missing profile is refused rather than skipping the check.
+  const svc = getServiceClient();
+  const userId = svc ? await getSignedInUserId(req, svc) : null;
+  if (!svc || !userId) {
+    return NextResponse.json({ error: "not_signed_in", message: "Sign in to upgrade." }, { status: 401 });
+  }
+  if (!profileId || !profileId.trim()) {
+    return NextResponse.json({ error: "bad_request", message: "Choose the profile to upgrade." }, { status: 400 });
+  }
+  {
     const { data: mine } = await svc.from("profiles").select("id").eq("id", profileId).eq("user_id", userId).limit(1);
     if (!mine || mine.length === 0) {
       return NextResponse.json({ error: "forbidden", message: "That profile isn't yours." }, { status: 403 });
@@ -58,11 +62,9 @@ export async function POST(req: NextRequest) {
       cancel_url: `${returnUrl}?billing=cancelled`,
       allow_promotion_codes: true,
       client_reference_id: profileId,
-      metadata: profileId ? { profile_id: profileId } : undefined,
+      metadata: { profile_id: profileId },
       // Stamp the subscription too, so renewal/cancel webhooks know the profile + tier.
-      subscription_data: profileId
-        ? { metadata: { profile_id: profileId, tier: tierForPlan(plan) } }
-        : undefined,
+      subscription_data: { metadata: { profile_id: profileId, tier: tierForPlan(plan) } },
     });
 
     if (!session.url) {

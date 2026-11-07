@@ -860,7 +860,7 @@ export default function MuseumPage() {
                         </div>
                       )}
                       <div className="pointer-events-none absolute inset-0 bg-black/10" />
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[56%]" style={{ background: "linear-gradient(to top, var(--theme-card) 0%, color-mix(in srgb, var(--theme-card) 55%, transparent) 55%, transparent 100%)" }} />
+                      <div className="vltd-card-scrim pointer-events-none absolute inset-x-0 bottom-0 h-[56%]" style={{ background: "linear-gradient(to top, var(--theme-card) 0%, color-mix(in srgb, var(--theme-card) 55%, transparent) 55%, transparent 100%)" }} />
 
                       {/* Hover controls: change cover / delete. vltd-dark-surface
                           scoped to just this row -- NOT the whole cover

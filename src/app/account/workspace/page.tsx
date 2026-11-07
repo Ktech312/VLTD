@@ -70,8 +70,6 @@ export default function WorkspaceSettingsPage() {
   const [editEmoji, setEditEmoji] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
-  const [notifyWeekly, setNotifyWeekly] = useState(true);
-  const [notifyActivity, setNotifyActivity] = useState(false);
   const [aiAutoReview, setAiAutoReview] = useState(false);
   const [showConfidence, setShowConfidence] = useState(true);
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -105,8 +103,6 @@ export default function WorkspaceSettingsPage() {
 
     try {
       const p = JSON.parse(localStorage.getItem("vltd_workspace_prefs") ?? "{}") as Record<string, unknown>;
-      if (typeof p.notifyWeekly === "boolean") setNotifyWeekly(p.notifyWeekly);
-      if (typeof p.notifyActivity === "boolean") setNotifyActivity(p.notifyActivity);
       if (typeof p.aiAutoReview === "boolean") setAiAutoReview(p.aiAutoReview);
       if (typeof p.showConfidence === "boolean") setShowConfidence(p.showConfidence);
     } catch (e) { /* ignore */ }
@@ -253,14 +249,9 @@ export default function WorkspaceSettingsPage() {
           </Section>
         )}
 
-        <Section title="Notifications">
-          <Row label="Weekly report email" sub="Summary of collection activity every Monday">
-            <Toggle ariaLabel="Weekly report email" on={notifyWeekly} onChange={() => setNotifyWeekly((v) => { saveLocalPrefs({ notifyWeekly: !v }); return !v; })} />
-          </Row>
-          <Row label="Activity alerts" sub="New followers, registry rank changes">
-            <Toggle ariaLabel="Activity alerts" on={notifyActivity} onChange={() => setNotifyActivity((v) => { saveLocalPrefs({ notifyActivity: !v }); return !v; })} />
-          </Row>
-        </Section>
+        {/* "Weekly report email" and "Activity alerts" are hidden for now: nothing sends either, so a switch would promise something that does not happen.
+            The saved choices (notifyWeekly / notifyActivity in the stored "vltd_workspace_prefs") are left untouched in storage (saveLocalPrefs merges
+            into what is there), so the switches can return with their old positions if a sender is ever built. */}
 
         <Section title="AI cataloging">
           <Row label="Auto-advance high-confidence drafts" sub="Skip review for items scored ≥ 90%">

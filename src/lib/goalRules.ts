@@ -56,15 +56,17 @@ export type GoalMerge<T> = {
  *  - goals that exist only on this device under this profile (ownership is the profile the list is stored under): kept and uploaded,
  *    never silently dropped because the account already holds other goals;
  *  - EXCEPT a goal this device itself saw in the account before (`syncedIds`) and the account no longer holds: another device deleted it.
- *    That rule is only trusted when the account answered with goals; an empty answer may be a lapsed session, so nothing is dropped then.
+ *    That rule is trusted when the account answered with goals, or answered empty to a verified signed-in read (`trustEmptyAnswer`):
+ *    the last goal deleted on another device must not come back. An empty answer that may be a lapsed session drops nothing.
  * Matching is by goal id, so a retry or a repeated read never makes a second copy.
  */
-export function mergeCloudGoals<T extends GoalLike>(cloud: T[], local: T[], pendingIds: Set<string>, deletedIds: Set<string>, syncedIds: Set<string> = new Set()): GoalMerge<T> {
+export function mergeCloudGoals<T extends GoalLike>(cloud: T[], local: T[], pendingIds: Set<string>, deletedIds: Set<string>, syncedIds: Set<string> = new Set(), trustEmptyAnswer = false): GoalMerge<T> {
   const byId = new Map<string, T>();
   const deviceOnly: string[] = [];
   const deletedElsewhere: string[] = [];
   for (const goal of cloud) if (!deletedIds.has(goal.id)) byId.set(goal.id, goal);
-  const trustSynced = cloud.length > 0;
+  // An empty answer is trusted only when the caller verified the account really answered for a signed-in person (trustEmptyAnswer).
+  const trustSynced = cloud.length > 0 || trustEmptyAnswer;
   for (const goal of local) {
     if (deletedIds.has(goal.id)) continue;
     if (pendingIds.has(goal.id)) { byId.set(goal.id, goal); continue; }

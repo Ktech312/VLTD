@@ -96,16 +96,19 @@ export default function BillingPage() {
     if (params.get("reason") === "vault_limit") setFromLimit(true);
 
     if (billingStatus === "success" && sessionId) {
-      fetch(`/api/billing/session?session_id=${encodeURIComponent(sessionId)}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.customerId) {
+      billingHeaders()
+        .then((headers) => fetch(`/api/billing/session?session_id=${encodeURIComponent(sessionId)}`, { headers }))
+        .then(async (r) => ({ ok: r.ok, data: await r.json().catch(() => ({})) }))
+        .then(({ ok, data }) => {
+          if (ok && data?.customerId) {
             setStoredStripeCustomerId(data.customerId, getStoredActiveProfileId() || undefined);
             setCustomerId(data.customerId);
             showToast("Subscription updated.");
+          } else {
+            showToast(data?.message || "We couldn't confirm your subscription yet. It will appear here once it is active.");
           }
         })
-        .catch(() => {})
+        .catch(() => showToast("We couldn't confirm your subscription yet. It will appear here once it is active."))
         .finally(() => {
           window.history.replaceState({}, "", "/account/billing");
           void getOnboardingStatus().then(() => setCurrentPlan(planForTier(getTierSafe())));
@@ -121,6 +124,8 @@ export default function BillingPage() {
     if (plan === "free" || busyPlan) return;
     setBusyPlan(plan);
     try {
+      // The checkout is always for one named profile of yours: the saved active profile, or the one the account reports.
+      const profileId = getStoredActiveProfileId() || (await getOnboardingStatus()).activeProfile?.id || undefined;
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: await billingHeaders(),
@@ -128,7 +133,7 @@ export default function BillingPage() {
           plan,
           customerEmail: email || undefined,
           returnUrl: `${window.location.origin}/account/billing`,
-          profileId: getStoredActiveProfileId() || undefined,
+          profileId,
         }),
       });
       const data = await res.json();

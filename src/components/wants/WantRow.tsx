@@ -20,7 +20,7 @@ function tagFor(w: { category?: string; universe?: string }): string {
 
 function Thumb({ src, label }: { src?: string; label: string }) {
   return (
-    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[6px] border text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ borderColor: line, background: "var(--theme-elevated, #1c2228)", color: "var(--muted2, #8d949b)" }}>
+    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[6px] border text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ borderColor: line, background: "var(--theme-elevated, #1c2228)", color: "var(--muted, #aab0b7)" }}>
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
