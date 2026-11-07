@@ -369,15 +369,15 @@ function ActivityRow({ event, selected, onSelect, basic }: { event: ActivityEven
     <button
       type="button"
       onClick={onSelect}
-      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[6px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] md:gap-4 md:p-4"
+      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[6px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[64px_minmax(0,1fr)_minmax(120px,170px)_130px] md:gap-4 md:p-4 2xl:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px]"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
         boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
       }}
     >
-      <div className="relative hidden text-sm md:block after:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:right-[-10px] after:h-11 after:w-px after:-translate-y-1/2 after:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
-      <div className="hidden h-11 w-11 place-items-center justify-self-center rounded-full border md:grid" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
+      <div className="relative hidden text-sm 2xl:block after:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:right-[-10px] after:h-11 after:w-px after:-translate-y-1/2 after:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
+      <div className="hidden h-11 w-11 place-items-center justify-self-center rounded-full border 2xl:grid" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
         <Glyph name={iconForKind(event.kind)} size={19} />
       </div>
       <ActivityThumb event={event} />
@@ -748,10 +748,12 @@ export default function ActivityPage() {
                     {selected.item?.isPublic ? "Public" : "Private"}
                   </div>
                   {selected.href && (
-                    <PillButton href={selected.href} className="mt-5">
-                      {selected.actionLabel ?? "Open"}
-                      <Glyph name="share" size={16} />
-                    </PillButton>
+                    <div className="mt-5">
+                      <PillButton href={selected.href}>
+                        {selected.actionLabel ?? "Open"}
+                        <Glyph name="share" size={16} />
+                      </PillButton>
+                    </div>
                   )}
                 </div>
               </div>
