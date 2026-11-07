@@ -350,7 +350,7 @@ function TopNavInner() {
                     key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
+                    className="relative flex flex-col items-center gap-[4px] px-1.5 pt-1 pb-2 lg:px-3"
                   >
                     <AppIcon
                       name={item.icon}
@@ -367,7 +367,7 @@ function TopNavInner() {
                     </span>
                     {active && (
                       <span
-                        className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                        className="absolute bottom-0 left-1.5 right-1.5 h-[2px] rounded-full lg:left-3 lg:right-3"
                         style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
                       />
                     )}
@@ -388,7 +388,7 @@ function TopNavInner() {
                       href: item.href,
                       current: activeMoreKey(pathname) === item.key,
                     }))}
-                    triggerClassName="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
+                    triggerClassName="relative flex flex-col items-center gap-[4px] px-1.5 pt-1 pb-2 lg:px-3"
                     triggerChildren={
                       <>
                         <AppIcon
@@ -407,7 +407,7 @@ function TopNavInner() {
                         </span>
                         {moreActive && (
                           <span
-                            className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                            className="absolute bottom-0 left-1.5 right-1.5 h-[2px] rounded-full lg:left-3 lg:right-3"
                             style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
                           />
                         )}
@@ -422,12 +422,12 @@ function TopNavInner() {
           {/* Right controls */}
           <div className="ml-auto flex items-center gap-1 shrink-0 md:gap-2">
 
-            {/* Search: an icon on phones that opens the command palette; the full bar shows from 768px */}
+            {/* Search: an icon that opens the command palette until 1280px, where the full bar fits beside the menu (at tablet widths the bar pushed the account menu off the screen) */}
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
               aria-label="Search"
-              className="vltd-tap grid h-11 w-9 place-items-center rounded-full min-[350px]:w-10 max-[349px]:[--tap-w:36px] md:hidden"
+              className="vltd-tap grid h-11 w-9 place-items-center rounded-full min-[350px]:w-10 max-[349px]:[--tap-w:36px] xl:hidden"
               style={{ color: "var(--muted)" }}
             >
               <AppIcon name="search" variant="navTop" size={26} />
@@ -445,8 +445,8 @@ function TopNavInner() {
               triggerChildren={
                 <>
                   <AppIcon name="guide" variant="navTop" size={22} />
-                  <span className="hidden md:inline">Help</span>
-                  <AppIcon name="chevronDown" size={14} strokeWidth={2} className="hidden md:block" />
+                  <span className="hidden lg:inline">Help</span>
+                  <AppIcon name="chevronDown" size={14} strokeWidth={2} className="hidden lg:block" />
                 </>
               }
             />
@@ -455,7 +455,7 @@ function TopNavInner() {
             {/* Search bar */}
             <form
               onSubmit={(e) => { e.preventDefault(); applySearch(input); }}
-              className="hidden md:block"
+              className="hidden xl:block"
             >
               <div
                 className="flex items-center gap-2 rounded-full px-3"
@@ -527,7 +527,7 @@ function TopNavInner() {
               >
                 {/* Collector level — real, from the curator's items + exhibits. */}
                 {signedIn && levelInfo && (
-                  <span className="hidden text-right leading-tight sm:block">
+                  <span className="hidden text-right leading-tight sm:block md:hidden lg:block">
                     <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>{levelInfo.title}</span>
                     <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level {levelInfo.level}</span>
                   </span>
