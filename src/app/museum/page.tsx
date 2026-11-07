@@ -1077,7 +1077,7 @@ export default function MuseumPage() {
                         <div className="mt-5">
                           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Share link</div>
                           <div className="mt-2 flex gap-2">
-                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-[7px] border px-3 text-xs max-md:h-11" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
+                            <input readOnly aria-label="Share link" value={shareUrl} className="h-9 min-w-0 flex-1 rounded-[7px] border px-3 text-xs max-md:h-11" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
                             <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-xs font-semibold ring-1 max-md:min-h-11" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                               <AppIcon name="link" size={12} strokeWidth={2} />
                               {copyOk ? "Copied" : "Copy link"}

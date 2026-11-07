@@ -319,6 +319,7 @@ export default function AuctionBrowsePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search auctions..."
+              aria-label="Search auctions"
               className="h-11 rounded-[8px] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none md:h-9"
               style={{ background: "var(--pill)", color: "var(--fg)", minWidth: 200 }}
             />

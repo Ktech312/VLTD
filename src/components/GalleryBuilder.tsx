@@ -1286,6 +1286,7 @@ export default function GalleryBuilder({
               value={sections[activeSectionIdx]?.title ?? ""}
               onChange={(e) => patchActiveSection({ title: e.target.value })}
               placeholder="Exhibit name…"
+              aria-label="Exhibit name"
               className="w-[38%] min-w-[150px] max-w-full shrink-0 min-h-[28px] max-md:min-h-11 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
 
@@ -1306,6 +1307,7 @@ export default function GalleryBuilder({
                 }
               }}
               placeholder="Exhibit description…"
+              aria-label="Exhibit description"
               className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-[14px] bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 max-md:py-3.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>

@@ -511,6 +511,7 @@ export default function SpreadsheetImportClient() {
             <textarea
               value={pasteInput}
               onChange={(event) => setPasteInput(event.target.value)}
+              aria-label="Pasted spreadsheet rows"
               placeholder={[
                 "Paste rows directly from Excel or Google Sheets here.",
                 "Headers should stay in the first row when possible.",

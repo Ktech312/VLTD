@@ -276,6 +276,7 @@ export default function FavoritesPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search…"
+                  aria-label="Search saved items"
                   className="h-11 rounded-[8px] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none md:h-9"
                   style={{ background: "var(--pill)", color: "var(--fg)", width: 140 }}
                 />

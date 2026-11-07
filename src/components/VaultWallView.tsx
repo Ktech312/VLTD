@@ -328,6 +328,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search…"
+            aria-label="Search items"
             className="h-8 rounded-full bg-white/8 px-3 text-[13px] ring-1 ring-white/12 focus:outline-none focus:ring-gold/40 w-40"
           />
 
@@ -335,6 +336,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
             <span className="text-[11px] text-white/40">Size</span>
             <input
               type="range"
+              aria-label="Wall card size"
               min={3}
               max={14}
               value={cols}

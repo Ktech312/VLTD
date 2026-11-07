@@ -59,6 +59,7 @@ export function RedeemCodeCard() {
           }}
           onKeyDown={(event) => event.key === "Enter" && handleRedeem()}
           placeholder="VLTD-XXXX-XXXX"
+          aria-label="Redemption code"
           autoCapitalize="characters"
           autoComplete="off"
           className="h-11 rounded-[10px] bg-[color:var(--pill)] px-4 text-sm font-bold tracking-[0.14em] ring-1 ring-[color:var(--border)] focus:outline-none"

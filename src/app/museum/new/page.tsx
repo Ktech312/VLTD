@@ -197,6 +197,7 @@ export default function NewMuseumGalleryPage() {
                 onChange={(e) => setTitle(e.target.value.slice(0, 80))}
                 maxLength={80}
                 placeholder="e.g. Hall of Grails"
+                aria-label="Exhibition title"
                 className={`w-full ${nativeSelectClass}`}
               />
             </div>
@@ -208,6 +209,7 @@ export default function NewMuseumGalleryPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Write a short curatorial description for this exhibition..."
+                aria-label="Exhibition description"
                 className="w-full rounded-[14px] bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
               />
             </div>
@@ -272,6 +274,7 @@ export default function NewMuseumGalleryPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium">Theme Pack</label>
                 <select
+                  aria-label="Theme pack"
                   value={themePack}
                   onChange={(e) => setThemePack(e.target.value as GalleryThemePack)}
                   className={`w-full ${nativeSelectClass}`}
@@ -287,6 +290,7 @@ export default function NewMuseumGalleryPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium">Display Mode</label>
                 <select
+                  aria-label="Display mode"
                   value={displayMode}
                   onChange={(e) => setDisplayMode(e.target.value as "grid" | "shelf")}
                   className={`w-full ${nativeSelectClass}`}

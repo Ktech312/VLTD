@@ -529,6 +529,7 @@ function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]
             }
           }}
           placeholder={tags.length ? "Add another tag…" : "Add a tag…"}
+          aria-label="Add a tag"
           className="min-w-[120px] flex-1 rounded-full px-3 py-1 text-[12px] outline-none ring-1 focus:ring-[color:var(--theme-gold)] max-md:min-h-11"
           style={{ background: "transparent", color: "var(--fg)", borderColor: "var(--border)" }}
         />

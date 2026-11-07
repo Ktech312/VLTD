@@ -326,6 +326,7 @@ export default function SalesHistoryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sales…"
+              aria-label="Search sales"
               className="h-11 md:h-9 max-sm:flex-none sm:flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
               style={{ background: "var(--pill)", color: "var(--fg)" }}
             />

@@ -452,6 +452,10 @@
 :root { --gain-text: #52C27A; --loss-text: #E05252; --bad-text: #f87171; }
 .theme-light { --gain-text: #15803d; --loss-text: #b91c1c; --bad-text: #b91c1c; }
 
+/* Keyboard focus ring on light pages: the shared ring is the accent lightened toward white, about 2.3:1 on a light page. Here it is the accent darkened, so it clears 3:1 against the page. */
+.theme-light :focus-visible,
+.theme-light select:focus-visible { outline-color: color-mix(in srgb, var(--accent) 50%, #000); }
+
 /* Accent colour used as TEXT (for example the active tab label): the theme's own accent on dark pages, a darker mix of it on light pages so small text reaches 4.5:1. */
 :root { --theme-gold-text: var(--theme-gold); }
 .theme-light { --theme-gold-text: color-mix(in srgb, var(--theme-gold) 70%, #000); }

@@ -411,6 +411,7 @@ export default function BulkUploadPage() {
             >
               <label className={LABEL_CLS}>Step 1 — Pick the Universe for this batch</label>
               <select
+                aria-label="Universe for this batch"
                 className={INPUT_CLS}
                 style={INPUT_STYLE}
                 value={universe}
