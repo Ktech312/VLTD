@@ -456,6 +456,9 @@
 .theme-light :focus-visible,
 .theme-light select:focus-visible { outline-color: color-mix(in srgb, var(--accent) 50%, #000); }
 
+/* The banner's tiny slide dots sit 4px from the banner's clipped bottom edge: a thin white ring with a black edge (3px in all) stays inside it. */
+[data-seasonal-banner] button[aria-label^="Slide"]:focus-visible { outline: none !important; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #000 !important; }
+
 /* Exhibition cards: on light themes the title sits on a solid card-coloured band (28% of the cover) before it fades into the photo, so dark text always has a light backdrop. Dark themes keep the original fade. */
 .theme-light .vltd-card-scrim { background: linear-gradient(to top, var(--theme-card) 0%, var(--theme-card) 28%, color-mix(in srgb, var(--theme-card) 70%, transparent) 55%, transparent 100%) !important; }
 

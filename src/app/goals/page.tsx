@@ -109,7 +109,8 @@ function thumbForItem(item: VaultItem | undefined) {
 
 function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[] {
   return progress.map((goal, index) => {
-    const ownedAll = items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST").filter((item) => {
+    // The one owned-collectible rule (sold by status, date or price, wishlist and supplies are not owned), the same as the goal count and the Vault.
+    const ownedAll = ownedItems(items).filter((item) => {
       if (goal.subject?.trim()) return (item.subject ?? "").toLowerCase() === goal.subject.trim().toLowerCase();
       if (goal.universe) return item.universe === goal.universe;
       return true;
