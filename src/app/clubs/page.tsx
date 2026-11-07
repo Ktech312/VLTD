@@ -63,6 +63,8 @@ export default function ClubsPage() {
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
               placeholder="e.g. Vintage Vinyl Collectors"
+              aria-label="Club name"
+              autoFocus
               className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
@@ -72,6 +74,7 @@ export default function ClubsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
+              aria-label="Club description"
               placeholder="What's this club about?"
               className={`mt-1 py-2 ${FIELD_CLASS}`}
               style={{ minHeight: 72 }}
