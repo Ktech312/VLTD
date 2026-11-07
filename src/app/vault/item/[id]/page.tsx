@@ -1,7 +1,7 @@
 "use client";
 
 import { itemMoneyProblem, parseMoneyInput } from "@/lib/moneyInput";
-import { saleOutcome, soldItemOf } from "@/lib/soldItems";
+import { removeSaleRecord, saleOutcome, soldItemOf } from "@/lib/soldItems";
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue, hasExplicitValue, hasRecordedCost, isSupplyItem, itemGain } from "@/lib/vaultStats";
@@ -98,18 +98,6 @@ function getSales(): SaleRecord[] {
   } catch {
     return [];
   }
-}
-
-function writeSales(records: SaleRecord[]) {
-  try {
-    localStorage.setItem(SALES_KEY, JSON.stringify(records));
-  } catch {
-    // Local sale history is only a compatibility cache.
-  }
-}
-
-function removeSaleRecord(itemId: string) {
-  writeSales(getSales().filter((sale) => String(sale.id) !== String(itemId)));
 }
 
 function clamp(value: unknown) {

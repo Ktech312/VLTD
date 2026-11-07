@@ -1,5 +1,6 @@
 // Sold items and realized-sales maths, shared by the Sold page (/vault/sold) and Home so the two always agree.
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { loadSales, removeSaleById } from "@/lib/salesModel";
 import { estimateSaleFees } from "@/lib/sellerFees";
 import { resolveCategoryLabel } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -123,6 +124,11 @@ export function removeSaleRecord(itemId: string) {
   writeSales(
     readSales().filter((sale) => String(sale.id) !== String(itemId) && String(sale.itemId ?? "") !== String(itemId))
   );
+  // The older ledger (and its copy in the account) can hold a row for the same sale. Leave it and a returned item shows up in Sales History
+  // as a sale with no price on every other device, and again as soon as the item is deleted from the Vault.
+  const ledgerIds = new Set<string>([String(itemId)]);
+  for (const sale of loadSales()) if (String(sale.id) === String(itemId) || String(sale.itemId ?? "") === String(itemId)) ledgerIds.add(String(sale.id));
+  for (const id of ledgerIds) removeSaleById(id);
 }
 
 /** The sale an item records, or null when it was never sold. Exported for the item page and the Sales History page. */
