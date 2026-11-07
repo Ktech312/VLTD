@@ -55,7 +55,7 @@ function ItemRow({ item }: { item: VaultItem }) {
     >
       <div className="flex items-center gap-3 p-3">
         {/* Thumbnail */}
-        <Link href={`/vault/item/${item.id}`} className="shrink-0">
+        <Link href={`/vault/item/${item.id}`} className="shrink-0" aria-label={`Open ${item.title || "this item"}`}>
           <div
             className="rounded-xl overflow-hidden"
             style={{ width: 56, height: 56, background: "var(--pill)" }}

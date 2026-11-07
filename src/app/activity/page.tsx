@@ -241,11 +241,15 @@ function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: 
       const key = saleKey(sale);
       if (seen.has(key)) return false;
       seen.add(key);
-      return Number(sale.soldAt ?? 0) > 0;
+      if (!(Number(sale.soldAt ?? 0) > 0)) return false;
+      // A ledger row for an item that is back in the Vault (the sale was returned or corrected) is not a sale any more.
+      const owner = itemById.get(sale.itemId) ?? itemById.get(String(sale.id));
+      return !(owner && owner.status !== "SOLD" && owner.soldPrice === undefined && !owner.soldAt);
     })
     .map((sale) => {
       const item = itemById.get(sale.itemId);
-      const salePrice = Number(sale.salePrice ?? 0);
+      const priceKnown = typeof sale.salePrice === "number" && Number.isFinite(sale.salePrice);
+      const salePrice = priceKnown ? Number(sale.salePrice) : 0;
       const purchasePrice = Number(sale.purchasePrice ?? item?.purchasePrice ?? 0);
       const profit = salePrice - purchasePrice;
       return {
@@ -253,16 +257,16 @@ function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: 
         kind: "sold",
         title: sale.title || item?.title || "Sold item",
         subtitle: "Listing sold",
-        detail: `Sold for ${formatMoney(salePrice)}`,
+        detail: priceKnown ? `Sold for ${formatMoney(salePrice)}` : "Sale price not recorded",
         timestamp: Number(sale.soldAt ?? 0),
         href: sale.itemId ? `/vault/item/${sale.itemId}` : "/sales",
         actionLabel: "View sale",
         item,
         imageUrl: itemImage(item),
-        previousValue: purchasePrice,
-        newValue: salePrice,
+        previousValue: priceKnown ? purchasePrice : undefined,
+        newValue: priceKnown ? salePrice : undefined,
         source: "Sales ledger",
-        meta: `${profit >= 0 ? "+" : ""}${formatMoney(profit)} net`,
+        meta: priceKnown ? `${profit >= 0 ? "+" : ""}${formatMoney(profit)} net` : "Profit unknown",
       } satisfies ActivityEvent;
     });
 }
