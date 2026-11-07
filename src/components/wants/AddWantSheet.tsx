@@ -40,18 +40,25 @@ export default function AddWantSheet({
   presetSeries?: string;
 }) {
   const [mode, setMode] = useState<AddMode>(initialMode);
+  // Something has been typed into the form. Escape, the backdrop and the cross ask before throwing it away; Cancel is the explicit discard.
+  const [dirty, setDirty] = useState(false);
+  const guardedClose = () => {
+    if (dirty && !window.confirm("Discard what you typed? Nothing has been added yet.")) return;
+    onClose();
+  };
   return (
-    <Sheet title={ruleId ? `Add a release: ${presetSeries ?? ""}` : "Add a want"} onClose={onClose} wide>
+    <Sheet title={ruleId ? `Add a release: ${presetSeries ?? ""}` : "Add a want"} onClose={guardedClose} wide>
       {!ruleId ? (
         <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="How to add">
           {MODES.map((m) => (
-            <PillButton key={m.key} variant={mode === m.key ? "active" : "default"} pressed={mode === m.key} onClick={() => setMode(m.key)}>{m.label}</PillButton>
+            <PillButton key={m.key} variant={mode === m.key ? "active" : "default"} pressed={mode === m.key} onClick={() => { setMode(m.key); setDirty(false); }}>{m.label}</PillButton>
           ))}
         </div>
       ) : null}
       {mode === "catalog" ? <CatalogPicker onAdded={(w) => { onAdded(w); onClose(); }} /> : null}
       {mode === "watched" ? <WatchedPicker watching={watching} onAdded={(w) => { onAdded(w); onClose(); }} /> : null}
       {mode === "link" || mode === "manual" ? (
+        <div onInput={() => setDirty(true)}>
         <WantForm
           key={mode}
           submitLabel="Add to wishlist"
@@ -60,6 +67,7 @@ export default function AddWantSheet({
           onCancel={onClose}
           onSubmit={(item) => { saveWishlistItem(item); onAdded(item); onClose(); }}
         />
+        </div>
       ) : null}
     </Sheet>
   );

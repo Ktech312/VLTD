@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 import { getCurrentUser, initAuthListener, onAuthStateChange } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -19,6 +20,8 @@ export default function BugReporter() {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+  // Escape, the backdrop and the cross only hide the report: what was typed is still there when it is opened again. Cancel is the explicit discard.
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, () => setOpen(false));
 
   useEffect(() => {
     setMounted(true);
@@ -148,10 +151,11 @@ export default function BugReporter() {
         <div
           className="fixed inset-0 z-[10001] flex items-start justify-center overflow-y-auto px-4 pt-4 sm:items-center sm:pt-0"
           style={{ position: "fixed", inset: 0, zIndex: 10001, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label="Report a bug"
-          onClick={() => { setOpen(false); reset(); }}
+          onClick={() => setOpen(false)}
         >
           <div
             className="w-full max-w-md rounded-[14px] p-6"
@@ -164,7 +168,7 @@ export default function BugReporter() {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-text-primary">Report a bug</h3>
-              <button type="button" onClick={() => { setOpen(false); reset(); }} aria-label="Close" className="text-[color:var(--muted2)] transition hover:text-text-primary">✕</button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-[color:var(--muted2)] transition hover:text-text-primary">✕</button>
             </div>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
               Tell us what went wrong — the more detail, the better. A screenshot helps a lot.
