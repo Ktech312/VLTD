@@ -31,7 +31,7 @@ export default function VaultToolsMenu() {
           { key: "json", label: "Export JSON", description: "Your records as a data file", onClick: exportVaultJson },
           { key: "insurance", label: "Insurance PDF", description: "A printable list for insurance", onClick: () => setInsuranceOpen(true) },
           { key: "report", label: "Collection report", description: "A printable view of your vault", onClick: () => window.open("/vault/print", "_blank") },
-          { key: "zip", label: "Download photos (ZIP)", description: "All item photos in one file", onClick: () => void handlePhotoZip() },
+          { key: "zip", label: "Download photos (ZIP)", description: "The main photo of each item, in one file", onClick: () => void handlePhotoZip() },
         ]}
       />
       <InsurancePdfButton items={insuranceOpen ? loadItems() : []} open={insuranceOpen} onOpenChange={setInsuranceOpen} hideTrigger />

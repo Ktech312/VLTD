@@ -555,7 +555,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">RETURN</div>
               <div className="mt-2 text-2xl font-semibold">{totals.roi === null ? "—" : fmtPct(totals.roi)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Change as a share of the measured cost · {filtered.length} items in view
+                Change as a share of the measured cost · {filtered.length} {filtered.length === 1 ? "item" : "items"} in view
               </div>
             </div>
           </div>
@@ -719,7 +719,7 @@ function UniverseDrillInner({ uniKey }: { uniKey: string }) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">{r.category}</div>
-                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} items</div>
+                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} {r.count === 1 ? "item" : "items"}</div>
                   </div>
 
                   <div className="text-right">

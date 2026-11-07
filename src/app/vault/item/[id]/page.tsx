@@ -945,6 +945,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   async function handleDeleteImage(index: number) {
     if (!item) return;
+    // A removed photo cannot be brought back: ask first.
+    if (typeof window !== "undefined" && !window.confirm("Delete this photo? This can't be undone.")) return;
 
     const beforeImages = getOrderedImages(item);
     const target = beforeImages[index];

@@ -320,7 +320,7 @@ function GalleryCard({ gallery, profileId }: { gallery: PublicGallery; profileId
           <div className="mt-1 line-clamp-2 text-[11px] leading-5 text-[color:var(--muted)]">{gallery.description}</div>
         )}
         <div className="mt-auto pt-2 text-[10px] text-[color:var(--muted2)] uppercase tracking-[0.14em]">
-          {gallery.itemCount > 0 ? `${gallery.itemCount} items` : "Exhibition"}
+          {gallery.itemCount > 0 ? `${gallery.itemCount} ${gallery.itemCount === 1 ? "item" : "items"}` : "Exhibition"}
           {gallery.visibility === "INVITE" && " · Invite only"}
         </div>
       </div>

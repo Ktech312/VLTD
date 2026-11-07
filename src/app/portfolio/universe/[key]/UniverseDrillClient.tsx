@@ -450,7 +450,7 @@ export default function UniverseDrillClient({ universeKey }: { universeKey: stri
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{r.category}</div>
-                  <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} items</div>
+                  <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} {r.count === 1 ? "item" : "items"}</div>
                 </div>
 
                 <div className="text-right">

@@ -46,7 +46,23 @@ export async function listDocuments(itemId: string): Promise<VaultDocument[]> {
   }));
 }
 
+/** What an attachment may be: certificates, receipts, appraisals, photos and plain text. Anything else (programs, scripts, archives) is refused with a plain message. */
+export const DOCUMENT_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "txt", "rtf", "csv", "doc", "docx", "xls", "xlsx", "odt", "ods", "pages", "numbers"];
+export const DOCUMENT_ACCEPT = DOCUMENT_EXTENSIONS.map((e) => "." + e).join(",");
+export const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
+
+/** null = fine; otherwise the plain-words reason this file cannot be attached. */
+export function documentProblem(file: { name: string; size: number }): string | null {
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  if (!DOCUMENT_EXTENSIONS.includes(ext)) return `"${file.name}" can't be attached: use a PDF, a picture, a text file or an Office document.`;
+  if (file.size > MAX_DOCUMENT_BYTES) return `"${file.name}" is larger than 15 MB. Make it smaller and try again.`;
+  if (file.size === 0) return `"${file.name}" is empty.`;
+  return null;
+}
+
 export async function addDocument(itemId: string, file: File): Promise<VaultDocument> {
+  const problem = documentProblem(file);
+  if (problem) throw new Error(problem);
   const supabase = getSupabaseBrowserClient();
   const profileId = getStoredActiveProfileId();
   if (!supabase) throw new Error("Not signed in — documents need a real account to store privately.");

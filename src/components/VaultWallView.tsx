@@ -346,7 +346,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
             <span className="text-[11px] text-white/40 w-4">{cols}</span>
           </div>
 
-          <span className="text-[11px] text-white/40">{filtered.length} items</span>
+          <span className="text-[11px] text-white/40">{filtered.length} {filtered.length === 1 ? "item" : "items"}</span>
         </div>
 
         {/* Row 2: universe pills (multi-select) */}

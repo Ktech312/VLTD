@@ -6,6 +6,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import {
   addDocument,
+  DOCUMENT_ACCEPT,
   removeDocument,
   listDocuments,
   getDocumentViewUrl,
@@ -74,6 +75,8 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
   }
 
   async function handleRemove(doc: VaultDocument) {
+    // A certificate or receipt is not recoverable once removed: ask first, naming the document.
+    if (typeof window !== "undefined" && !window.confirm(`Remove "${doc.name}"? This can't be undone.`)) return;
     setBusy(true);
     try {
       await removeDocument(doc);
@@ -137,6 +140,7 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
         ref={fileInputRef}
         type="file"
         multiple
+        accept={DOCUMENT_ACCEPT}
         className="hidden"
         onChange={(e) => {
           void handleFiles(e.target.files);

@@ -697,7 +697,7 @@ export default function MuseumPage() {
               {strongestGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {strongestGallery.itemCount} items
+                    {strongestGallery.itemCount} {strongestGallery.itemCount === 1 ? "item" : "items"}
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {strongestGallery.score.signals.sections} exhibits
@@ -748,7 +748,7 @@ export default function MuseumPage() {
               {mostValuableGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {mostValuableGallery.itemCount} items
+                    {mostValuableGallery.itemCount} {mostValuableGallery.itemCount === 1 ? "item" : "items"}
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {mostValuableGallery.score.score}/100 score
@@ -1031,7 +1031,7 @@ export default function MuseumPage() {
                             <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
                           </button>
                         </div>
-                        <div className="mt-1 text-xs text-[color:var(--muted)]">{selectedEntry.itemCount} items · Updated {formatGalleryDate(g.updatedAt)}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{selectedEntry.itemCount} {selectedEntry.itemCount === 1 ? "item" : "items"} · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
                         <div className="vltd-dark-surface mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[6px] border p-3" style={{ borderColor: "var(--theme-border)", background: "#0F1620", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
