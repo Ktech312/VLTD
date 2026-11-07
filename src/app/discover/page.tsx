@@ -516,7 +516,7 @@ export default function DiscoverPage() {
         {!compact && (
           <div className="vltd-dark-surface relative h-[128px]" style={coverStyle(gallery)}>
             <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
-            <span className="absolute left-3 top-3 rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-black/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
+            <span className="absolute left-3 top-3 rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-black/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
           </div>

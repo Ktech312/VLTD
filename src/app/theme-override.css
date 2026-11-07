@@ -456,6 +456,9 @@
 .theme-light :focus-visible,
 .theme-light select:focus-visible { outline-color: color-mix(in srgb, var(--accent) 50%, #000); }
 
+/* The floating bug button sits over any page colour (and is dimmed on phones), so its keyboard focus is a white ring with a black edge too. */
+.vltd-bug-fab:focus-visible { outline: 2px solid #fff !important; outline-offset: 1px; box-shadow: 0 0 0 4px #000 !important; opacity: 1 !important; }
+
 /* The banner's tiny slide dots sit 4px from the banner's clipped bottom edge: a thin white ring with a black edge (3px in all) stays inside it. */
 [data-seasonal-banner] button[aria-label^="Slide"]:focus-visible { outline: none !important; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #000 !important; }
 
