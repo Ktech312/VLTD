@@ -666,7 +666,7 @@ export default function DiscoverPage() {
                     <img src={UNIVERSE_THUMB[key]} alt="" className="h-8 w-8 rounded-[6px] object-cover" />
                     <span className="min-w-0">
                       <span className="block truncate text-xs font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{UNIVERSE_LABEL[key]}</span>
-                      <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{count.toLocaleString()} exhibitions</span>
+                      <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{count.toLocaleString()} {count === 1 ? "exhibition" : "exhibitions"}</span>
                     </span>
                   </button>
                 ))}
