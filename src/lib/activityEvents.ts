@@ -36,8 +36,7 @@ function activeProfileId() {
   }
 }
 
-function lsKey() {
-  const pid = activeProfileId();
+function lsKey(pid = activeProfileId()) {
   return pid ? `${LS_BASE}:${pid}` : LS_BASE;
 }
 
@@ -75,19 +74,19 @@ function normalize(raw: Record<string, unknown>): ActivityEventRecord {
   };
 }
 
-function writeLocal(events: ActivityEventRecord[]) {
+function writeLocal(events: ActivityEventRecord[], pid = activeProfileId()) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(lsKey(), JSON.stringify(events.slice(0, 500)));
+    window.localStorage.setItem(lsKey(pid), JSON.stringify(events.slice(0, 500)));
   } catch {
     // Activity should never block the user workflow.
   }
 }
 
-export function loadActivityEvents() {
+export function loadActivityEvents(pid = activeProfileId()) {
   if (typeof window === "undefined") return [] as ActivityEventRecord[];
   try {
-    const raw = window.localStorage.getItem(lsKey());
+    const raw = window.localStorage.getItem(lsKey(pid));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.map((row) => normalize(row)) : [];
@@ -100,13 +99,68 @@ export function saveActivityEvents(events: ActivityEventRecord[]) {
   writeLocal([...events].sort((a, b) => b.timestamp - a.timestamp));
 }
 
+type PendingEvent = { event: ActivityEventRecord; revision: string };
+function pendingEvents(pid: string): Record<string, PendingEvent> {
+  try { return JSON.parse(window.localStorage.getItem(`${lsKey(pid)}:pending`) ?? "{}"); } catch { return {}; }
+}
+function savePending(pid: string, pending: Record<string, PendingEvent>) {
+  try { window.localStorage.setItem(`${lsKey(pid)}:pending`, JSON.stringify(pending)); } catch { /* Activity must never block an item save. */ }
+}
+function cloudRow(next: ActivityEventRecord) {
+  return {
+    id: next.id, profile_id: next.profileId ?? null, kind: next.kind, title: next.title,
+    subtitle: next.subtitle ?? null, detail: next.detail ?? null, href: next.href ?? null,
+    action_label: next.actionLabel ?? null, item_id: next.itemId ?? null, gallery_id: next.galleryId ?? null,
+    image_url: next.imageUrl ?? null, previous_value: next.previousValue ?? null, new_value: next.newValue ?? null,
+    source: next.source ?? null, confidence: next.confidence ?? null, comps: next.comps ?? null,
+    meta: next.meta ?? null, created_at: new Date(next.timestamp).toISOString(),
+  };
+}
+const flushes = new Map<string, Promise<void>>();
+let listening = false;
+function listenForReconnect() {
+  if (!listening && typeof window !== "undefined" && window.addEventListener) {
+    listening = true;
+    window.addEventListener("online", () => { void syncActivityEventsFromSupabase(); });
+  }
+}
+function flushPending(pid: string): Promise<void> {
+  const stillSame = captureIdentity();
+  const run = async () => {
+    const client = getSupabaseBrowserClient();
+    if (!client || !pid || !stillSame() || activeProfileId() !== pid) return;
+    for (const [id, entry] of Object.entries(pendingEvents(pid))) {
+      if (!stillSame()) return;
+      try {
+        const { error } = await client.from("activity_events").upsert(cloudRow(entry.event));
+        if (!stillSame()) return;
+        if (!error) {
+          const latest = pendingEvents(pid);
+          if (latest[id]?.revision === entry.revision) delete latest[id];
+          savePending(pid, latest);
+        }
+      } catch { /* Keep the event queued across reloads and network failures. */ }
+    }
+  };
+  const result = (flushes.get(pid) ?? Promise.resolve()).catch(() => undefined).then(run);
+  flushes.set(pid, result);
+  const clear = () => { if (flushes.get(pid) === result) flushes.delete(pid); };
+  void result.then(clear, clear);
+  return result;
+}
+
 export async function syncActivityEventsFromSupabase() {
+  listenForReconnect();
   const client = getSupabaseBrowserClient();
   if (!client) return loadActivityEvents();
 
   const profileId = activeProfileId();
+  if (!profileId) return loadActivityEvents();
   const stillSame = captureIdentity();
   try {
+    await flushPending(profileId);
+    if (!stillSame()) return loadActivityEvents();
+    const beforeRead = new Map(loadActivityEvents().map(event => [event.id, JSON.stringify(event)]));
     let query = client.from("activity_events").select("*").order("created_at", { ascending: false }).limit(500);
     if (profileId) query = query.eq("profile_id", profileId);
 
@@ -114,7 +168,13 @@ export async function syncActivityEventsFromSupabase() {
     if (error || !Array.isArray(data)) return loadActivityEvents();
     if (!stillSame()) return loadActivityEvents(); // the person or profile changed while this was in flight
 
-    const events = data.map((row) => normalize(row as Record<string, unknown>));
+    const byId = new Map(data.map((row) => { const event = normalize(row as Record<string, unknown>); return [event.id, event] as const; }));
+    for (const event of loadActivityEvents()) {
+      if (beforeRead.get(event.id) !== JSON.stringify(event)) byId.set(event.id, event);
+    }
+    // A new event may have been added while the account read was in flight.
+    for (const { event } of Object.values(pendingEvents(profileId))) byId.set(event.id, event);
+    const events = [...byId.values()].sort((a, b) => b.timestamp - a.timestamp).slice(0, 500);
     saveActivityEvents(events);
     return events;
   } catch {
@@ -123,6 +183,7 @@ export async function syncActivityEventsFromSupabase() {
 }
 
 export async function addActivityEvent(event: Omit<ActivityEventRecord, "id" | "timestamp"> & Partial<Pick<ActivityEventRecord, "id" | "timestamp">>) {
+  listenForReconnect();
   const profileId = event.profileId ?? activeProfileId() ?? undefined;
   const next: ActivityEventRecord = {
     id: event.id ?? `activity_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -131,35 +192,12 @@ export async function addActivityEvent(event: Omit<ActivityEventRecord, "id" | "
     profileId,
   };
 
-  saveActivityEvents([next, ...loadActivityEvents()]);
-
-  const client = getSupabaseBrowserClient();
-  if (!client) return next;
-
-  try {
-    await client.from("activity_events").upsert({
-      id: next.id,
-      profile_id: next.profileId ?? null,
-      kind: next.kind,
-      title: next.title,
-      subtitle: next.subtitle ?? null,
-      detail: next.detail ?? null,
-      href: next.href ?? null,
-      action_label: next.actionLabel ?? null,
-      item_id: next.itemId ?? null,
-      gallery_id: next.galleryId ?? null,
-      image_url: next.imageUrl ?? null,
-      previous_value: next.previousValue ?? null,
-      new_value: next.newValue ?? null,
-      source: next.source ?? null,
-      confidence: next.confidence ?? null,
-      comps: next.comps ?? null,
-      meta: next.meta ?? null,
-      created_at: new Date(next.timestamp).toISOString(),
-    });
-  } catch {
-    // The activity_events table is optional until the backend migration lands.
-  }
+  const pid = profileId ?? "";
+  writeLocal([next, ...loadActivityEvents(pid).filter(row => row.id !== next.id)].sort((a, b) => b.timestamp - a.timestamp), pid);
+  const pending = pendingEvents(pid);
+  pending[next.id] = { event: next, revision: `${Date.now()}:${Math.random()}` };
+  savePending(pid, pending);
+  await flushPending(pid);
 
   return next;
 }

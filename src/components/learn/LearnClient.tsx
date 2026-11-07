@@ -9,6 +9,7 @@ import { LoungeNav } from "@/components/SectionNav";
 import CoverArt from "@/components/learn/CoverArt";
 import NewsletterSignup from "@/components/learn/NewsletterSignup";
 import LearnVideoLibrary from "@/components/learn/LearnVideoLibrary";
+import SavedContentStatus from "@/components/learn/SavedContentStatus";
 import {
   FEATURED_ARTICLE,
   GUIDE_ARTICLES,
@@ -21,6 +22,7 @@ import {
   loadSavedArticles,
   toggleSavedArticle,
   syncSavedArticlesFromSupabase,
+  pendingSavedArticleChanges,
 } from "@/lib/savedArticles";
 
 function Thumb({ article, className = "" }: { article: LearnArticle; className?: string }) {
@@ -67,8 +69,11 @@ export default function LearnClient() {
   const [saved, setSaved] = useState<string[]>([]);
 
   useEffect(() => {
+    const refresh = () => setSaved(loadSavedArticles());
+    window.addEventListener("vltd-saved-content", refresh);
     setSaved(loadSavedArticles());
     void syncSavedArticlesFromSupabase().then(setSaved);
+    return () => window.removeEventListener("vltd-saved-content", refresh);
   }, []);
 
   const toggle = (slug: string) => setSaved(toggleSavedArticle(slug));
@@ -92,6 +97,7 @@ export default function LearnClient() {
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-7 sm:px-6 lg:px-8">
         <LearnVideoLibrary />
+        <SavedContentStatus pendingCount={pendingSavedArticleChanges} />
         <div id="written-guides" className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* ── Main column ── */}
           <div className="min-w-0">

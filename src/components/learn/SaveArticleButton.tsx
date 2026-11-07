@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { isArticleSaved, toggleSavedArticle, syncSavedArticlesFromSupabase } from "@/lib/savedArticles";
+import { isArticleSaved, toggleSavedArticle, syncSavedArticlesFromSupabase, pendingSavedArticleChanges } from "@/lib/savedArticles";
+import SavedContentStatus from "@/components/learn/SavedContentStatus";
 
 // Standalone save toggle (used on the article reader). The hub manages its own
 // shared saved-state, so it doesn't use this.
@@ -11,13 +12,16 @@ export default function SaveArticleButton({ slug }: { slug: string }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const refresh = () => setSaved(isArticleSaved(slug));
+    window.addEventListener("vltd-saved-content", refresh);
     setSaved(isArticleSaved(slug));
     setHydrated(true);
     void syncSavedArticlesFromSupabase().then(() => setSaved(isArticleSaved(slug)));
+    return () => window.removeEventListener("vltd-saved-content", refresh);
   }, [slug]);
 
   return (
-    <button
+    <><button
       type="button"
       onClick={() => setSaved(toggleSavedArticle(slug).includes(slug))}
       aria-pressed={saved}
@@ -31,6 +35,6 @@ export default function SaveArticleButton({ slug }: { slug: string }) {
     >
       <AppIcon name="favorite" size={15} strokeWidth={1.8} filled={saved} />
       {saved ? "Saved" : "Save"}
-    </button>
+    </button><SavedContentStatus pendingCount={pendingSavedArticleChanges} /></>
   );
 }

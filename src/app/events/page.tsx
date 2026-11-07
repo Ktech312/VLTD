@@ -7,7 +7,8 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
+import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent, pendingSavedEventChanges } from "@/lib/savedEventsModel";
+import SavedContentStatus from "@/components/learn/SavedContentStatus";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { earliestStoredEnd, eventPhase } from "@/lib/eventDates";
 import { formatDateRange, safeDate } from "@/lib/events/eventPreview";
@@ -495,12 +496,15 @@ export default function EventsPage() {
   useEffect(() => {
     let active = true;
     const timer = window.setTimeout(() => setSavedIds(new Set(loadSavedEventIds())), 0);
+    const refresh = () => setSavedIds(new Set(loadSavedEventIds()));
+    window.addEventListener("vltd-saved-content", refresh);
     void syncSavedEventIdsFromSupabase().then((ids) => {
       if (active) setSavedIds(new Set(ids));
     });
     return () => {
       active = false;
       window.clearTimeout(timer);
+      window.removeEventListener("vltd-saved-content", refresh);
     };
   }, []);
 
@@ -726,6 +730,7 @@ export default function EventsPage() {
           </PillButton>
         </section>
 
+        <SavedContentStatus pendingCount={pendingSavedEventChanges} />
         <section className="mt-4 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4" data-testid="live-lookup-paused">
           <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
           <p className="mt-1 text-xs text-[color:var(--muted)]">Live event lookup is paused for now. Search and filter the events already listed below, by name, city, type or universe.</p>
