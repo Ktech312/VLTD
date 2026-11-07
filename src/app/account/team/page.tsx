@@ -84,7 +84,7 @@ export default function TeamPage() {
   async function handleRole(m: TeamMember, role: "admin" | "member") {
     if (!profile) return;
     const res = await updateTeamMemberRole(profile.id, m.user_id, role);
-    if (res.ok) await refreshMembers();
+    if (res.ok) { setStatus(`${m.email} is now ${role === "admin" ? "an admin" : "a member"}.`); await refreshMembers(); }
     else setStatus(res.error ?? "Failed to change role.");
   }
 
@@ -92,7 +92,7 @@ export default function TeamPage() {
     if (!profile) return;
     if (!window.confirm(`Remove ${m.email} from ${profile.display_name}?`)) return;
     const res = await removeTeamMember(profile.id, m.user_id);
-    if (res.ok) await refreshMembers();
+    if (res.ok) { setStatus(`Removed ${m.email}. They no longer have access to ${profile.display_name}.`); await refreshMembers(); }
     else setStatus(res.error ?? "Failed to remove.");
   }
 
