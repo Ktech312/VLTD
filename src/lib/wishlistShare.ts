@@ -2,10 +2,22 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { captureIdentity } from "@/lib/sessionGuard";
 import { DEFAULT_SHARE_FIELDS, normalizeShareFields, type ShareFields } from "@/lib/wantsCore";
 
 // Public share link for the active profile's wishlist
 // (20261011_wishlist_comics_and_sharing.sql: wishlist_shares + get_shared_wishlist).
+
+const pendingChanges = new Map<string, Promise<unknown>>();
+
+function inProfileOrder<T>(profileId: string, action: () => Promise<T>): Promise<T> {
+  const previous = pendingChanges.get(profileId) ?? Promise.resolve();
+  const result = previous.catch(() => undefined).then(action);
+  pendingChanges.set(profileId, result);
+  const clear = () => { if (pendingChanges.get(profileId) === result) pendingChanges.delete(profileId); };
+  void result.then(clear, clear);
+  return result;
+}
 
 export type SharedWish = {
   title: string;
@@ -31,6 +43,9 @@ export async function loadWishlistShareFields(): Promise<{ fields: ShareFields; 
   const supabase = getSupabaseBrowserClient();
   const pid = getStoredActiveProfileId();
   if (!supabase || !pid) return { fields: DEFAULT_SHARE_FIELDS, supported: false };
+  const stillCurrent = captureIdentity();
+  await pendingChanges.get(pid)?.catch(() => undefined);
+  if (!stillCurrent()) return { fields: DEFAULT_SHARE_FIELDS, supported: false };
   const { data, error } = await supabase.from("wishlist_shares").select("fields").eq("profile_id", pid).maybeSingle();
   if (error) return { fields: DEFAULT_SHARE_FIELDS, supported: false };
   return { fields: normalizeShareFields((data as { fields?: unknown } | null)?.fields), supported: true };
@@ -40,8 +55,18 @@ export async function saveWishlistShareFields(fields: ShareFields): Promise<{ ok
   const supabase = getSupabaseBrowserClient();
   const pid = getStoredActiveProfileId();
   if (!supabase || !pid) return { ok: false, error: "Not signed in." };
-  const { error } = await supabase.from("wishlist_shares").update({ fields }).eq("profile_id", pid);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  const stillCurrent = captureIdentity();
+  const next = normalizeShareFields(fields);
+  return inProfileOrder(pid, async () => {
+    if (!stillCurrent()) return { ok: false, error: "The active account or profile changed. Reopen sharing to try again." };
+    try {
+      const { data, error } = await supabase.from("wishlist_shares").update({ fields: next }).eq("profile_id", pid).select("profile_id");
+      if (error) return { ok: false, error: error.message };
+      return data?.length ? { ok: true } : { ok: false, error: "Sharing is no longer enabled. Reopen sharing to try again." };
+    } catch {
+      return { ok: false, error: "Could not reach your account. Try again." };
+    }
+  });
 }
 
 function randomToken() {
@@ -82,8 +107,16 @@ export async function disableWishlistShare(): Promise<{ ok: boolean; error?: str
   const supabase = getSupabaseBrowserClient();
   const pid = getStoredActiveProfileId();
   if (!supabase || !pid) return { ok: false, error: "Not signed in." };
-  const { error } = await supabase.from("wishlist_shares").delete().eq("profile_id", pid);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  const stillCurrent = captureIdentity();
+  return inProfileOrder(pid, async () => {
+    if (!stillCurrent()) return { ok: false, error: "The active account or profile changed. Reopen sharing to try again." };
+    try {
+      const { error } = await supabase.from("wishlist_shares").delete().eq("profile_id", pid);
+      return error ? { ok: false, error: error.message } : { ok: true };
+    } catch {
+      return { ok: false, error: "Could not reach your account. Try again." };
+    }
+  });
 }
 
 /** Read a shared wishlist by its link token (works signed out). */

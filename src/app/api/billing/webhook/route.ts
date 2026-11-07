@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripeClient, isStripeConfigured, tierForPriceId } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
 
 /**
  * Stripe webhook → app tier.
@@ -43,17 +44,14 @@ async function applyTier(
   profileId: string,
   tier: "FREE" | "MID" | "FULL",
   expiresAt: string | null,
-  customerId?: string
+  customerId: string | undefined,
+  event: Pick<Stripe.Event, "id" | "created">
 ) {
   const sb = serviceClient();
   if (!sb) throw new Error("Billing database is not configured.");
   if (!profileId) return;
   const update: Record<string, unknown> = { tier, tier_source: "stripe", tier_expires_at: expiresAt };
   if (customerId) update.stripe_customer_id = customerId;
-
-  // What the profile has now, so a replayed event (same tier again) writes the same values and adds no second change record.
-  const { data: before } = await sb.from("profiles").select("tier").eq("id", profileId).limit(1);
-  const currentTier = Array.isArray(before) && before.length ? (before[0] as { tier?: string }).tier : undefined;
 
   let { error } = await sb.from("profiles").update(update).eq("id", profileId);
   if (error && customerId && error.message.toLowerCase().includes("stripe_customer_id")) {
@@ -66,12 +64,23 @@ async function applyTier(
   // A tier that could not be stored must not be answered with success: the failure goes back to Stripe, which retries the event.
   if (error) throw new Error(`Could not store the ${tier} tier: ${error.message}`);
 
-  if (currentTier !== tier) {
-    const { error: logError } = await sb
-      .from("tier_changes")
-      .insert({ profile_id: profileId, new_tier: tier, source: "stripe", reason: "stripe webhook" });
-    if (logError) throw new Error(`Could not record the tier change: ${logError.message}`);
-  }
+  // A tier write can succeed while its audit write fails. Always finish the audit on retry,
+  // using the existing UUID primary key to make sequential/concurrent deliveries idempotent.
+  // This records subscription synchronization, including renewals that retain the same tier.
+  const bytes = createHash("sha256").update(`vltd:stripe:${event.id}:${profileId}`).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x80;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString("hex");
+  const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  const { error: logError } = await sb.from("tier_changes").upsert({
+    id,
+    profile_id: profileId,
+    new_tier: tier,
+    source: "stripe",
+    reason: `Stripe subscription synchronized: ${event.id}`,
+    changed_at: new Date(event.created * 1000).toISOString(),
+  }, { onConflict: "id" });
+  if (logError) throw new Error(`Could not record the subscription synchronization: ${logError.message}`);
 }
 
 function periodEndIso(sub: Stripe.Subscription): string | null {
@@ -98,6 +107,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!event.id || !Number.isFinite(event.created)) {
+    return NextResponse.json({ error: "invalid_event", message: "Missing Stripe event identity." }, { status: 400 });
+  }
+
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -105,7 +118,8 @@ export async function POST(req: NextRequest) {
       if (session.subscription && profileId) {
         const sub = await stripe.subscriptions.retrieve(String(session.subscription));
         const tier = tierForPriceId(sub.items.data[0]?.price?.id);
-        if (tier) await applyTier(profileId, tier, periodEndIso(sub), customerIdFrom(session.customer));
+        const active = sub.status === "active" || sub.status === "trialing";
+        if (tier) await applyTier(profileId, active ? tier : "FREE", active ? periodEndIso(sub) : null, customerIdFrom(session.customer), event);
       }
     } else if (event.type === "customer.subscription.updated") {
       const eventSub = event.data.object as Stripe.Subscription;
@@ -119,13 +133,14 @@ export async function POST(req: NextRequest) {
           profileId,
           active && tier ? tier : "FREE",
           active ? periodEndIso(sub) : null,
-          customerIdFrom(sub.customer)
+          customerIdFrom(sub.customer),
+          event
         );
       }
     } else if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
       const profileId = (sub.metadata?.profile_id || "") as string;
-      if (profileId) await applyTier(profileId, "FREE", null, customerIdFrom(sub.customer));
+      if (profileId) await applyTier(profileId, "FREE", null, customerIdFrom(sub.customer), event);
     }
 
     return NextResponse.json({ received: true });

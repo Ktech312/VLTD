@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";
 import { Toggle } from "@/components/ui/Toggle";
@@ -16,8 +16,10 @@ export default function ChecklistSheet({ items, onClose }: { items: WishlistItem
   const [opts, setOpts] = useState<Required<ChecklistOptions>>({ includeDates: true, includePrices: false, includeNotes: false, includeShops: false });
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const changing = useRef(false);
+  const [savingFields, setSavingFields] = useState(false);
   const [fields, setFields] = useState<ShareFields>(DEFAULT_SHARE_FIELDS);
-  const [fieldsSupported, setFieldsSupported] = useState(true);
+  const [fieldsSupported, setFieldsSupported] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -32,22 +34,33 @@ export default function ChecklistSheet({ items, onClose }: { items: WishlistItem
   const totals = plannedTotals(items);
 
   async function toggleShare() {
+    if (changing.current) return;
+    changing.current = true;
     setBusy(true); setError("");
     if (token) {
       const r = await disableWishlistShare();
       if (r.ok) setToken(null); else setError(r.error ?? "Could not turn sharing off.");
     } else {
       const r = await enableWishlistShare();
-      if (r.token) setToken(r.token); else setError(r.error ?? "Could not turn sharing on.");
+      if (r.token) {
+        setToken(r.token);
+        const current = await loadWishlistShareFields();
+        setFields(current.fields); setFieldsSupported(current.supported);
+      } else setError(r.error ?? "Could not turn sharing on.");
     }
     setBusy(false);
+    changing.current = false;
   }
   async function setField(key: keyof ShareFields) {
-    if (key === "titles") return;
+    if (key === "titles" || changing.current || !fieldsSupported) return;
+    changing.current = true;
+    setSavingFields(true); setError("");
     const next = { ...fields, [key]: !fields[key] } as ShareFields;
-    setFields(next);
     const r = await saveWishlistShareFields(next);
-    if (!r.ok) { setFields(fields); setError("Could not change what is shared. Nothing changed."); }
+    if (r.ok) setFields(next);
+    else setError(r.error ?? "Could not change what is shared. Try again.");
+    setSavingFields(false);
+    changing.current = false;
   }
 
   function printUrl() {
@@ -92,7 +105,7 @@ export default function ChecklistSheet({ items, onClose }: { items: WishlistItem
         </p>
       </section>
       <section aria-label="Sharing" className="mt-5 flex flex-col gap-3 border-t border-[rgba(203,208,213,0.18)] pt-4">
-        <div className="flex items-center gap-3 text-sm"><Toggle on={Boolean(token)} onChange={() => !busy && void toggleShare()} ariaLabel="Share a read-only link" /><span>Share a read-only link (you can turn it off at any time)</span></div>
+        <div className="flex items-center gap-3 text-sm"><Toggle on={Boolean(token)} disabled={busy || savingFields} onChange={() => void toggleShare()} ariaLabel="Share a read-only link" /><span>Share a read-only link (you can turn it off at any time)</span></div>
         {token ? (
           <>
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -102,12 +115,13 @@ export default function ChecklistSheet({ items, onClose }: { items: WishlistItem
             <p className="text-[12px]" style={{ color: "var(--muted)" }}>Titles, pictures, categories and editions are shared. Everything below is private until you switch it on.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {shareRows.map(([key, label]) => (
-                <div key={key} className="flex items-center gap-3 text-sm"><Toggle on={Boolean(fields[key])} onChange={() => void setField(key)} ariaLabel={`Share ${label}`} /><span>{label}</span></div>
+                <div key={key} className="flex items-center gap-3 text-sm"><Toggle on={Boolean(fields[key])} disabled={busy || savingFields || !fieldsSupported} onChange={() => void setField(key)} ariaLabel={`Share ${label}`} /><span>{label}</span></div>
               ))}
             </div>
             {!fieldsSupported ? <p className="text-[12px]" style={{ color: "var(--theme-gold)" }}>Choosing what is shared is not available yet on your account. Until it is, the link shows titles, pictures, categories and release dates only: never notes, prices or target prices.</p> : null}
           </>
         ) : null}
+        {savingFields ? <p role="status" className="text-[12px]">Saving sharing preferences…</p> : null}
         {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
       </section>
     </Sheet>
