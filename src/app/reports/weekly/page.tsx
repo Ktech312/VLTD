@@ -227,7 +227,7 @@ export default function WeeklyVaultReportPage() {
   if (items.length === 0 && cloud.state !== "ok") return <CloudWait what="weekly report" cloud={cloud} />;
 
   return (
-    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="vltd-print-document bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {cloud.state === "failed" ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -238,7 +238,7 @@ export default function WeeklyVaultReportPage() {
               A local-first weekly report foundation for new items, sold items, value changes, and insurance gaps. Generated {generatedLabel}.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="vltd-no-print flex flex-wrap gap-2">
             <Link href="/capture" className="rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--pill-active-bg)]">
               Capture
             </Link>

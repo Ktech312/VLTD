@@ -115,7 +115,7 @@ export default function VaultPrintPage() {
         <AppIcon name="download" size={16} /> Save as PDF
       </button>
 
-      <div className="page-wrap">
+      <div className="page-wrap vltd-print-document">
         {/* Header */}
         <div className="header">
           <div className="logo">
