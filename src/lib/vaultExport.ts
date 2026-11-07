@@ -8,6 +8,7 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
   "universe",
   "category",
   "title",
+  "storageLocation",
   "subtitle",
   "number",
   "grade",

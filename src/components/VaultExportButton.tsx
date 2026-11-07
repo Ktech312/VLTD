@@ -58,7 +58,7 @@ export async function downloadPhotosZip(
 
   let done = 0;
   await Promise.all(
-    withImages.map(async (item) => {
+    withImages.map(async (item, index) => {
       const url = getPrimaryImageUrl(item);
       try {
         const response = await fetch(url);
@@ -74,7 +74,10 @@ export async function downloadPhotosZip(
           .trim()
           .replace(/\s+/g, "_")
           .slice(0, 60);
-        const filename = safeName + "_" + item.id.slice(0, 8) + "." + ext;
+        // Titles and short ID prefixes can repeat. The per-export index keeps
+        // every main photo even if two sanitized names/IDs are identical.
+        const safeId = String(item.id).replace(/[^a-z0-9_-]/gi, "_").slice(0, 80);
+        const filename = `${safeName}_${index + 1}_${safeId}.${ext}`;
         const universe = (item.universe ?? "Other").replace(/[^a-z0-9]/gi, "_");
         zip.folder(universe).file(filename, blob);
         done++;
@@ -85,6 +88,10 @@ export async function downloadPhotosZip(
     })
   );
 
+  if (done === 0) {
+    onProgress("No photos could be downloaded. Check your connection and try again.");
+    return;
+  }
   onProgress("Building ZIP...");
   const content = await zip.generateAsync({ type: "blob" });
   const link = document.createElement("a");
@@ -92,7 +99,7 @@ export async function downloadPhotosZip(
   link.download = "vltd-photos-" + new Date().toISOString().slice(0, 10) + ".zip";
   link.click();
   URL.revokeObjectURL(link.href);
-  onProgress("Done");
+  onProgress(done === withImages.length ? "Done" : `Downloaded ${done} of ${withImages.length} main photos. Some photos could not be downloaded; try again.`);
 }
 
 export default function VaultExportButton() {
