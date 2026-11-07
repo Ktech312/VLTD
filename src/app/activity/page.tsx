@@ -122,7 +122,7 @@ function BasicInfoBadge({ info }: { info: BasicInfo }) {
   const color = complete ? "#58D783" : info.done >= 3 ? "#F2C14E" : "#F2784B";
   return (
     <div>
-      <div className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+      <div className="inline-flex items-center gap-2 whitespace-nowrap text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
         <span aria-hidden="true" className="inline-flex gap-0.5">
           {Array.from({ length: info.total }).map((_, i) => (
             <span key={i} className="h-2 w-4 rounded-[2px]" style={{ background: i < info.done ? color : "rgba(203,208,213,0.22)" }} />
@@ -369,7 +369,7 @@ function ActivityRow({ event, selected, onSelect, basic }: { event: ActivityEven
     <button
       type="button"
       onClick={onSelect}
-      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[6px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[64px_minmax(0,1fr)_minmax(120px,170px)_130px] md:gap-4 md:p-4 2xl:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px]"
+      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[6px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[64px_minmax(0,1fr)_minmax(100px,150px)_190px] md:gap-4 md:p-4 2xl:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px]"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",

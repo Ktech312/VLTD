@@ -286,9 +286,14 @@ function rowToItem(r: Record<string, unknown>): WishlistItem {
   return item;
 }
 
+// Whether the last attempt to read the wishlist from the account got an answer. A page that has nothing saved on this device uses it to say "could not load" instead of "nothing here".
+let lastWishlistReadFailed = false;
+export function wishlistReadFailed(): boolean { return lastWishlistReadFailed; }
+
 export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
   if (typeof window === "undefined") return [];
   const local = loadWishlist();
+  lastWishlistReadFailed = false;
   try {
     const pid = activeProfileId();
     if (!pid) return local;
@@ -307,7 +312,7 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
     }
     const { error } = res;
     const data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : null;
-    if (error || !data) return local;
+    if (error || !data) { lastWishlistReadFailed = true; return local; }
     if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
     if (data.length === 0) {
       for (const w of local) void pushWish(w);
@@ -341,6 +346,7 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
     for (const w of repush) void pushWish(w);
     return items;
   } catch {
+    lastWishlistReadFailed = true;
     return local;
   }
 }

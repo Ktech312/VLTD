@@ -7,6 +7,7 @@ import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { buildSoldItems, saleOutcome, type SoldItem } from "@/lib/soldItems";
+import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -196,6 +197,8 @@ export default function SalesHistoryPage() {
   const [universeFilter, setUniverseFilter] = useState("All");
   // Sales recorded from the Vault, For Sale and Sold pages live on the Sold page, not in this older list.
   const [soldOnSoldPage, setSoldOnSoldPage] = useState(0);
+  // Whether the account has answered: "No sales yet" is only said once it has.
+  const cloud = useCloudRefresh(() => setSales(buildRows()));
 
   useEffect(() => {
     const countSold = () => setSoldOnSoldPage(buildSoldItems().length);
@@ -370,8 +373,11 @@ export default function SalesHistoryPage() {
           </div>
         )}
 
+        {cloud.state === "failed" && sales.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
+        {sales.length === 0 && cloud.state === "failed" ? <LoadErrorCard what="sales" onRetry={cloud.retry} busy={cloud.busy} /> : null}
+        {sales.length === 0 && cloud.state === "loading" ? <div role="status" className="rounded-[14px] p-10 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>Loading your sales…</div> : null}
         {/* Empty state */}
-        {sales.length === 0 && (
+        {sales.length === 0 && cloud.state === "ok" && (
           <div className="rounded-[14px] p-10 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="mb-3 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="tag" size={40} /></div>
             <h2 className="text-lg font-semibold mb-1">{soldOnSoldPage > 0 ? "Your sales are on the Sold page" : "No sales yet"}</h2>

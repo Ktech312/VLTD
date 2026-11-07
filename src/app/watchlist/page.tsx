@@ -16,9 +16,10 @@ import FollowTab from "@/components/wants/FollowTab";
 import WantRow, { WatchingRow } from "@/components/wants/WantRow";
 import { loadPullRules, refreshPullRules, syncPullRulesFromSupabase } from "@/lib/pullRules";
 import { showToast } from "@/lib/toast";
+import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { addableSuggestion, formatMoney, groupPullList, isOpen, isRemoved, needsRemovalRecord, plannedTotals, ruleIdentityOfItem, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
 import { loadWatchlist, removeFromWatchlist, syncWatchlistFromSupabase, type WatchlistItem } from "@/lib/watchlistModel";
-import { loadWishlist, removeWant, saveWishlistItem, syncWishlistFromSupabase, undoRemoveWant, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, removeWant, saveWishlistItem, syncWishlistFromSupabase, undoRemoveWant, wantIdNamespace, wishlistReadFailed, type WishlistItem } from "@/lib/wishlistModel";
 
 // Watchlist: three views of what you collect next.
 //   Wishlist  = what I want (any category, with or without a date or price), plus things I am Watching (someone else's public items).
@@ -40,6 +41,9 @@ export default function WatchlistPage() {
   const [watching, setWatching] = useState<WatchlistItem[]>(() => loadWatchlist());
   const [rules, setRules] = useState<PullRule[]>(() => loadPullRules());
   const [inAccount, setInAccount] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
+  const [retrying, setRetrying] = useState(false);
   const [suggestions, setSuggestions] = useState<CatalogRelease[]>([]);
   const [checking, setChecking] = useState(false);
   const [query, setQuery] = useState("");
@@ -66,6 +70,7 @@ export default function WatchlistPage() {
       const [w, wl, pr] = await Promise.all([syncWishlistFromSupabase(), syncWatchlistFromSupabase(), syncPullRulesFromSupabase()]);
       if (!active) return;
       setWishlist(w); setWatching(wl); setRules(pr.rules); setInAccount(pr.inAccount);
+      setLoadFailed(wishlistReadFailed()); setRetrying(false);
       // Check Following comic rules (at most every six hours per rule); adds nothing for paused or stopped rules.
       const outcome = await refreshPullRules();
       if (!active) return;
@@ -78,7 +83,7 @@ export default function WatchlistPage() {
       window.removeEventListener("vltd:watchlist-updated", onWatch);
       window.removeEventListener("vltd:pull-rules-updated", onRules);
     };
-  }, []);
+  }, [retryTick]);
 
   const categories = useMemo(() => [...new Set(wishlist.map((w) => w.category).filter((c): c is string => Boolean(c && c.trim())))].sort(), [wishlist]);
   const ruleNames = useMemo(() => new Map(rules.map((r) => [r.id, r.name])), [rules]);
@@ -107,6 +112,9 @@ export default function WatchlistPage() {
   const pullGroups = useMemo(() => groupPullList(wishlist.filter((w) => matches(w))), [wishlist, matches]);
   const openWants = useMemo(() => wishlist.filter(isOpen), [wishlist]);
   const pullCount = useMemo(() => groupPullList(wishlist).reduce((n, g) => n + g.items.length, 0), [wishlist]);
+  // Nothing saved here and the account did not answer: that is a failed load, not an empty wishlist.
+  const blocked = loadFailed && wishlist.length === 0 && watching.length === 0 && rules.length === 0;
+  const retry = () => { setRetrying(true); setRetryTick((n) => n + 1); };
   const visibleTotals = plannedTotals(tab === "pull" ? pullGroups.flatMap((g) => g.items) : wants);
 
   function save(next: WishlistItem) {
@@ -187,7 +195,9 @@ export default function WatchlistPage() {
             )}
           </div>
 
-          {tab === "wishlist" ? (
+          {blocked ? <LoadErrorCard what="wishlist" onRetry={retry} busy={retrying} /> : null}
+          {loadFailed && !blocked ? <StaleDataNotice onRetry={retry} busy={retrying} /> : null}
+          {!blocked && tab === "wishlist" ? (
             <section aria-label="Wishlist" className="flex flex-col gap-1.5">
               {wants.length === 0 && watchRows.length === 0 ? (
                 <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
@@ -211,7 +221,7 @@ export default function WatchlistPage() {
             </section>
           ) : null}
 
-          {tab === "pull" ? (
+          {!blocked && tab === "pull" ? (
             <section aria-label="Pull List" className="flex flex-col gap-1.5">
               {pullGroups.length === 0 ? (
                 <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
@@ -230,7 +240,7 @@ export default function WatchlistPage() {
             </section>
           ) : null}
 
-          {tab === "follow" ? (
+          {!blocked && tab === "follow" ? (
             <FollowTab
               rules={rules}
               wants={rawWishlist}
