@@ -304,6 +304,11 @@ function TopNavInner() {
   function applySearch(raw: string) {
     // The whole text goes to the Vault's own search box (it matches titles, numbers, grades, notes and more).
     const q = normalize(raw);
+    // This is a new search, not Back from an item. A previous list's saved
+    // text/scroll must not overwrite the submitted query when the Vault mounts.
+    try {
+      for (const key of ["vltd_vault_filters", "vltd_vault_scroll_y", "vltd_vault_scroll_count"]) window.sessionStorage.removeItem(key);
+    } catch { /* Searching still works when browser storage is unavailable. */ }
     router.push("/vault" + (q ? `?q=${encodeURIComponent(q)}` : ""));
   }
 

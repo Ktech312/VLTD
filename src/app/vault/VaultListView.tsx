@@ -1144,7 +1144,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     if (["newest", "value_desc", "value_asc", "gain_desc", "gain_asc", "title"].includes(urlSort)) setSortMode(urlSort as SortMode);
   }, [urlSort]);
   useEffect(() => {
-    if (urlQuery) setQuery(urlQuery);
+    // An empty header search is a real change too: do not leave the old text filtering the list.
+    setQuery(urlQuery);
   }, [urlQuery]);
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>(lockedUniverse ?? "ALL");
   // Moving between universe routes reuses this component: follow the route.
