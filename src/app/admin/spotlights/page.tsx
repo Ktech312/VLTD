@@ -145,7 +145,7 @@ export default function AdminSpotlightsPage() {
     );
   }
   if (!authorized) {
-    return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;
+    return <div className="p-8 text-sm text-red-400">You don&apos;t have access to this page.</div>;
   }
 
   return (

@@ -122,7 +122,7 @@ export default function VaultPrintPage() {
             VL<span>T</span>D
           </div>
           <div className="report-meta">
-            <strong>Collection Report</strong>
+            <strong role="heading" aria-level={1}>Collection Report</strong>
             {today}
           </div>
         </div>

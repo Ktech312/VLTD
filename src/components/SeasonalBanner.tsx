@@ -390,7 +390,7 @@ export default function SeasonalBanner() {
               href={ctaHref ?? "#"}
               draggable={false}
               onClick={(e) => e.stopPropagation()}
-              className="vltd-tap-y [--tap-h:40px] max-w-[84px] flex-shrink-0 whitespace-normal px-2 py-1 text-center text-[10px] font-black leading-tight transition hover:brightness-110 sm:max-w-none sm:whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-[11px] sm:leading-normal"
+              className="vltd-tap-y [--tap-h:44px] max-w-[84px] flex-shrink-0 whitespace-normal px-2 py-1 text-center text-[10px] font-black leading-tight transition hover:brightness-110 sm:max-w-none sm:whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-[11px] sm:leading-normal"
               style={
                 graphic
                   ? { background: "#141A1F", border: "1px solid rgba(0,0,0,0.5)", borderRadius: 7, color: "#F1F3F5", boxShadow: "0 6px 16px rgba(0,0,0,0.18)" }
@@ -433,7 +433,7 @@ export default function SeasonalBanner() {
                   e.stopPropagation();
                   goTo(i, true);
                 }}
-                className="vltd-tap-y pointer-events-auto flex-shrink-0 transition-all duration-300"
+                className="vltd-tap-y pointer-events-auto [@media(pointer:coarse)]:pointer-events-none flex-shrink-0 transition-all duration-300"
                 style={{
                   ["--tap-h" as string]: "28px",
                   width: i === idx ? 14 : 5,

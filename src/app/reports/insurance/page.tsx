@@ -251,7 +251,7 @@ export default function InsuranceReportPage() {
         {/* Report header */}
         <div className="mt-5 rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-surface avoid-break">
           <div className="text-xs tracking-widest text-[color:var(--muted2)]">INSURANCE INVENTORY REPORT</div>
-          <div className="mt-2 text-3xl font-semibold">VLTD Inventory Summary</div>
+          <h1 className="mt-2 text-3xl font-semibold">VLTD Inventory Summary</h1>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated: <span className="font-medium text-[color:var(--fg)]">{fmtDate(generatedAt)}</span>
           </div>

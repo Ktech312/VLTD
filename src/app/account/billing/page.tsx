@@ -35,19 +35,19 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
     key: "free",
     name: "Free",
     price: "$0 / mo",
-    features: ["Up to 50 vault items", "4 public exhibitions", "Standard image quality", "Basic analytics", "Community registry"],
+    features: ["Up to 50 vault items", "Up to 4 exhibitions", "Standard photo quality", "1 exhibition in storage, for its first 90 days"],
   },
   {
     key: "pro",
     name: "Pro",
     price: "$9 / mo",
-    features: ["Unlimited vault items", "3 public profiles", "Weekly reports", "Portfolio analytics", "Export CSV & PDF", "AI draft queue"],
+    features: ["Unlimited vault items", "Up to 25 exhibitions", "Full-quality photos", "Unlimited exhibition storage"],
   },
   {
     key: "business",
     name: "Business",
     price: "$29 / mo",
-    features: ["Everything in Pro", "Team members", "Multi-workspace", "Business billing & invoicing", "Priority support", "API access"],
+    features: ["Everything in Pro", "Unlimited exhibitions", "Team members on a business profile", "Invoice history"],
   },
 ];
 
@@ -196,7 +196,7 @@ export default function BillingPage() {
           <div className="rounded-[14px] p-4 ring-1" style={{ background: "var(--pill-active-bg)", borderColor: "var(--frame-ring)" }}>
             <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>You&apos;ve hit your free item limit</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-              Upgrade to a paid plan below to add unlimited items and unlock everything.
+              Upgrade to a paid plan below to add unlimited items.
             </div>
           </div>
         ) : null}
@@ -210,7 +210,7 @@ export default function BillingPage() {
                 {currentPlan === "free" ? "Free" : currentPlan === "pro" ? "Pro — $9 / month" : "Business — $29 / month"}
               </div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--fg)" }}>
-                {currentPlan === "free" ? "Upgrade to unlock more features" : "Cancel anytime"}
+                {currentPlan === "free" ? "Paid plans lift the item and exhibition limits" : "Cancel anytime"}
               </div>
             </div>
             <div style={{ color: "var(--theme-gold)" }}><Glyph name="star" size={30} /></div>
@@ -263,6 +263,7 @@ export default function BillingPage() {
               );
             })}
           </div>
+          <p className="mt-3 text-[11px]" style={{ color: "var(--muted)" }}>Insights, the weekly report, CSV and PDF exports and the community registry are included on every plan.</p>
         </div>
 
         {/* Payment method — only shown once a real subscription exists */}

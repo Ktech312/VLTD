@@ -657,7 +657,7 @@ export default function EventsPage() {
                   <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
                     Featured Event
                   </div>
-                  <h1 className="max-w-2xl text-2xl font-black leading-tight md:text-3xl">{featuredEvent.name}</h1>
+                  <h2 className="max-w-2xl text-2xl font-black leading-tight md:text-3xl">{featuredEvent.name}</h2>
                   <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em]">
                     {formatLongDate(featuredEvent.starts_at, featuredEvent.ends_at)} - {locationLabel(featuredEvent)}
                   </div>

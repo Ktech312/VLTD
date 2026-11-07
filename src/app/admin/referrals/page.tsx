@@ -216,7 +216,7 @@ export default function AdminReferralsPage() {
   if (!role) {
     return (
       <main style={{ padding: "2rem", textAlign: "center" }}>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>Access denied.</p>
+        <p style={{ color: "var(--muted)", fontSize: 14 }}>You don&apos;t have access to this page.</p>
       </main>
     );
   }

@@ -1174,7 +1174,7 @@ export default function MuseumPage() {
       </div>
 
       {galleryPendingDelete ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !isDeleting) setGalleryPendingDelete(null); }}>
           <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Delete exhibition" className="w-full max-w-lg rounded-[14px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               DELETE EXHIBITION

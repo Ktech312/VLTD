@@ -153,7 +153,7 @@ export default function AdminScanLimitsPage() {
       <main className="min-h-dvh bg-[color:var(--bg)] p-6 text-[color:var(--fg)]">
         <h1 className="text-lg font-semibold">Admin — Scan Limits</h1>
         <div className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200 ring-1 ring-red-500/20">
-          You need admin access to view this page. Sign in with an admin account.
+          You don&apos;t have access to this page.
         </div>
       </main>
     );

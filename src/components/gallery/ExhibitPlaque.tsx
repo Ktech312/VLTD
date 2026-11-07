@@ -17,7 +17,7 @@ export default function ExhibitPlaque({ title, text }: { title: string; text?: s
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[6px] bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-[4%] text-center">
           <div
             className="w-full truncate font-serif font-semibold leading-tight text-[#f5d16d]"
-            style={{ fontSize: "2.5cqw" }}
+            style={{ fontSize: "max(2.5cqw, 12px)" }}
           >
             {cleanTitle}
           </div>
@@ -25,7 +25,7 @@ export default function ExhibitPlaque({ title, text }: { title: string; text?: s
             <div
               className="mt-[1px] w-full overflow-hidden leading-tight text-white/65"
               style={{
-                fontSize: "1.4cqw",
+                fontSize: "max(1.4cqw, 10px)",
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",

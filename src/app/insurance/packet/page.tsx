@@ -187,7 +187,7 @@ export default function InsurancePacketPage() {
           }}
         >
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Insurance Policy Packet</h1>
+          <h2 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Insurance Policy Packet</h2>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {scope.eligible.length} owned items • {totalsSentence(totals)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>

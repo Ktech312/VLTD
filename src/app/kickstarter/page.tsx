@@ -311,15 +311,16 @@ export default function KickstarterPage() {
               marginBottom: "14px",
             }}
           >
-            <span
+            <h1
               style={{
                 fontSize: "22px",
+                margin: 0,
                 fontWeight: 900,
                 letterSpacing: "-0.02em",
               }}
             >
               Kickstarter Comics
-            </span>
+            </h1>
             <span
               style={{
                 fontSize: "12px",

@@ -23,7 +23,7 @@ export default function UpgradeNudge({
           You&apos;ve reached your free limit
         </div>
         <div className="text-xs" style={{ color: "var(--muted)" }}>
-          {message || "Upgrade to add unlimited items and unlock everything."}
+          {message || "Upgrade to add unlimited items."}
         </div>
       </div>
       <Link

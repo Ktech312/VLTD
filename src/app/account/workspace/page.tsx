@@ -269,9 +269,6 @@ export default function WorkspaceSettingsPage() {
           <Row label="Show confidence scores" sub="Display AI confidence on draft cards">
             <Toggle ariaLabel="Show confidence scores" on={showConfidence} onChange={() => setShowConfidence((v) => { saveLocalPrefs({ showConfidence: !v }); return !v; })} />
           </Row>
-          <div className="mt-3">
-            <PillButton href="/ai/drafts">View AI draft queue →</PillButton>
-          </div>
         </Section>
 
         <Section title="Integrations">
@@ -292,9 +289,6 @@ export default function WorkspaceSettingsPage() {
           </Row>
           <Row label="CSV export" sub="Download your vault as a spreadsheet">
             <PillButton onClick={exportVaultCsv}>Export</PillButton>
-          </Row>
-          <Row label="API access" sub="Business plan — programmatic vault access">
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--pill)", color: "var(--muted)" }}>Business</span>
           </Row>
         </Section>
 

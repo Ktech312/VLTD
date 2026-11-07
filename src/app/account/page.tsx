@@ -453,7 +453,7 @@ export default function AccountPage() {
                       : "Every VLTD member keeps a personal profile. Add a separate business profile whenever you need one."}
                   </div>
                   {profileType === "personal" ? (
-                    <Link href="/account/business/new" className="mt-3 inline-flex h-9 items-center rounded-[8px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]">
+                    <Link href="/account/business/new" className="vltd-tap-y mt-3 inline-flex h-9 items-center rounded-[6px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]">
                       + Add business profile
                     </Link>
                   ) : null}

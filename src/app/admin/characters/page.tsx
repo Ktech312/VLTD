@@ -184,8 +184,8 @@ function NotAuthorized({
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
       <div className="w-full max-w-sm rounded-[14px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
-        <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
-        <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
+        <div className="mt-2 text-sm font-semibold text-white">You don&apos;t have access to this page.</div>
+        <div className="mt-1 text-xs text-white/40">{userEmail} is not an admin account.</div>
         <button
           onClick={() => signOut().then((failure) => (failure ? window.alert(failure) : window.location.reload()))}
           className="mt-3 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"

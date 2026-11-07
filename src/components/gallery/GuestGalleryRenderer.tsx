@@ -113,10 +113,10 @@ function ViewerItemCard({
           )}
 
           {/* Ghost title / subtitle overlay */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-1.5 pb-1.5 pt-5">
-            <div className="line-clamp-2 text-[8px] font-semibold leading-tight text-white/90">{item.title}</div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-1.5 pb-1.5 pt-6">
+            <div className="line-clamp-2 text-[11px] font-semibold leading-tight text-white/95">{item.title}</div>
             {subtitle ? (
-              <div className="mt-0.5 line-clamp-1 text-[7px] leading-tight text-white/55">{subtitle}</div>
+              <div className="mt-0.5 line-clamp-1 text-[9px] leading-tight text-white/70">{subtitle}</div>
             ) : null}
           </div>
 

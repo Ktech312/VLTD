@@ -336,7 +336,7 @@ function TopNavInner() {
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-2 px-4 sm:gap-4 sm:px-6">
 
           {/* Logo */}
-          <Link href={signedIn ? "/dashboard" : "/"} className="shrink-0 flex items-center" aria-label="VLTD Home">
+          <Link href={signedIn ? "/dashboard" : "/"} className="vltd-tap-y shrink-0 flex items-center" aria-label="VLTD Home">
             <VltdLogo height={38} glow={isHome} />
           </Link>
 

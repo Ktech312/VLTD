@@ -55,7 +55,7 @@ export default function VaultWorkspace({ children }: { children: ReactNode }) {
       <div data-vault-workspace={tab.key}>
         <div data-vault-chrome="true">
         <PageHeader
-          title="Vault"
+          title={tab.key === "insights" ? "Insights" : "Vault"}
           description={tab.description}
           contentClassName="max-w-[1480px]"
           actions={<div ref={setSlot} className="contents" data-workspace-actions />}
