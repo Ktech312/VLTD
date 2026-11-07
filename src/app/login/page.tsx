@@ -13,6 +13,18 @@ function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = useMemo(() => searchParams.get("next") || "/dashboard", [searchParams]);
+  // Say which action needs the account, so a visitor who was sent here knows why (and that they will land back on it).
+  const whyLogin = useMemo(() => {
+    if (!searchParams.get("next")) return "";
+    const p = nextUrl;
+    if (p.startsWith("/museum/invite/")) return "Sign in to open this private invitation.";
+    if (p.startsWith("/museum")) return "Sign in to open your exhibitions.";
+    if (p.startsWith("/capture") || p.startsWith("/vault/add") || p.startsWith("/vault/quick") || p.startsWith("/vault/bulk")) return "Sign in to add an item to your Vault.";
+    if (p.startsWith("/vault")) return "Sign in to open your Vault.";
+    if (p.startsWith("/watchlist")) return "Sign in to open your Wishlist.";
+    if (p.startsWith("/account")) return "Sign in to open your account.";
+    return "Sign in to continue to the page you asked for.";
+  }, [searchParams, nextUrl]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -172,7 +184,7 @@ function LoginInner() {
               <>
                 <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">Welcome back</div>
                 <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">Log in to your vault</h1>
-                <p className="mt-2 text-base text-[color:var(--muted)]">Get back into your vault.</p>
+                <p className="mt-2 text-base text-[color:var(--muted)]">{whyLogin || "Get back into your vault."}</p>
 
                 {error ? <div className="mt-5 rounded-[14px] border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 

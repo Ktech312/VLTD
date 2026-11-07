@@ -57,9 +57,13 @@ export function hiddenSnapshot(id: string, createdAt?: number, blurThumb?: strin
   return { id, title: HIDDEN_ITEM_TITLE, hidden: true, blurThumb, createdAt };
 }
 
-/** The public record for an item. A hidden item stays hidden until it is made public again. */
+/**
+ * The public record for an item. An item the owner hid in an exhibit stays hidden through every later Save of the exhibit, whether or not the item
+ * is also flagged public in the Vault: only the explicit "Show this item in your exhibits again" (which builds the record without the old one) shows it.
+ * It used to un-hide itself on the next Save when the item was flagged public, putting its title and photo back on the public page.
+ */
 export function buildPublicSnapshot(item: VaultItem, previous?: GalleryPublicItemSnapshot): GalleryPublicItemSnapshot {
-  if (previous?.hidden && item.isPublic !== true) {
+  if (previous?.hidden) {
     return hiddenSnapshot(item.id, item.createdAt, previous.blurThumb);
   }
   return {
