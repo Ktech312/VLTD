@@ -26,6 +26,7 @@ type Tab = {
    Theme-aware now: dark mode keeps the same look via each var's dark
    default; light mode gets a light nav surface with dark icons. */
 const GOLD = "var(--theme-gold, #C8CDD2)";
+const GOLD_TEXT = "var(--theme-gold-text, var(--theme-gold, #C8CDD2))";
 const DIM = "var(--theme-text-secondary, rgba(240,226,198,0.94))";
 
 /* ── Tabs ────────────────────────────────────────────────── */
@@ -229,7 +230,7 @@ export default function BottomNav() {
                   />
                   <span
                     className="vltd-keep-color whitespace-nowrap text-[10.5px] font-semibold tracking-[0.01em] transition-colors"
-                    style={keepColor(isActive ? GOLD : DIM)}
+                    style={keepColor(isActive ? GOLD_TEXT : DIM)}
                   >
                     {tab.label}
                   </span>
@@ -258,7 +259,7 @@ export default function BottomNav() {
                 />
                 <span
                   className="vltd-keep-color whitespace-nowrap text-[10.5px] font-semibold tracking-[0.01em] transition-colors"
-                  style={keepColor(isActive ? GOLD : DIM)}
+                  style={keepColor(isActive ? GOLD_TEXT : DIM)}
                 >
                   {tab.label}
                 </span>

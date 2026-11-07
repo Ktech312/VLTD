@@ -40,8 +40,8 @@ const C = {
   gold: "var(--theme-gold, #C8CDD2)",
   muted: "var(--theme-text-secondary, #9BA0A6)",
   text: "var(--theme-text-primary, #ECEDEF)",
-  green: "#52C27A",
-  red: "#E05252",
+  green: "var(--gain-text, #52C27A)",
+  red: "var(--loss-text, #E05252)",
   r: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
 } as const;
 

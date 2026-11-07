@@ -447,3 +447,11 @@
 
 /* Gain green: the bright dark-page green is hard to read on light pages, so light pages use a deeper green. */
 .theme-light { --status-gain: #15803d; --color-gain: #15803d; }
+
+/* Gain / loss / error colours used as TEXT: exactly the established dark-page colours on dark pages, deeper ones on light pages (the bright ones are 2:1 on white). */
+:root { --gain-text: #52C27A; --loss-text: #E05252; --bad-text: #f87171; }
+.theme-light { --gain-text: #15803d; --loss-text: #b91c1c; --bad-text: #b91c1c; }
+
+/* Accent colour used as TEXT (for example the active tab label): the theme's own accent on dark pages, a darker mix of it on light pages so small text reaches 4.5:1. */
+:root { --theme-gold-text: var(--theme-gold); }
+.theme-light { --theme-gold-text: color-mix(in srgb, var(--theme-gold) 70%, #000); }
