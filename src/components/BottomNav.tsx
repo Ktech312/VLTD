@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { usePathname } from "next/navigation";
 import { useState, type CSSProperties } from "react";
 import { ADD_CHOOSER_ITEMS } from "@/components/AddItemActions";
@@ -75,6 +76,8 @@ export default function BottomNav() {
   const pathname = usePathname();
   const guestRoute = isGuestGalleryRoute(pathname ?? "");
   const [moreOpen, setMoreOpen] = useState(false);
+  // The More sheet is a dialog: Escape closes it, Tab stays inside, and focus returns to the More button.
+  const moreSheetRef = useDialogA11y<HTMLDivElement>(moreOpen, () => setMoreOpen(false));
 
   function active(tab: Tab) {
     if (tab.href === MORE_TAB) return moreOpen;
@@ -101,6 +104,10 @@ export default function BottomNav() {
           />
           {/* Sheet: sits directly above the nav bar */}
           <div
+            ref={moreSheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="More"
             data-more-sheet="true"
             className="vltd-keep-color"
             style={{
@@ -200,6 +207,7 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
+                  aria-expanded={moreOpen}
                   className="flex min-w-[52px] flex-col items-center gap-[2px] rounded-[18px] px-1.5 py-1 transition-opacity active:opacity-70"
                   style={{
                     border: isActive ? "1px solid var(--theme-gold-border, rgba(203,208,213,0.44))" : "1px solid transparent",
