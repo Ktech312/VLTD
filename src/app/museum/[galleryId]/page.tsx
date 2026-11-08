@@ -27,6 +27,7 @@ import {
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
+  fetchGalleryVisibility,
 } from "@/lib/galleryModel";
 
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -238,6 +239,8 @@ export default function GalleryPage() {
   // A refused follower notice stays on screen next to the buttons until the next action (the page-wide status line clears itself in 2 s
   // and can sit above the visible part of the page).
   const [noticeProblem, setNoticeProblem] = useState("");
+  // Set when the account keeps the exhibition public although something else was chosen (free plan); stays until the person acts.
+  const [visibilityNote, setVisibilityNote] = useState("");
   const [announced, setAnnounced] = useState(false);
 
   const [originalSnapshot, setOriginalSnapshot] = useState("");
@@ -517,6 +520,7 @@ export default function GalleryPage() {
       return;
     }
     setConfirmPublic(false);
+    if (mode === "public_gallery") setVisibilityNote("");
     patchDraft((current) => applyAccessMode(current, mode));
   }
 
@@ -651,6 +655,21 @@ export default function GalleryPage() {
 
       setSaveState("saved");
 
+      // A free plan can keep the exhibition public whatever was chosen. Say so and show what is true, instead of showing Private (and Saved) over a public exhibition.
+      let keptPublic = false;
+      if (nextDraft.visibility !== "PUBLIC" && (await fetchGalleryVisibility(nextDraft.id)) === "PUBLIC") {
+        keptPublic = true;
+        const corrected = cloneGallery({ ...nextDraft, visibility: "PUBLIC" as Gallery["visibility"] });
+        saveGalleriesLocally(loadGalleries({ includeAllProfiles: true }).map((entry) => (entry.id === corrected.id ? corrected : entry)));
+        persistCachedGalleryDraft(corrected.id, corrected);
+        setGallery(cloneGallery(corrected));
+        setDraft(cloneGallery(corrected));
+        setOriginalSnapshot(normalizeDraftForCompare(corrected));
+        setVisibilityNote("This exhibition is still public. Your plan keeps exhibitions public, so Private, Guest View and Registered Users could not be saved.");
+      } else {
+        setVisibilityNote("");
+      }
+
       // The follower notice is recorded BEFORE the page says anything about publishing, so there is one accurate message: the
       // exhibition itself is public either way; if the account refuses the notice the page says followers were not notified.
       let noticeRecorded = true;
@@ -662,7 +681,7 @@ export default function GalleryPage() {
         if (profileId) noticeRecorded = await logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
       }
       if (!noticeRecorded) setNoticeProblem("Published, but followers were not notified: the account did not accept the notice.");
-      if (!auto || justPublished || vaultSyncError) {
+      if (!keptPublic && (!auto || justPublished || vaultSyncError)) {
         setStatusTone(vaultSyncError || !noticeRecorded ? "neutral" : "good");
         setStatus(
           vaultSyncError
@@ -1141,6 +1160,9 @@ export default function GalleryPage() {
                       Registered Users
                     </button>
                   </div>
+                  {visibilityNote ? (
+                    <div role="alert" data-testid="visibility-kept-public" className="mt-2 text-[12px] leading-snug text-amber-300">{visibilityNote}</div>
+                  ) : null}
                   {confirmPublic ? (
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)] max-md:mt-3 max-md:gap-y-3">
                       <span>Make this exhibit public now? Anyone will be able to find it.</span>

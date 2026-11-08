@@ -1273,6 +1273,22 @@ export async function syncGalleryToSupabaseNow(gallery: Gallery) {
   await upsertGalleryToSupabase(normalized, { throwOnError: true });
 }
 
+/**
+ * What the account actually holds for an exhibition's visibility (PUBLIC, LOCKED or INVITE), or null when it cannot be read.
+ * The database can keep an exhibition public on a free plan whatever the page asked for, so the page asks instead of assuming.
+ */
+export async function fetchGalleryVisibility(galleryId: string): Promise<string | null> {
+  try {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return null;
+    const { data, error } = await supabase.from("galleries").select("visibility").eq("id", galleryId).maybeSingle();
+    if (error || !data) return null;
+    return String((data as { visibility?: unknown }).visibility ?? "") || null;
+  } catch {
+    return null;
+  }
+}
+
 // Deletes only the parent `galleries` row. `gallery_items.gallery_id` and
 // `gallery_invites.gallery_id` both carry ON DELETE CASCADE (confirmed live
 // against the database — deleting a probe gallery with child rows in both
