@@ -461,7 +461,7 @@ export default function SpreadsheetImportClient() {
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Spreadsheet import</h1>
             <p className="mt-2 max-w-3xl text-sm text-[color:var(--muted)]">
               Upload Excel or CSV, paste rows from Google Sheets, or download the blank VLTD workbook and fill it out.
-              Review mappings before you confirm import.
+              Review mappings before you confirm import. A spreadsheet holds item details only: photos, attachments and exhibitions are not part of it, so an export and re-import does not bring them back.
             </p>
           </div>
 

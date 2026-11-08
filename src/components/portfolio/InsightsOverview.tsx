@@ -763,6 +763,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             items={[
               { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
               { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
+              { key: "weekly", label: "Weekly report", description: "New items, sales, value changes and gaps this week", href: "/reports/weekly" },
             ]}
           />
         </span>
