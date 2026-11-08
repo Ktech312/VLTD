@@ -41,7 +41,7 @@ function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery
     return it ? getPrimaryImageUrl(it) : String(r.metadata?.image || "");
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
-  return g?.coverImage || "";
+  return g?.coverImage || String(r.metadata?.image || "");
 }
 
 function favoriteValue(r: FavoriteRecord, items: VaultItem[]) {
@@ -209,9 +209,10 @@ export default function FavoritesPage() {
   return (
     <div className="" style={{ background: "var(--bg)" }}>
       <PageHeader
-        title="Favorites"
-        description="Items and exhibitions you've saved from across VLTD."
+        title="Saved bookmarks"
+        description="Items and exhibitions you bookmarked. Swiped items are under From The Flip."
         contentClassName="max-w-2xl"
+        actions={<PillButton href="/saved">From The Flip</PillButton>}
       />
       <div className="mx-auto max-w-2xl px-4">
         <div>

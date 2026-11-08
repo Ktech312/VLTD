@@ -10,6 +10,8 @@ import {
   removeFromWatchlist,
   clearWatchlist,
   syncWatchlistFromSupabase,
+  pendingWatchlistChanges,
+  watchlistReadFailed,
   type WatchlistItem,
 } from "@/lib/watchlistModel";
 import { Glyph } from "@/components/ui/Glyph";
@@ -18,17 +20,17 @@ export default function SavedPage() {
   const router = useRouter();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [, refreshStatus] = useState(0);
 
   useEffect(() => {
     setWatchlist(loadWatchlist());
-    setLoaded(true);
 
     let active = true;
     void syncWatchlistFromSupabase().then(() => {
-      if (active) setWatchlist(loadWatchlist());
+      if (active) { setWatchlist(loadWatchlist()); setLoaded(true); }
     });
 
-    function onUpdate() { setWatchlist(loadWatchlist()); }
+    function onUpdate() { setWatchlist(loadWatchlist()); refreshStatus(n => n + 1); }
     window.addEventListener("vltd:watchlist-updated", onUpdate);
     return () => {
       active = false;
@@ -39,6 +41,12 @@ export default function SavedPage() {
   function handleRemove(id: string) {
     removeFromWatchlist(id);
   }
+  async function retry() {
+    setLoaded(false);
+    await syncWatchlistFromSupabase();
+    setWatchlist(loadWatchlist());
+    setLoaded(true);
+  }
 
   function handleClearAll() {
     if (confirm("Clear all saved items?")) clearWatchlist();
@@ -48,10 +56,11 @@ export default function SavedPage() {
     <>
       <PageHeader
         title="Saved"
-        description="Items you swiped right on in The Flip."
+        description="Items saved from The Flip. Open Bookmarks for saved exhibitions and other items."
         contentClassName="max-w-2xl"
         actions={
           <>
+            <PillButton href="/favorites">Bookmarks</PillButton>
             <PillButton onClick={() => router.back()} title="Back">
               <Glyph name="arrowLeft" size={16} strokeWidth={2} />
               Back
@@ -67,8 +76,15 @@ export default function SavedPage() {
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-2xl px-4 pb-6 sm:px-6">
 
+        {!loaded && watchlist.length === 0 && <p role="status" className="py-5 text-sm text-[color:var(--muted)]">Loading saved items…</p>}
+        {loaded && watchlistReadFailed() && <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-[color:var(--border)] p-4 text-sm">
+          <span>{watchlist.length ? "Showing saved items on this device. We couldn't refresh the account copy." : "We couldn't load your saved items. Try again."}</span>
+          <PillButton onClick={() => void retry()}>Retry</PillButton>
+        </div>}
+        {pendingWatchlistChanges() > 0 && <p role="status" className="mb-4 text-sm text-[color:var(--muted)]">{pendingWatchlistChanges()} saved-item change{pendingWatchlistChanges() === 1 ? "" : "s"} waiting to reach your account. We will retry when you are online.</p>}
+
         {/* Empty state */}
-        {loaded && watchlist.length === 0 && (
+        {loaded && !watchlistReadFailed() && watchlist.length === 0 && (
           <div
             className="flex flex-col items-center gap-4 rounded-[14px] px-6 py-14 text-center"
             style={{
