@@ -123,7 +123,7 @@ export async function fetchAuctionItem(id: string): Promise<AuctionItem | null> 
     .select(AUCTION_COLUMNS)
     .eq("id", id)
     .eq("status", "AUCTION")
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   return rowToAuctionItem(data as unknown as Record<string, unknown>);

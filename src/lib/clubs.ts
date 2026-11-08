@@ -141,7 +141,7 @@ export async function getClubChecked(clubId: string): Promise<{ club: Club | nul
     .from("clubs")
     .select("id, name, description, owner_profile_id, created_at")
     .eq("id", clubId)
-    .single();
+    .maybeSingle();
   if (error || !data) {
     // PGRST116: no row; 22P02: not a valid id. Anything else (network, server) is a failed read, not a missing club.
     const missing = error?.code === "PGRST116" || error?.code === "22P02" || (!error && !data);
