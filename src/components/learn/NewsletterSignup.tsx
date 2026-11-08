@@ -60,7 +60,7 @@ export default function NewsletterSignup({ source = "learn" }: { source?: string
             if (status === "error") setStatus("idle");
           }}
           placeholder="Your email address"
-          className="h-11 w-full min-w-0 flex-1 rounded-[8px] border md:h-9 border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#C8CDD2)]"
+          className="h-11 w-full min-w-0 sm:flex-1 rounded-[8px] border md:h-9 border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#C8CDD2)]"
           aria-label="Email address"
         />
         <PillButton type="submit" variant="active" disabled={status === "loading"} className="shrink-0 font-black">

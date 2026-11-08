@@ -1733,6 +1733,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <div>
                 <textarea
                   autoFocus
+                  aria-label="Item notes"
                   value={notesDraft}
                   onChange={(e) => setNotesDraft(e.target.value)}
                   rows={4}

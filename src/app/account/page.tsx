@@ -386,6 +386,10 @@ export default function AccountPage() {
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <AccountTabs />
+        {/* Every settings tab has one page heading (the Profile tab shows its own, visibly). */}
+        {section !== "profile" ? (
+          <h1 className="sr-only">{section === "preferences" ? "Preferences" : section === "contact" ? "Billing and contact" : "Data and maintenance"}</h1>
+        ) : null}
 
         {section === "profile" ? (
         <section

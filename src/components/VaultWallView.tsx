@@ -341,7 +341,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
               max={14}
               value={cols}
               onChange={(e) => setCols(Number(e.target.value))}
-              className="w-28 accent-gold"
+              className="h-6 w-28 accent-gold"
             />
             <span className="text-[11px] text-white/40 w-4">{cols}</span>
           </div>

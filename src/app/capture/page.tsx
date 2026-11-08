@@ -1135,7 +1135,7 @@ export default function CapturePage() {
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one{aiAccess ? <> — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in</> : <>, then type the details in</>}. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2 max-md:gap-y-3">
-                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>Take photo</button>
+                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[6px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>Take photo</button>
                             <button type="button" onClick={() => nativeCameraInputRef.current?.click()} title="Uses your phone's own camera app for the sharpest quality" className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Take Real Photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
@@ -1564,7 +1564,7 @@ export default function CapturePage() {
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className={LABEL_CLS}>Current value ($)</label>
+                        <label htmlFor="capture-current-value" className={LABEL_CLS}>Current value ($)</label>
                         <input
                           type="number"
                           inputMode="decimal"
@@ -1577,7 +1577,7 @@ export default function CapturePage() {
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Purchase price ($)</label>
+                        <label htmlFor="capture-purchase-price" className={LABEL_CLS}>Purchase price ($)</label>
                         <input
                           id="capture-purchase-price"
                           type="number"
@@ -1630,7 +1630,7 @@ export default function CapturePage() {
                         type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className="inline-flex min-h-[52px] disabled:opacity-60 items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
+                        className="inline-flex min-h-[52px] disabled:opacity-60 items-center justify-center gap-2 rounded-[6px] px-9 text-[15px] font-black text-[#06171d]"
                         style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)", color: "#06171d" }}
                       >
                         <AppIcon name="save" size={18} strokeWidth={1.8} />

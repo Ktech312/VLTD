@@ -837,14 +837,14 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             <Label>Value Breakdown</Label>
             <div className="mt-4 flex flex-col gap-5 md:flex-row xl:flex-col 2xl:flex-row">
               <Donut rows={categoryRows} total={categoryRows.reduce((sum, row) => sum + row.value, 0)} />
-              <div className="grid min-w-0 flex-1 gap-2">
+              <div className="grid min-w-0 flex-1 gap-[9px]">
                 {categoryRows.map((row, idx) => {
                   const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
                   return (
                     <Link
                       key={row.label}
                       href={`/vault?q=${encodeURIComponent(row.label)}`}
-                      className="vltd-tap-y [--tap-h:23px] grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
+                      className="vltd-tap-y [--tap-h:24px] grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
                       style={{ color: "var(--fg)" }}
                     >
                       <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length] }} />

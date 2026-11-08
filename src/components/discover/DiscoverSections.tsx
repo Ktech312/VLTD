@@ -155,7 +155,7 @@ export function EventsSection() {
                 <AppIcon name="events" size={20} />
               </span>
               <span className="min-w-0">
-                <span className="line-clamp-2 block text-[12px] font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.name}</span>
+                <span className="line-clamp-2 text-[12px] font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.name}</span>
                 <span className="mt-1 block truncate text-[11px]" style={muted}>{formatDateRange(event.starts_at, event.ends_at)}</span>
                 <span className="block truncate text-[10px]" style={{ color: "var(--theme-gold)" }}>{eventCountdown(event)}</span>
               </span>

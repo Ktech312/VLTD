@@ -660,12 +660,12 @@ export default function DiscoverPage() {
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Across Every Universe</h2>
                 <PillButton size="compact" onClick={() => setActiveTab("All")}>View all</PillButton>
               </div>
-              <div className="grid overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.22)] md:grid-cols-4 xl:grid-cols-8" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+              <div className="grid overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.22)] md:grid-cols-4 2xl:grid-cols-8" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
                 {universeCounts.map(({ key, count }) => (
                   <button key={key} type="button" onClick={() => setActiveTab(key)} className="flex min-h-[58px] items-center gap-2 border-r border-[rgba(203,208,213,0.16)] px-3 text-left transition hover:bg-[rgba(203,208,213,0.06)]">
                     <img src={UNIVERSE_THUMB[key]} alt="" className="h-8 w-8 rounded-[6px] object-cover" />
                     <span className="min-w-0">
-                      <span className="block truncate text-xs font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{UNIVERSE_LABEL[key]}</span>
+                      <span className="line-clamp-2 text-xs font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{UNIVERSE_LABEL[key]}</span>
                       <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{count.toLocaleString()} {count === 1 ? "exhibition" : "exhibitions"}</span>
                     </span>
                   </button>
