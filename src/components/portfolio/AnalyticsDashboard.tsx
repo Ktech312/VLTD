@@ -1,7 +1,7 @@
 "use client";
 
 import { PillButton as SharedPill } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useState } from "react";
 
 import { PillSelect } from "@/components/ui/PillSelect";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/ActionMenu";
 import { AppIcon } from "@/components/ui/AppIcon";

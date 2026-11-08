@@ -3,7 +3,7 @@
 import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode, accessLabel } from "@/lib/galleryAccess";
 import { buildPublicSnapshot, isHiddenInExhibits, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import ContentActionBar from "@/components/share/ContentActionBar";

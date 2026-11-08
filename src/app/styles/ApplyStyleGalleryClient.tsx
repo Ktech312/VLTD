@@ -1,7 +1,7 @@
 // Path: src/app/styles/ApplyStyleGalleryClient.tsx
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";

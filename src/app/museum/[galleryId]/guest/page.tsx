@@ -4,7 +4,7 @@ import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as rowToVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";

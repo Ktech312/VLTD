@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useRef, useState } from "react";
 import { getCurrentSession } from "@/lib/auth";
 import { LEARN_VIDEOS, type LearnVideo } from "@/lib/learnVideos";

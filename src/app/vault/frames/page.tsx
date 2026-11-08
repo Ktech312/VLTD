@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";

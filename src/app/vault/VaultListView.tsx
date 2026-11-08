@@ -7,7 +7,7 @@ import { LocalNav } from "@/components/ui/LocalNav";
 import { PillButton } from "@/components/ui/PillButton";
 import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WorkspaceActions, useInVaultWorkspace } from "@/components/vault/VaultWorkspace";

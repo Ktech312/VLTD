@@ -3,7 +3,7 @@
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { RedeemCodeCard } from "@/components/account/RedeemCodeCard";
 import { showToast } from "@/lib/toast";

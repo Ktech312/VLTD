@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { use, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";

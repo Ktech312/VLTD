@@ -26,7 +26,7 @@
 // predicate (isWalkable, this room's own geometry) and the substep/stop
 // loop around it are local, since collision shape is necessarily
 // per-surface.
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";

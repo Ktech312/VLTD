@@ -2,7 +2,7 @@
 
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillSelect } from "@/components/ui/PillSelect";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

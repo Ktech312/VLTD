@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { usePathname } from "next/navigation";
 import { useState, type CSSProperties } from "react";

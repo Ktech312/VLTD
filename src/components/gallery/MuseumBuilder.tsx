@@ -95,7 +95,7 @@
 import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import * as THREE from "three";
 import { AppIcon } from "@/components/ui/AppIcon";
 

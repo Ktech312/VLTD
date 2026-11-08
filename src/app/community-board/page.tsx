@@ -3,7 +3,7 @@
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";

@@ -10,7 +10,7 @@
 // Path A (camera rapid-capture) will reuse this same review grid later.
 
 import { PillButton } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAiAccess } from "@/lib/ai/useAiAccess";

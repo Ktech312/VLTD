@@ -4,7 +4,7 @@
 // (museum_beta_enabled, which only an admin can set) and the owner account itself can open the
 // builder. The "request access" button on Exhibitions only records a request; it never grants access.
 // This gate protects the direct /museum/virtual-room URL, not just the button.
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { getMyAdminRole } from "@/lib/adminAuth";

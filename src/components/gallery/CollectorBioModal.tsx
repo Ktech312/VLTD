@@ -2,7 +2,7 @@
 
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PillButton, pillClassName, type PillVariant } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";

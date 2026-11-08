@@ -2,7 +2,7 @@
 
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PageHeader } from "@/components/layout/PageHeader";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";

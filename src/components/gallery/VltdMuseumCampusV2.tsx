@@ -17,7 +17,7 @@
 // and whatever else the visitor walks to) is built procedurally, same as
 // TCG/HUB, since nothing else has been published yet.
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 

@@ -5,7 +5,7 @@ import { removeSaleRecord, saleOutcome, soldItemOf } from "@/lib/soldItems";
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue, hasExplicitValue, hasRecordedCost, isSupplyItem, itemGain } from "@/lib/vaultStats";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 

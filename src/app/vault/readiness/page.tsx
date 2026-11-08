@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { computeReadiness } from "@/components/ListingReadinessPanel";

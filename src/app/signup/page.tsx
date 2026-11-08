@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useState } from "react";
 import VltdLogo from "@/components/VltdLogo";
 import { friendlyErrorMessage } from "@/lib/friendlyError";

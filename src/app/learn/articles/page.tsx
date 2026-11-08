@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import Image from "next/image";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { Metadata } from "next";

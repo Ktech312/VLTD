@@ -3,7 +3,7 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { ACCESS_PILLS, accessDescription, applyAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 

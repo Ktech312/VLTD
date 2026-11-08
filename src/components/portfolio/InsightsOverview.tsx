@@ -3,7 +3,7 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { PillButton } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 

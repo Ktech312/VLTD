@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 /** Inline "you've hit the free limit → upgrade" prompt, shown wherever a save is

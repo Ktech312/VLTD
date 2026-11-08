@@ -4,7 +4,7 @@ import { PillSelect } from "@/components/ui/PillSelect";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { publicItemsTable } from "@/lib/publicItemsSource";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";

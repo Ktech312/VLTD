@@ -1,0 +1,564 @@
+{
+ "label": "after-prefetch-off",
+ "base": "http://localhost:3100",
+ "at": "2026-11-08T20:57:52.287Z",
+ "repeat": 3,
+ "settleMs": 12000,
+ "cold": {
+  "/": {
+   "total": 40,
+   "prefetch": 0,
+   "totals": [
+    40,
+    40,
+    40
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "static image/media": 5,
+    "stylesheet": 3,
+    "image optimizer": 7,
+    "other": 1,
+    "script chunk": 20,
+    "font": 2,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/login": {
+   "total": 31,
+   "prefetch": 0,
+   "totals": [
+    31,
+    31,
+    31
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 19,
+    "font": 2,
+    "static image/media": 5
+   },
+   "external": 0
+  },
+  "/discover": {
+   "total": 44,
+   "prefetch": 0,
+   "totals": [
+    44,
+    44,
+    44
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 27,
+    "font": 2,
+    "static image/media": 9,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/learn": {
+   "total": 40,
+   "prefetch": 0,
+   "totals": [
+    40,
+    40,
+    40
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "static image/media": 12,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 20,
+    "font": 2,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/events": {
+   "total": 33,
+   "prefetch": 0,
+   "totals": [
+    33,
+    33,
+    33
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 21,
+    "font": 2,
+    "static image/media": 5
+   },
+   "external": 0
+  },
+  "/market": {
+   "total": 38,
+   "prefetch": 0,
+   "totals": [
+    38,
+    37,
+    38
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 21,
+    "font": 2,
+    "static image/media": 9
+   },
+   "external": 0
+  },
+  "/dashboard": {
+   "total": 42,
+   "prefetch": 0,
+   "totals": [
+    42,
+    42,
+    42
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 23,
+    "font": 2,
+    "static image/media": 11,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/vault": {
+   "total": 49,
+   "prefetch": 0,
+   "totals": [
+    49,
+    49,
+    49
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 26,
+    "font": 2,
+    "static image/media": 15,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/vault/item/sim_item_1": {
+   "total": 47,
+   "prefetch": 0,
+   "totals": [
+    47,
+    47,
+    46
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "static image/media": 7,
+    "other": 1,
+    "stylesheet": 3,
+    "script chunk": 32,
+    "font": 2,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/museum": {
+   "total": 35,
+   "prefetch": 0,
+   "totals": [
+    35,
+    35,
+    35
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 21,
+    "font": 2,
+    "static image/media": 6,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/portfolio": {
+   "total": 41,
+   "prefetch": 0,
+   "totals": [
+    41,
+    41,
+    41
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 22,
+    "font": 2,
+    "static image/media": 11,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/watchlist": {
+   "total": 39,
+   "prefetch": 0,
+   "totals": [
+    39,
+    39,
+    39
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 25,
+    "font": 2,
+    "static image/media": 6,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/activity": {
+   "total": 40,
+   "prefetch": 0,
+   "totals": [
+    39,
+    40,
+    40
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 21,
+    "font": 2,
+    "static image/media": 11,
+    "API route": 1
+   },
+   "external": 0
+  },
+  "/account": {
+   "total": 37,
+   "prefetch": 0,
+   "totals": [
+    37,
+    37,
+    37
+   ],
+   "prefetches": [
+    0,
+    0,
+    0
+   ],
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 23,
+    "font": 2,
+    "static image/media": 6,
+    "API route": 1
+   },
+   "external": 0
+  }
+ },
+ "warm": {
+  "/dashboard": {
+   "total": 42,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "stylesheet": 3,
+    "other": 1,
+    "script chunk": 23,
+    "font": 2,
+    "static image/media": 11,
+    "API route": 1
+   }
+  },
+  "/vault": {
+   "total": 23,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "script chunk": 6,
+    "other": 1,
+    "static image/media": 15
+   }
+  },
+  "/portfolio": {
+   "total": 16,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "script chunk": 3,
+    "other": 1,
+    "static image/media": 11
+   }
+  },
+  "/museum": {
+   "total": 11,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "script chunk": 3,
+    "other": 1,
+    "static image/media": 6
+   }
+  },
+  "/watchlist": {
+   "total": 12,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "script chunk": 4,
+    "other": 1,
+    "static image/media": 6
+   }
+  },
+  "/dashboard (2nd)": {
+   "total": 13,
+   "prefetch": 0,
+   "by": {
+    "page HTML": 1,
+    "other": 1,
+    "static image/media": 11
+   }
+  }
+ },
+ "idle": {
+  "page": "/ (public home), left open",
+  "seconds": 95,
+  "launchAccessCallsOnLoad": 1,
+  "launchAccessCallsWhileIdle": 0,
+  "otherRequestsWhileIdle": 0
+ },
+ "prefetch": {
+  "page": "/vault with 80 simulated items, scrolled 8 screens",
+  "total": 0,
+  "prefetch": 0,
+  "by": {},
+  "scrolledTo": 3221,
+  "itemLinksOnPage": 80
+ },
+ "navigation": {
+  "/vault": {
+   "urlChangeMs": 131,
+   "contentMs": 486,
+   "requests": 13,
+   "prefetch": 0,
+   "runs": [
+    {
+     "clicked": true,
+     "urlMs": 102,
+     "contentMs": 670,
+     "requests": 13,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 141,
+     "contentMs": 451,
+     "requests": 13,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 131,
+     "contentMs": 486,
+     "requests": 13,
+     "prefetch": 0
+    }
+   ]
+  },
+  "/portfolio": {
+   "urlChangeMs": 124,
+   "contentMs": 373,
+   "requests": 5,
+   "prefetch": 0,
+   "runs": [
+    {
+     "clicked": true,
+     "urlMs": 124,
+     "contentMs": 271,
+     "requests": 5,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 76,
+     "contentMs": 373,
+     "requests": 5,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 164,
+     "contentMs": 436,
+     "requests": 5,
+     "prefetch": 0
+    }
+   ]
+  },
+  "/museum": {
+   "urlChangeMs": 53,
+   "contentMs": 154,
+   "requests": 5,
+   "prefetch": 0,
+   "runs": [
+    {
+     "clicked": true,
+     "urlMs": 59,
+     "contentMs": 167,
+     "requests": 5,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 53,
+     "contentMs": 148,
+     "requests": 5,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 49,
+     "contentMs": 154,
+     "requests": 5,
+     "prefetch": 0
+    }
+   ]
+  },
+  "/dashboard": {
+   "urlChangeMs": 47,
+   "contentMs": 93,
+   "requests": 3,
+   "prefetch": 0,
+   "runs": [
+    {
+     "clicked": true,
+     "urlMs": 55,
+     "contentMs": 84,
+     "requests": 3,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 47,
+     "contentMs": 104,
+     "requests": 3,
+     "prefetch": 0
+    },
+    {
+     "clicked": true,
+     "urlMs": 46,
+     "contentMs": 93,
+     "requests": 3,
+     "prefetch": 0
+    }
+   ]
+  }
+ },
+ "back": {
+  "runs": [
+   {
+    "openedItem": true,
+    "scrollBefore": 900,
+    "scrollAfterBack": 900,
+    "backMs": 181
+   },
+   {
+    "openedItem": true,
+    "scrollBefore": 900,
+    "scrollAfterBack": 900,
+    "backMs": 167
+   },
+   {
+    "openedItem": true,
+    "scrollBefore": 900,
+    "scrollAfterBack": 900,
+    "backMs": 358
+   }
+  ],
+  "backMs": 181,
+  "scrollRestoredInAllRuns": true
+ }
+}

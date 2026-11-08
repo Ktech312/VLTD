@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";

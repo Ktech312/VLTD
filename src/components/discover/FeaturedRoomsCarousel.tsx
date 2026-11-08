@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Glyph } from "@/components/ui/Glyph";

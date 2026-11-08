@@ -5,7 +5,7 @@ import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { Toggle } from "@/components/ui/Toggle";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";

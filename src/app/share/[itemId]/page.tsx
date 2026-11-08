@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { isSupplyItem } from "@/lib/vaultStats";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { Glyph } from "@/components/ui/Glyph";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

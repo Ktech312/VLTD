@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useState } from "react";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
@@ -224,11 +224,11 @@ export default function PublicHomeClient() {
         // temporarily unavailable. We never invent a number as a fallback.
       }
     };
+    // Asked once when the page opens. It used to repeat every 30 seconds for as long as the tab stayed open (about 2,900 requests a day per
+    // open tab); the number is a courtesy on the public page, so it is read once and a reload refreshes it.
     void load();
-    const timer = window.setInterval(load, 30_000);
     return () => {
       alive = false;
-      window.clearInterval(timer);
     };
   }, []);
 

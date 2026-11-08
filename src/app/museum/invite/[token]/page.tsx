@@ -4,7 +4,7 @@ import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromSnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS_WITH_VALUE, PUBLIC_ITEM_COLUMNS_WITH_VALUE_NO_OWNER } from "@/lib/publicItemColumns";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";

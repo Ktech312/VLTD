@@ -5,7 +5,7 @@ import { PillButton, pillClassName } from "@/components/ui/PillButton";
 import { Toggle as Switch } from "@/components/ui/Toggle";
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";

@@ -4,7 +4,7 @@ import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useState } from "react";
 import { useHashTarget } from "@/lib/useHashTarget";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 
 import { MonthlyBars } from "@/components/ui/MonthlyBars";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";

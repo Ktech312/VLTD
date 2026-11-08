@@ -7,7 +7,7 @@ import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { describeGainExclusions, itemGain, summarizeGain } from "@/lib/vaultStats";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine } from "@/lib/insuranceDocs";
 import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";

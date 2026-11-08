@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 

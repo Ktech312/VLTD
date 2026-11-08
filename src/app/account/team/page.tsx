@@ -2,7 +2,7 @@
 
 import { PillSelect } from "@/components/ui/PillSelect";
 import { PillButton } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AccountTabs } from "@/components/account/AccountTabs";

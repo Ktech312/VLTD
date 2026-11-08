@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PillButton } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 
 export const metadata: Metadata = {
   title: "Getting started with VLTD",

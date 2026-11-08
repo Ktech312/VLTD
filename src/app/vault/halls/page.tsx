@@ -13,7 +13,7 @@
 // it's a real search over your data, not a hardcoded pop-culture list.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";

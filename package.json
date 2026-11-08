@@ -44,7 +44,9 @@
     "test:ai-ui": "tsx scripts/test-ai-ui-access.ts",
     "test:insurance-pdf": "tsx scripts/test-insurance-pdf.ts",
     "test:shipping": "tsx scripts/test-shipping-advice.ts",
-    "test:delete-permission": "tsx scripts/test-delete-permission.ts"
+    "test:delete-permission": "tsx scripts/test-delete-permission.ts",
+    "traffic:sim": "node scripts/traffic/fake-supabase.cjs",
+    "traffic:measure": "node scripts/traffic/measure.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

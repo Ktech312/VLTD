@@ -8,7 +8,7 @@
 // blueprint's 10-room, 18-door floor plan, populated with the signed-in
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";

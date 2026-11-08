@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { Glyph } from "@/components/ui/Glyph";
 import {
   fetchActiveAuctions,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { fetchSubjectLeaderboard, type LeaderboardEntry } from "@/lib/registryModel";
 import { Glyph } from "@/components/ui/Glyph";
 

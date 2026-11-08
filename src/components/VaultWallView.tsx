@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";

@@ -2,7 +2,7 @@
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import { fetchAlertsChecked, timeAgo, type AlertItem } from "@/lib/notificationFeed";
 import { CLOUD_WAIT_MS, LoadErrorCard } from "@/components/vault/CloudStatus";

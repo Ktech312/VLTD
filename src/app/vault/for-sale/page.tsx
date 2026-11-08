@@ -2,7 +2,7 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
 

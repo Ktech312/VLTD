@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/AppLink";
 import { useEffect, useState } from "react";
 
 import ReliefForgeClient from "@/components/owner-lab/ReliefForgeClient";
