@@ -113,13 +113,13 @@ export default function PrivacyIdentityCards() {
           <div className="flex-1">
             <div className="text-sm font-black text-text-primary">Public profile</div>
             <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
-              Your vault and exhibitions are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
+              Profile visibility is separate from exhibition sharing. Use each exhibition&apos;s sharing controls to choose who can open it.
             </div>
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--frame-ring)]" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)" }}>
               <AppIcon name="sparkle" size={12} /> Paid feature — coming soon
             </div>
           </div>
-          <Toggle on={isPublic} onChange={() => {}} disabled title="Going incognito is a paid feature" ariaLabel="Public profile" className="mt-0.5" />
+          <Toggle on={isPublic} onChange={() => {}} disabled title="Profile visibility changes are not available yet" ariaLabel="Public profile" className="mt-0.5" />
         </div>
       </section>
 

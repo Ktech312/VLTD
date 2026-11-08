@@ -8,7 +8,8 @@ import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { buildSoldItems, soldStats } from "@/lib/soldItems";
 import { REVIEW_GAP_SHORT, reviewGaps } from "@/lib/vaultReview";
-import { activeItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
+import { activeItems, describeGainExclusions, effectiveMarketValue, hasRecordedCost, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
+import { hasReportCondition, recordedWeeklySalePrice, weeklyMoney, weeklySaleDetail } from "@/lib/weeklyReportFacts";
 
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -39,10 +40,6 @@ function itemCreatedAt(item: VaultItem) {
 
 function hasPhoto(item: VaultItem) {
   return getOrderedImages(item).length > 0 || Boolean(item.imageFrontUrl || item.imageBackUrl || item.imageFrontStoragePath);
-}
-
-function hasCondition(item: VaultItem) {
-  return Boolean(item.grade || item.conditionReason || item.conditionSource);
 }
 
 function valueUpdatedAt(item: VaultItem) {
@@ -136,6 +133,7 @@ export default function WeeklyVaultReportPage() {
   const weekStart = now - WEEK_MS;
 
   const report = useMemo(() => {
+    const owned = activeItems(items);
     const collectionItems = items.filter((item) => item.status !== "WISHLIST");
     const newItems = collectionItems
       .filter((item) => itemCreatedAt(item) >= weekStart)
@@ -144,9 +142,9 @@ export default function WeeklyVaultReportPage() {
       .filter((item) => item.status === "SOLD" || item.soldAt)
       .sort((a, b) => Number(b.soldAt ?? 0) - Number(a.soldAt ?? 0));
     const missingPhoto = collectionItems.filter((item) => !hasPhoto(item));
-    const missingCost = collectionItems.filter((item) => itemCost(item) <= 0);
+    const missingCost = collectionItems.filter((item) => !hasRecordedCost(item));
     const missingValue = collectionItems.filter((item) => itemValue(item) <= 0);
-    const missingCondition = collectionItems.filter((item) => !hasCondition(item));
+    const missingCondition = collectionItems.filter((item) => !hasReportCondition(item));
     // The Insurance tab's own checklist (photo, value, price, identity) over the items you currently own: the same number the Vault and Insurance show.
     const insuranceGaps = activeItems(items).filter((item) => reviewGaps(item).length > 0);
     const forSaleItems = collectionItems.filter((item) => item.status === "FOR_SALE");
@@ -154,7 +152,7 @@ export default function WeeklyVaultReportPage() {
     const staleValuations = collectionItems.filter((item) => itemValue(item) > 0 && valueUpdatedAt(item) > 0 && now - valueUpdatedAt(item) > VALUE_STALE_MS);
 
     const byUniverse = new Map<string, { count: number; value: number }>();
-    collectionItems.forEach((item) => {
+    owned.forEach((item) => {
       const key = universeLabel(item.universe);
       const current = byUniverse.get(key) ?? { count: 0, value: 0 };
       byUniverse.set(key, {
@@ -164,14 +162,15 @@ export default function WeeklyVaultReportPage() {
     });
 
     // What you hold now: sold, wishlist and supply items are not part of it (same as the Vault, Home and Insights).
-    const owned = activeItems(items);
     const ownedSummary = summarizeValues(owned, readValueMode());
     const totalValue = ownedSummary.totalValue;
     const totalCost = ownedSummary.totalCost;
     const valueAdded = newItems.reduce((sum, item) => sum + itemValue(item), 0);
     const newWithValue = newItems.filter((item) => itemValue(item) > 0).length;
     const costAdded = newItems.reduce((sum, item) => sum + itemCost(item), 0);
-    const soldValue = soldItems.reduce((sum, item) => sum + clampMoney(item.soldPrice), 0);
+    const pricedSales = soldItems.filter((item) => recordedWeeklySalePrice(item) !== null);
+    const soldValue = pricedSales.reduce((sum, item) => sum + recordedWeeklySalePrice(item)!, 0);
+    const salesWithoutPrice = soldItems.length - pricedSales.length;
 
     // Health score: % of items that have photo + cost + value + condition
     const total = collectionItems.length;
@@ -203,12 +202,15 @@ export default function WeeklyVaultReportPage() {
       staleValuations,
       totalValue,
       totalCost,
+      recordedCostCount: owned.filter(hasRecordedCost).length,
       valueAdded,
       newWithValue,
       costAdded,
       unrealized,
       ownedCount: owned.length,
       soldValue,
+      pricedSaleCount: pricedSales.length,
+      salesWithoutPrice,
       healthScore: healthScoreRaw,
       unrealizedGain,
       realizedGain,
@@ -255,14 +257,14 @@ export default function WeeklyVaultReportPage() {
         </div>
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`${report.ownedCount} items you own. Purchase cost ${formatPrice(report.totalCost)}`} />
+          <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`${report.ownedCount} items you own. Purchase cost ${report.recordedCostCount ? weeklyMoney(report.totalCost) : "not recorded"}`} />
           <StatCard
             label="Unrealized change"
             value={report.unrealized.eligibleCount > 0 ? (report.unrealizedGain >= 0 ? "+" : "") + formatPrice(report.unrealizedGain) : "—"}
             helper={`On ${report.unrealized.eligibleCount} of ${report.unrealized.totalCount} items, cost basis ${formatPrice(report.unrealized.costBasis)}${describeGainExclusions(report.unrealized) ? `. Not counted: ${describeGainExclusions(report.unrealized)}` : ""}. Sales profit ${report.realizedGain >= 0 ? "+" : ""}${formatPrice(report.realizedGain)} after estimated fees`}
           />
           <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} estimated value of items added (${report.newWithValue} of ${report.newItems.length} have a value). Not a change in value`} />
-          <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${formatPrice(report.soldValue)} sold proceeds`} />
+          <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${report.pricedSaleCount ? `${weeklyMoney(report.soldValue)} sold proceeds` : "No sale prices recorded"}${report.salesWithoutPrice ? ` · ${report.salesWithoutPrice} without a recorded sale price` : ""}`} />
           <StatCard label="For Sale" value={String(report.forSaleItems.length)} helper="Ready for listing review" />
           <StatCard label="Public Items" value={String(report.publicItems.length)} helper={`${report.collectionItems.length - report.publicItems.length} private`} />
           <StatCard label="Missing Condition" value={String(report.missingCondition.length)} helper="Grade or condition note needed" />
@@ -295,7 +297,7 @@ export default function WeeklyVaultReportPage() {
                 <div className="mb-2 text-sm font-semibold">Sold items</div>
                 <div className="space-y-2">
                   {report.soldItems.slice(0, 8).map((item) => (
-                    <ItemRow key={item.id} item={item} detail={`Sold for ${formatPrice(clampMoney(item.soldPrice))}`} />
+                    <ItemRow key={item.id} item={item} detail={weeklySaleDetail(item)} />
                   ))}
                   {report.soldItems.length === 0 ? (
                     <div className="rounded-[14px] bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
