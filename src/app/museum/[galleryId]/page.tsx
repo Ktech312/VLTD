@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
-import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
+import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode, accessLabel } from "@/lib/galleryAccess";
 import { buildPublicSnapshot, isHiddenInExhibits, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -44,12 +44,6 @@ import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
 const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
 const GALLERY_DRAFT_CACHE_PREFIX = "vltd_gallery_editor_draft_v1";
-
-function visibilityLabel(v: Gallery["visibility"]) {
-  if (v === "LOCKED") return "Locked";
-  if (v === "INVITE") return "Invite Only";
-  return "Public";
-}
 
 function itemSubtitle(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" - ");
@@ -893,7 +887,7 @@ export default function GalleryPage() {
           <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
                   <div className="mb-2 flex flex-wrap justify-end gap-1 sm:absolute sm:right-0 sm:top-0 sm:z-10 sm:mb-0 sm:flex-col sm:items-end">
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
-                      {visibilityLabel(draft.visibility)}
+                      {accessLabel(draft)}
                     </span>
 
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">

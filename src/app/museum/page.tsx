@@ -21,7 +21,7 @@ import {
   updateGallery,
   type Gallery,
 } from "@/lib/galleryModel";
-import { applyAccessMode } from "@/lib/galleryAccess";
+import { applyAccessMode, accessLabel } from "@/lib/galleryAccess";
 import { showToast } from "@/lib/toast";
 import { getGalleryLimits } from "@/lib/galleryTier";
 import { getUserBonusGalleries } from "@/lib/referral";
@@ -36,12 +36,6 @@ import { getMyAdminRole } from "@/lib/adminAuth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
-
-function visibilityLabel(v: Gallery["visibility"]) {
-  if (v === "LOCKED") return "Locked";
-  if (v === "INVITE") return "Invite Only";
-  return "Public";
-}
 
 function stateLabel(v: Gallery["state"]) {
   return v === "STORAGE" ? "Storage" : "Active";
@@ -907,7 +901,7 @@ export default function MuseumPage() {
                         <div className="flex items-center gap-1 text-[10px] text-white/70">
                           {itemCount} {itemCount === 1 ? "item" : "items"} <span className="opacity-60">·</span>
                           <AppIcon name="globe" size={11} strokeWidth={1.8} className="opacity-80" />
-                          {visibilityLabel(gallery.visibility)}
+                          {accessLabel(gallery)}
                         </div>
                       </div>
                     </div>
@@ -1018,7 +1012,7 @@ export default function MuseumPage() {
                             <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>{g.title}</h2>
                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "var(--data-color)" : "var(--theme-gold)" }}>
                               <AppIcon name="globe" size={13} strokeWidth={1.8} />
-                              {visibilityLabel(g.visibility)}
+                              {accessLabel(g)}
                             </span>
                           </div>
                           <button
@@ -1092,7 +1086,7 @@ export default function MuseumPage() {
                             <AppIcon name="globe" size={16} strokeWidth={1.8} className="mt-0.5 text-[color:var(--muted)]" />
                             <div>
                               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Privacy &amp; access</div>
-                              <div className="text-sm font-semibold text-text-primary">{visibilityLabel(g.visibility)}</div>
+                              <div className="text-sm font-semibold text-text-primary">{accessLabel(g)}</div>
                               <div className="text-[11px] text-[color:var(--muted)]">{g.visibility === "PUBLIC" ? "Anyone can view this exhibition." : g.visibility === "INVITE" ? "Only invited people can view." : "Only you can view this exhibition."}</div>
                             </div>
                           </div>
@@ -1236,8 +1230,8 @@ export default function MuseumPage() {
               className={`mt-2 w-auto ${nativeSelectClass}`}
             >
               <option value="PUBLIC">Public</option>
-              <option value="INVITE">Invite Only</option>
-              <option value="LOCKED">Locked</option>
+              <option value="INVITE">Guest View or Registered Users</option>
+              <option value="LOCKED">Private</option>
             </select>
 
             <label className="mt-4 block text-xs font-semibold tracking-[0.16em] text-[color:var(--muted2)]">

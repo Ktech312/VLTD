@@ -11,6 +11,12 @@ export const ACCESS_PILLS: { mode: GalleryAccessPillMode; label: string }[] = [
   { mode: "registered_users", label: "Registered Users" },
 ];
 
+/** The word shown on cards and headers: the same words as the four choices (Private, Public, Guest View, Registered Users). */
+export function accessLabel(gallery: Gallery | null | undefined): string {
+  const mode = getAccessMode(gallery);
+  return mode === "private" ? "Private" : mode === "guest_view" ? "Guest View" : mode === "registered_users" ? "Registered Users" : "Public";
+}
+
 export function getAccessMode(gallery: Gallery | null | undefined): GalleryAccessPillMode {
   if (!gallery) return "private";
   if (gallery.guestViewMode === "guest") return "registered_users";
