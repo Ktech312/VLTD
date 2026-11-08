@@ -8,11 +8,12 @@ import { getOnboardingStatus, signInWithGoogle, signInWithPassword } from "@/lib
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import VltdLogo from "@/components/VltdLogo";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
+import { safeLoginReturn } from "@/lib/loginReturn";
 
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextUrl = useMemo(() => searchParams.get("next") || "/dashboard", [searchParams]);
+  const nextUrl = useMemo(() => safeLoginReturn(searchParams.get("next")), [searchParams]);
   // Say which action needs the account, so a visitor who was sent here knows why (and that they will land back on it).
   const whyLogin = useMemo(() => {
     if (!searchParams.get("next")) return "";

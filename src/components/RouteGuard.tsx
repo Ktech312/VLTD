@@ -60,7 +60,10 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
       if (event === "SIGNED_OUT") {
         const had = knownUser;
         knownUser = null;
-        if (had && routeAccess(window.location.pathname) !== "public") window.location.replace("/login");
+        if (had && routeAccess(window.location.pathname) !== "public") {
+          const returnTo = window.location.pathname + window.location.search + window.location.hash;
+          window.location.replace(`/login?next=${encodeURIComponent(returnTo)}`);
+        }
         return;
       }
       if (uid) {
@@ -117,7 +120,7 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
 
       if (!status.isAuthenticated) {
         setupOkUntil = 0;
-        const query = typeof window !== "undefined" ? window.location.search : "";
+        const query = typeof window !== "undefined" ? window.location.search + window.location.hash : "";
         router.replace(`/login?next=${encodeURIComponent(here + query)}`);
         return;
       }

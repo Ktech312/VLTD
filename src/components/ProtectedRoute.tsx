@@ -53,7 +53,8 @@ export default function ProtectedRoute({
         if (!status.isAuthenticated) {
           setAllowed(false);
           setLoading(false);
-          router.replace(`/login?next=${encodeURIComponent(pathname || "/")}`);
+          const suffix = typeof window !== "undefined" ? window.location.search + window.location.hash : "";
+          router.replace(`/login?next=${encodeURIComponent((pathname || "/") + suffix)}`);
           return;
         }
 
