@@ -2395,7 +2395,12 @@ export default function AddPage() {
       }
     } catch (error) {
       if (isFreeTierLimitError(error)) { setLimitHit(true); }
-      else setStatus(error instanceof Error ? error.message : "Failed to save item.");
+      else {
+        // The alert strip above only shows messages it recognises, so a storage or network error in its own words (for example a
+        // permission message) used to leave the person with a Save that did nothing. Always say it plainly; the detail follows.
+        const detail = error instanceof Error ? error.message.trim() : "";
+        setStatus(`Couldn't save this item. Your photo and details are still here, so try Save again.${detail ? ` (${detail})` : ""}`);
+      }
     } finally {
       setIsSaving(false);
     }
