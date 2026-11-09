@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "@/components/ui/AppLink";
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -655,7 +655,18 @@ const RATIO_DIMS: Record<ExportRatio, { w: number; h: number } | null> = {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function FramesPage() {
-  const [items] = useState<VaultItem[]>(() => loadItems());
+  const [items, setItems] = useState<VaultItem[]>(() => loadItems());
+  // On a device that has not opened the Vault yet the local copy is empty: read the account before saying there is nothing here.
+  const [syncing, setSyncing] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    syncVaultItemsFromSupabaseChecked()
+      .then((r) => { if (!alive) return; setItems(loadItems()); setLoadFailed(!r.ok); })
+      .catch(() => { if (alive) setLoadFailed(true); })
+      .finally(() => { if (alive) setSyncing(false); });
+    return () => { alive = false; };
+  }, []);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [frame, setFrame] = useState<FrameType>("slab");
@@ -790,7 +801,7 @@ export default function FramesPage() {
           <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
             {filtered.length === 0 && (
               <div style={{ padding: "24px 16px", textAlign: "center", fontSize: 13, color: "#888" }}>
-                {items.length === 0 ? "No items in vault yet." : "No matches."}
+                {items.length === 0 ? (syncing ? "Loading your vault…" : loadFailed ? "Couldn't load your vault. Check your connection and reload this page." : "No items in vault yet.") : "No matches."}
               </div>
             )}
             {filtered.map((item) => (
@@ -803,7 +814,7 @@ export default function FramesPage() {
             ))}
           </div>
           <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border, #e0ddd5)", fontSize: 11, color: "#888" }}>
-            {items.length} item{items.length !== 1 ? "s" : ""} in vault
+            {items.length === 0 && syncing ? "Loading…" : `${items.length} item${items.length !== 1 ? "s" : ""} in vault`}
           </div>
         </div>
 
