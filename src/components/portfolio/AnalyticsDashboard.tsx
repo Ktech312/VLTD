@@ -324,7 +324,9 @@ export function AnalyticsDashboard(props: {
     window.addEventListener("vltd:value-mode", sync);
     return () => window.removeEventListener("vltd:value-mode", sync);
   }, []);
-  const [range, setRange] = useState<TimeRange>("30d");
+  // "All" matches the Insights overview and the universe page this one is opened from. The window filters by when an item was ADDED, so a 30-day
+  // default showed "Items 0 / Cost $0" for any collection older than a month until the person found the All button. A saved choice still wins below.
+  const [range, setRange] = useState<TimeRange>("all");
   const [allocMode, setAllocMode] = useState<AllocationMode>("dollars");
   const [view, setView] = useState<ViewMode>("bars");
   const [q, setQ] = useState("");
