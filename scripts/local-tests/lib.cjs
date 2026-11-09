@@ -1,0 +1,30 @@
+// Local test helper. PREREQUISITES: a LOCAL production build made with NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 (see README), `next start -p 3100`, and
+// `node scripts/traffic/sim-supabase.cjs` running. Every request to a non-local host is failed, so nothing can reach production.
+// Local test helper: browser against the local production build + simulated Supabase. Non-local requests are failed.
+const path = require("path"); const { launch } = require("../traffic/cdp.cjs");
+const BASE = process.env.BASE || "http://localhost:3100"; const SIM = "http://localhost:54321"; const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const U = "11111111-1111-4111-8111-111111111111", P = "22222222-2222-4222-8222-222222222222"; const NL = String.fromCharCode(10);
+const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+const jwt = [b64({ alg: "HS256", typ: "JWT" }), b64({ sub: U, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now() / 1000) + 86400 * 30 }), "sig"].join(".");
+const session = { access_token: jwt, refresh_token: "r", token_type: "bearer", expires_in: 2592000, expires_at: Math.floor(Date.now() / 1000) + 86400 * 30, user: { id: U, aud: "authenticated", role: "authenticated", email: "sim@example.com", app_metadata: {}, user_metadata: {} } };
+let pass = 0, fail = 0; const failures = [];
+const check = (n, ok, d) => { ok ? pass++ : (fail++, failures.push(n)); console.log(ok ? "PASS" : "FAIL", n, ok ? "" : JSON.stringify(d ?? "").slice(0, 500)); };
+const sim = (p, opts) => fetch(SIM + p, opts).then((r) => r.json());
+const seed = (obj) => sim("/__sim/seed", { method: "POST", body: JSON.stringify(obj) });
+const dump = (t) => sim("/__sim/dump?table=" + t);
+async function open(opts = {}) {
+  const c = await launch(0); const { send, evaluate } = c; await send("Page.enable"); await send("Network.enable"); await send("Runtime.enable");
+  await send("Emulation.setDeviceMetricsOverride", { width: opts.width || 1280, height: opts.height || 900, deviceScaleFactor: 1, mobile: !!opts.mobile });
+  const ext = []; await send("Fetch.enable", { patterns: [{ urlPattern: "*" }] });
+  c.on((m) => { if (m.method === "Page.javascriptDialogOpening") { (opts.dialogs = opts.dialogs || []).push(m.params.message); send("Page.handleJavaScriptDialog", { accept: opts.accept !== false }).catch(() => {}); } if (m.method !== "Fetch.requestPaused") return; let host = ""; try { host = new URL(m.params.request.url).host; } catch {} if (!/^(localhost|127\.0\.0\.1)(:|$)/.test(host)) { ext.push(m.params.request.url.slice(0, 80)); send("Fetch.failRequest", { requestId: m.params.requestId, errorReason: "BlockedByClient" }).catch(() => {}); } else send("Fetch.continueRequest", { requestId: m.params.requestId }).catch(() => {}); });
+  await send("Page.navigate", { url: BASE + "/robots.txt" }); await sleep(800);
+  if (opts.signedIn !== false) await evaluate(`localStorage.setItem('vltd-auth', ${JSON.stringify(JSON.stringify(session))}); localStorage.setItem('vltd_active_profile_id_v1', ${JSON.stringify(P)}); localStorage.setItem('vltd-theme', 'deep-vault'); true`);
+  const go = async (p, wait = 6500) => { await send("Page.navigate", { url: BASE + p }); await sleep(wait); };
+  const text = () => evaluate("document.body ? document.body.innerText : ''");
+  const click = (label, exact) => evaluate(`(() => { const t = ${JSON.stringify(label)}; const b = [...document.querySelectorAll("button,a,[role=switch],[role=menuitem]")].find((x) => { const s = (x.getAttribute("aria-label") || x.innerText || "").trim().replace(/\s+/g, " "); return ${exact ? "s === t" : "s.indexOf(t) === 0"} && x.getBoundingClientRect().width > 0; }); if (!b) return false; b.scrollIntoView({ block: "center" }); b.click(); return true; })()`);
+  const mclick = async (label, exact) => { const r = await evaluate("(() => { const t = " + JSON.stringify(label) + "; const ex = " + (exact ? "true" : "false") + "; const b = [...document.querySelectorAll(\"button,a,[role=switch],[role=menuitem],[role=tab]\")].find((x) => { const s = (x.getAttribute(\"aria-label\") || x.innerText || \"\").split(String.fromCharCode(10)).join(\" \").trim(); return (ex ? s === t : s.indexOf(t) === 0) && x.getBoundingClientRect().width > 0; }); if (!b) return null; b.scrollIntoView({ block: \"center\" }); const q = b.getBoundingClientRect(); return JSON.stringify({ x: q.x + q.width / 2, y: q.y + q.height / 2 }); })()"); if (!r) return false; const { x, y } = JSON.parse(r); await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 }); await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 }); return true; };
+  const setField = (sel, v) => evaluate(`(() => { const e = [...document.querySelectorAll(${JSON.stringify(sel)})].find((x) => x.getBoundingClientRect().width > 0); if (!e) return false; const proto = e.tagName === "TEXTAREA" ? HTMLTextAreaElement : e.tagName === "SELECT" ? HTMLSelectElement : HTMLInputElement; Object.getOwnPropertyDescriptor(proto.prototype, "value").set.call(e, ${JSON.stringify(v)}); e.dispatchEvent(new Event(e.tagName === "SELECT" ? "change" : "input", { bubbles: true })); return true; })()`);
+  const dismiss = () => evaluate(`(() => { const b = [...document.querySelectorAll("button")].find((x) => /^(Dismiss)$/i.test((x.getAttribute("aria-label") || x.textContent).trim()) && !x.closest("[data-pwa-banner]")); b && b.click(); })()`);
+  return { c, go, text, click, mclick, setField, dismiss, evaluate, send, ext, close: c.close, opts };
+}
+module.exports = { open, check, sim, seed, dump, sleep, NL, BASE, P, U, results: () => ({ pass, fail, failures }) };

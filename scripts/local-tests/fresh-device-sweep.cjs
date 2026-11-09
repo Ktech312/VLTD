@@ -1,0 +1,4 @@
+// Direct link on a device that has never opened the Vault: does the page read the account, or claim emptiness?
+const L = require("./lib.cjs"); const { NL, sleep } = L;
+const routes = (process.env.ROUTES || "").split(",").filter(Boolean).map((r) => "/" + r.replace(/^[\/]+/, ""));
+(async () => { for (const r of routes) { const s = await L.open({ width: 1280, height: 1200 }); try { await s.go(r, 9500); await s.dismiss(); const t = (await s.text()).split(NL).filter((x) => x.trim()).join(" | ").replace(/\s+/g, " "); const sims = (t.match(/Sim Item \d+/g) || []).length; const empty = /(no items|vault is empty|nothing here|add your first|0 items|Items 0|empty)/i.exec(t); console.log(r.padEnd(34), "simTitles", String(sims).padStart(3), "| emptyWords:", empty ? empty[0] : "-", "|", t.slice(t.indexOf("Level") + 9, t.indexOf("Level") + 150)); } finally { await s.close(); } } process.exit(0); })();

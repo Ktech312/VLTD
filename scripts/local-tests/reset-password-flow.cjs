@@ -1,0 +1,10 @@
+const L = require("./lib.cjs"); const { NL, sleep, sim } = L;
+(async () => { const s = await L.open({ width: 1280, height: 1000 });
+  try { await s.go("/reset-password", 9000);
+    const body = async () => { const t = (await s.text()).split(NL).filter((x) => x.trim()).join(" | "); const i = t.indexOf("Choose a new password"); return t.slice(i < 0 ? 0 : i, (i < 0 ? 0 : i) + 330); };
+    const fill = async (a, b) => { await s.evaluate(`[...document.querySelectorAll("input[type=password]")].forEach((e, i) => e.setAttribute("data-t", String(i)))`); await s.setField("input[data-t='0']", a); await s.setField("input[data-t='1']", b); };
+    const put = async () => ((await sim("/__sim/counts")).counts["PUT /auth/v1/user"] || 0); const p0 = await put();
+    await fill("abc", "abc"); console.log("btn:", await s.mclick("Update password", false)); await sleep(1200); console.log("short ->", await body(), "| PUT", (await put()) - p0);
+    await fill("abcdefgh1", "abcdefgh2"); await s.mclick("Update password", false); await sleep(1200); console.log("mismatch ->", await body(), "| PUT", (await put()) - p0);
+    await fill("abcdefgh1", "abcdefgh1"); await s.mclick("Update password", false); await sleep(2500); console.log("valid ->", await body(), "| PUT", (await put()) - p0, "| path", await s.evaluate("location.pathname"));
+  } finally { await s.close(); } process.exit(0); })();

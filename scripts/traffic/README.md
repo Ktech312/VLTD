@@ -23,3 +23,7 @@ Use it instead of automated sweeps against the live site (a fresh test browser h
 - back: scroll position and speed after opening an item and going Back.
 
 Compare two builds by running the same harness against each (different ports) and diffing the JSON.
+
+## Related
+`scripts/local-tests/` holds browser regression tests that use the newer simulator `scripts/traffic/sim-supabase.cjs` (`npm run local:sim`, `npm run local:test`). The measurements in `results/` were taken with the original `fake-supabase.cjs`, which is kept unchanged so they stay reproducible.
+When you build with the simulated address, set the variables in the build's environment: `.env.local` otherwise bakes the real database address into the bundle.

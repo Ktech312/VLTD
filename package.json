@@ -46,7 +46,9 @@
     "test:shipping": "tsx scripts/test-shipping-advice.ts",
     "test:delete-permission": "tsx scripts/test-delete-permission.ts",
     "traffic:sim": "node scripts/traffic/fake-supabase.cjs",
-    "traffic:measure": "node scripts/traffic/measure.cjs"
+    "traffic:measure": "node scripts/traffic/measure.cjs",
+    "local:sim": "node scripts/traffic/sim-supabase.cjs",
+    "local:test": "node scripts/local-tests/run-all.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
