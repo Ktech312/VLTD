@@ -390,7 +390,7 @@ export default function PricingMvpCard({
   const smallInput = "rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11";
 
   return (
-    <section ref={sectionRef} className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section ref={sectionRef} className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>

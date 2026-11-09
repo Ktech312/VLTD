@@ -170,7 +170,7 @@ export default function ScanPanel({
           </button>
         )}
 
-        <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
+        <div className="grid content-start gap-1.5 rounded-[14px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
           {/* Gold folder-upload icon — centered */}
           <div className="flex justify-center">
             <button

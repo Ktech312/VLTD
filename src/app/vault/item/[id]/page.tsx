@@ -1562,7 +1562,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           {item.status === "FOR_SALE" ? (
             <ExportListingButton item={item} />
           ) : (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[18px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
               <div className="min-w-0 flex-1 basis-[280px]">
                 <div className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">Listing copy</div>
                 <p className="mt-0.5 text-xs leading-snug text-[color:var(--muted)]">

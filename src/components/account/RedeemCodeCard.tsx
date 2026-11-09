@@ -62,14 +62,14 @@ export function RedeemCodeCard() {
           aria-label="Redemption code"
           autoCapitalize="characters"
           autoComplete="off"
-          className="h-11 rounded-[10px] bg-[color:var(--pill)] px-4 text-sm font-bold tracking-[0.14em] ring-1 ring-[color:var(--border)] focus:outline-none"
+          className="h-11 rounded-[6px] bg-[color:var(--pill)] px-4 text-sm font-bold tracking-[0.14em] ring-1 ring-[color:var(--border)] focus:outline-none"
           style={{ color: "var(--fg)" }}
         />
         <button
           type="button"
           onClick={handleRedeem}
           disabled={!code.trim() || busy}
-          className="h-11 rounded-[10px] px-5 text-sm font-bold transition disabled:opacity-40"
+          className="h-11 rounded-[6px] px-5 text-sm font-bold transition disabled:opacity-40"
           style={{
             background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
             color: "#0B0B0B",

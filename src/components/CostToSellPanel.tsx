@@ -93,7 +93,7 @@ export default function CostToSellPanel({
   const hasPrice = payout.gross > 0;
 
   return (
-    <section aria-label="Cost to sell" className="rounded-[18px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+    <section aria-label="Cost to sell" className="rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <div className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">Cost to Sell</div>
         <div className="text-[11px] text-[color:var(--muted)]">Try first: <span className="font-semibold text-[color:var(--theme-gold)]">{CHANNEL_LABEL[advice.suggested]}</span></div>

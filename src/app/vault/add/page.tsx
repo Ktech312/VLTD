@@ -2414,7 +2414,7 @@ export default function AddPage() {
   return (
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : "pb-20 sm:pb-4"}`}>
-        <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 px-3 py-2 backdrop-blur">
+        <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[14px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 px-3 py-2 backdrop-blur">
           <div className="flex items-center justify-between gap-3 pr-24">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold">Add</h1>
@@ -2501,7 +2501,7 @@ export default function AddPage() {
               />
             </div>
 
-              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
                 <div className="flex items-center justify-between">
                   <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
                     BASIC ITEM RECORD
@@ -2604,7 +2604,7 @@ export default function AddPage() {
 
         </div>
 
-        <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-3 sm:p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="w-full max-w-5xl mx-auto rounded-[14px] bg-[color:var(--surface)] p-3 sm:p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={detailLabel("subtitle", "Subtitle / Set")} locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
@@ -2850,7 +2850,7 @@ export default function AddPage() {
                 </PillButton>
               </div>
 
-              <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-[color:var(--theme-card)] p-2 ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 min-h-0 overflow-hidden rounded-[14px] bg-[color:var(--theme-card)] p-2 ring-1 ring-[color:var(--border)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedMediaImage.previewUrl}
