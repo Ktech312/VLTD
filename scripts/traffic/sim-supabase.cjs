@@ -1,4 +1,5 @@
 // Simulated Supabase for local tests (in-memory, PostgREST-like). Nothing here talks to the real service.
+//  - SIM_USER_EMAIL sets the signed-in simulated user's email (use an owner address to see owner-only screens locally).
 //  - auth: any token is the simulated user.  - REST: select/eq/neq/in/is/gt/gte/lt/lte/ilike/order/limit/offset, insert, upsert (on_conflict / merge-duplicates), patch, delete.
 //  - /__sim/fail?rest=1 makes every REST table call answer 503 (rest=0 restores); /__sim/missing-col?names=a,b answers 42703 for those columns; /__sim/selects shows the last column list per table.
 //  - storage: uploads are accepted (bytes dropped), public/sign URLs answer a 1x1 png; /__sim/fail?storage=1 makes storage answer 500, ?storage=0 restores it.
@@ -16,7 +17,7 @@ T.seasonal_themes = [{ id: uuid(), name: "Simulated Season", slug: "sim-season",
 T.lounge_posts = [{ id: uuid(), profile_id: "33333333-3333-4333-8333-333333333333", kind: "post", body: "A sample post from another simulated collector.", title: "Sample thread", category: "General", score: 0, comment_count: 0, hidden_at: null, created_at: new Date(now - day).toISOString() }];
 T.profiles.push({ id: "33333333-3333-4333-8333-333333333333", user_id: "44444444-4444-4444-8444-444444444444", display_name: "Other Collector", username: "other_collector", profile_type: "personal", onboarding_completed: true, is_public: true, avatar_emoji: "key", tier: "FULL", created_at: "2026-01-01T00:00:00Z" });
 const INITIAL = JSON.stringify(T);
-const user = { id: U, aud: "authenticated", role: "authenticated", email: "sim@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
+const user = { id: U, aud: "authenticated", role: "authenticated", email: process.env.SIM_USER_EMAIL || "sim@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*", "access-control-expose-headers": "*" };
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 function rows(table) { if (table === "public_vault_items") return (T.vault_items || []).filter((r) => r.is_public === true); return (T[table] = T[table] || []); }

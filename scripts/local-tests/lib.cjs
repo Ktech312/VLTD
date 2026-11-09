@@ -6,7 +6,7 @@ const BASE = process.env.BASE || "http://localhost:3100"; const SIM = "http://lo
 const U = "11111111-1111-4111-8111-111111111111", P = "22222222-2222-4222-8222-222222222222"; const NL = String.fromCharCode(10);
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
 const jwt = [b64({ alg: "HS256", typ: "JWT" }), b64({ sub: U, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now() / 1000) + 86400 * 30 }), "sig"].join(".");
-const session = { access_token: jwt, refresh_token: "r", token_type: "bearer", expires_in: 2592000, expires_at: Math.floor(Date.now() / 1000) + 86400 * 30, user: { id: U, aud: "authenticated", role: "authenticated", email: "sim@example.com", app_metadata: {}, user_metadata: {} } };
+const session = { access_token: jwt, refresh_token: "r", token_type: "bearer", expires_in: 2592000, expires_at: Math.floor(Date.now() / 1000) + 86400 * 30, user: { id: U, aud: "authenticated", role: "authenticated", email: process.env.SIM_USER_EMAIL || "sim@example.com", app_metadata: {}, user_metadata: {} } };
 let pass = 0, fail = 0; const failures = [];
 const check = (n, ok, d) => { ok ? pass++ : (fail++, failures.push(n)); console.log(ok ? "PASS" : "FAIL", n, ok ? "" : JSON.stringify(d ?? "").slice(0, 500)); };
 const sim = (p, opts) => fetch(SIM + p, opts).then((r) => r.json());
