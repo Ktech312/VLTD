@@ -250,12 +250,13 @@ export async function toggleFavorite({
   return setFavoriteState({ contentType, contentId, favorited: !current, metadata });
 }
 
-export async function listViewerFavorites() {
+/** Same list, but says whether the database really answered, so a page never shows "no favorites" for an unreachable account. */
+export async function listViewerFavoritesChecked(): Promise<{ records: FavoriteRecord[]; ok: boolean }> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return [] as FavoriteRecord[];
+  if (!supabase) return { records: [], ok: true };
 
   const identity = await getFavoriteIdentity();
-  if (!identity) return [] as FavoriteRecord[];
+  if (!identity) return { records: [], ok: true };
 
   let query = supabase
     .from(FAVORITES_TABLE)
@@ -267,6 +268,10 @@ export async function listViewerFavorites() {
   else query = query.eq("anonymous_id", filter.anonymous_id);
 
   const { data, error } = await query;
-  if (error || !Array.isArray(data)) return [];
-  return data as FavoriteRecord[];
+  if (error || !Array.isArray(data)) return { records: [], ok: false };
+  return { records: data as FavoriteRecord[], ok: true };
+}
+
+export async function listViewerFavorites() {
+  return (await listViewerFavoritesChecked()).records;
 }

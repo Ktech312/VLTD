@@ -1451,6 +1451,10 @@ function readStoredGallerySnapshot() {
   }
 }
 
+// Whether the last download of the account's exhibitions failed, so a page can say "could not load" instead of showing an empty list.
+let lastGalleryHydrationFailed = false;
+export function galleriesHydrationFailed(): boolean { return lastGalleryHydrationFailed; }
+
 async function hydrateLocalGalleriesFromSupabase(force = false) {
   if (typeof window === "undefined") return;
   // A request that is already running for someone else (who has since signed out or been replaced) is not reused.
@@ -1483,8 +1487,10 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
 
     if (error || !Array.isArray(data)) {
       if (error) console.error("Failed to hydrate galleries from Supabase:", error);
+      lastGalleryHydrationFailed = true;
       return;
     }
+    lastGalleryHydrationFailed = false;
 
     let remote = data
       .map((row) => normalizeSupabaseGallery(row))
@@ -1573,6 +1579,7 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       lastSupabaseHydrationAt = Date.now();
     } catch (error) {
       console.error("Unexpected Supabase gallery hydration error:", error);
+      lastGalleryHydrationFailed = true;
     } finally {
       if (supabaseHydrationInFlight === thisRun.current) supabaseHydrationInFlight = null;
     }

@@ -17,6 +17,7 @@ import Link from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { LoadErrorCard } from "@/components/vault/CloudStatus";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Glyph } from "@/components/ui/Glyph";
@@ -25,7 +26,8 @@ import { universePlaceholder } from "@/lib/itemPlaceholder";
 import {
   loadItems,
   saveItemsBatch,
-  syncVaultItemsFromSupabase,
+  resetCloudBackoff,
+  syncVaultItemsFromSupabaseChecked,
   getPrimaryImageUrl,
   type VaultItem,
 } from "@/lib/vaultModel";
@@ -251,6 +253,8 @@ export default function VaultHallsPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [syncing, setSyncing] = useState(true);
+  // The account could not be reached: with nothing on this device that is "could not load", never "your halls are empty".
+  const [cloudFailed, setCloudFailed] = useState(false);
 
   const [terms, setTerms] = useState<string[]>([]);
   const [universe, setUniverse] = useState<UniverseKey | "">("");
@@ -268,9 +272,9 @@ export default function VaultHallsPage() {
     setItems(loadItems());
     setGalleries(loadGalleries());
     setSyncing(true);
-    syncVaultItemsFromSupabase()
-      .then(() => setItems(loadItems()))
-      .catch(console.error)
+    syncVaultItemsFromSupabaseChecked()
+      .then((r) => { setItems(loadItems()); setCloudFailed(!r.ok); })
+      .catch((e) => { console.error(e); setCloudFailed(true); })
       .finally(() => setSyncing(false));
   }
 
@@ -453,7 +457,10 @@ export default function VaultHallsPage() {
 
         {/* Body */}
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          {isEmptyVault && !syncing && (
+          {isEmptyVault && !syncing && cloudFailed && (
+            <LoadErrorCard what="halls" onRetry={() => { resetCloudBackoff(); refresh(); }} />
+          )}
+          {isEmptyVault && !syncing && !cloudFailed && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <Glyph name="building" size={56} className="text-[color:var(--muted2)]" />
               <h2 className="mt-6 text-2xl font-black text-[color:var(--fg)]">Your halls are empty</h2>

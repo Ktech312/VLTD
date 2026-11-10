@@ -6,7 +6,8 @@ import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "@/components/ui/AppLink";
 import { useEffect, useMemo, useState } from "react";
 
-import { listViewerFavorites, type FavoriteRecord } from "@/lib/favorites";
+import { listViewerFavoritesChecked, type FavoriteRecord } from "@/lib/favorites";
+import { LoadErrorCard } from "@/components/vault/CloudStatus";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
@@ -157,6 +158,8 @@ export default function FavoritesPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [visibleCounts, setVisibleCounts] = useState<Map<string, number>>(new Map());
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("saved");
@@ -165,16 +168,18 @@ export default function FavoritesPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [records] = await Promise.all([listViewerFavorites()]);
+      setLoading(true);
+      const { records, ok } = await listViewerFavoritesChecked();
       if (!active) return;
       setFavorites(records);
+      setLoadFailed(!ok);
       void fetchVisibleItemCounts(records.filter((r) => r.content_type === "gallery").map((r) => String(r.content_id))).then((counts) => { if (active) setVisibleCounts(counts); }).catch(() => undefined);
       setItems(loadItems({ includeAllProfiles: true }));
       setGalleries(loadGalleries({ includeAllProfiles: true }));
       setLoading(false);
     })();
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
   const itemCount = favorites.filter((f) => f.content_type === "item").length;
   const galleryCount = favorites.filter((f) => f.content_type === "gallery").length;
@@ -241,6 +246,8 @@ export default function FavoritesPage() {
           <div className="py-16 text-center text-sm" style={{ color: "var(--muted)" }}>
             Loading favorites…
           </div>
+        ) : favorites.length === 0 && loadFailed ? (
+          <LoadErrorCard what="saved bookmarks" onRetry={() => setAttempt((n) => n + 1)} />
         ) : favorites.length === 0 ? (
           /* Empty state */
           <div

@@ -16,6 +16,7 @@ import {
   createGallery,
   deleteGallery,
   loadGalleries,
+  galleriesHydrationFailed,
   refreshGalleriesFromSupabase,
   saveGalleries,
   updateGallery,
@@ -27,7 +28,8 @@ import { getGalleryLimits } from "@/lib/galleryTier";
 import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { LoadErrorCard } from "@/components/vault/CloudStatus";
 import { totalsValue } from "@/lib/vaultStats";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
@@ -173,6 +175,9 @@ export default function MuseumPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [hasHydratedGalleries, setHasHydratedGalleries] = useState(false);
+  // The account could not be reached: with nothing saved on this device that is "could not load", never "you have no exhibitions".
+  const [galleriesLoadFailed, setGalleriesLoadFailed] = useState(false);
+  const rehydrateRef = useRef<() => void>(() => undefined);
   const [tier, setTier] = useState<Tier>(getTierSafe());
   const [bonusGalleries, setBonusGalleries] = useState(0);
   const [galleryPendingDelete, setGalleryPendingDelete] = useState<Gallery | null>(null);
@@ -364,10 +369,12 @@ export default function MuseumPage() {
       } finally {
         if (active) {
           refresh();
+          setGalleriesLoadFailed(galleriesHydrationFailed());
           setHasHydratedGalleries(true);
         }
       }
     }
+    rehydrateRef.current = () => { setHasHydratedGalleries(false); void hydrateGalleries(); };
     void hydrateGalleries();
 
     function onGalleryChange() {
@@ -776,6 +783,8 @@ export default function MuseumPage() {
                 />
               ))}
             </div>
+          ) : galleries.length === 0 && galleriesLoadFailed ? (
+            <LoadErrorCard what="exhibitions" onRetry={() => { resetCloudBackoff(); rehydrateRef.current(); }} />
           ) : galleries.length === 0 ? (
             <div
               className="rounded-[14px] border p-8 text-center"
