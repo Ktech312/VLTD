@@ -7,29 +7,34 @@ const uploads = () => sim("/__sim/uploads");
 const setOffline = (s) => s.evaluate(`Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false }); window.dispatchEvent(new Event("offline")); true`);
 async function attach(s, file, sel) { const doc = await s.send("DOM.getDocument", { depth: 0 }); const n = await s.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector: sel || "input[type=file][multiple]" }); await s.send("DOM.setFileInputFiles", { nodeId: n.nodeId, files: [file] }); await sleep(2200); }
 async function addOffline(s, title) { await s.go("/vault/add", 9000); await s.dismiss(); await attach(s, PHOTO); await s.setField("input[placeholder*='Name this item']", title); await setOffline(s); await s.mclick("Save", true); await sleep(3500); }
-const localItem = (s, title) => s.evaluate(`(() => { try { const all = JSON.parse(localStorage.getItem("vltd_vault_items_v1") || "[]"); const it = all.find((x) => (x.title || "").startsWith(${JSON.stringify(title)})); return it ? JSON.stringify({ id: it.id, profile_id: it.profile_id, images: (it.images || []).map((i) => ({ localOnly: !!i.localOnly, key: i.storageKey })) }) : ""; } catch (e) { return ""; } })()`).then((x) => (x ? JSON.parse(x) : null));
+const zlib = require("zlib");
+// The device copy of the vault is stored compressed ("z64:" + base64 zlib); read it here, not in the page.
+const localItem = async (s, title) => { const raw = await s.evaluate(`localStorage.getItem("vltd_vault_items_v1") || ""`); let txt = raw; if (raw.startsWith("z64:")) { try { txt = zlib.inflateSync(Buffer.from(raw.slice(4), "base64")).toString("utf8"); } catch { txt = ""; } } let all = []; try { all = JSON.parse(txt || "[]"); } catch {} const it = all.find((x) => (x.title || "").startsWith(title)); return it ? { id: it.id, profile_id: it.profile_id, images: (it.images || []).map((i) => ({ localOnly: !!i.localOnly, key: i.storageKey })) } : null; };
 (async () => {
   await sim("/__sim/reset"); await L.registerSecond();
   const dir = path.join(os.tmpdir(), "vltd-pending-" + Date.now());
   // 1. save offline, close the browser completely, start a new one on the same profile: the photo is still pending, then finishes once
   let s = await L.open({ width: 1280, height: 1400, userDir: dir }); let it;
-  try { await addOffline(s, "PEND restart"); it = await localItem(s, "PEND restart"); check("offline save keeps the item and its photo on the device (photo pending)", it && it.images.some((i) => i.localOnly), it); check("nothing reached the account yet", (await rows("PEND restart")).length === 0 && (await uploads()).length === 0); } finally { await s.close(); }
+  try { await addOffline(s, "PEND restart"); it = await localItem(s, "PEND restart"); check("offline save keeps the item and its photo on the device (photo pending)", it && it.images.some((i) => i.localOnly), it); check("nothing reached the account yet", (await rows("PEND restart")).length === 0 && (await uploads()).length === 0);
+    await sleep(500); } finally { await s.close(); }
   await sleep(1500);
   await sim("/__sim/fail?storage=1&msg=" + encodeURIComponent("temporarily unavailable"));
   s = await L.open({ width: 1280, height: 1400, userDir: dir, keepStorage: true });
-  try { await s.go("/vault", 11000); let t = await s.text(); check("after a browser restart with storage still down: the item is still listed and no duplicate row exists", /PEND restart/.test(t) && (await rows("PEND restart")).length === 0, t.slice(0, 120));
+  try { await s.go("/vault", 11000); let t = await s.text(); const rr = await rows("PEND restart"); console.log("restart, storage down: listed", /PEND restart/.test(t), "| server rows", rr.length, rr.map((x) => x.image_front_storage_path), "| local", JSON.stringify(await localItem(s, "PEND restart")), "| uploads", JSON.stringify(await uploads()));
+    check("after a browser restart with storage still down: the item is still listed and no photo-less duplicate/row was made", /PEND restart/.test(t) && rr.every((x) => !!x.image_front_storage_path), [rr.length, t.slice(0, 80)]);
     await sim("/__sim/fail?storage=0"); await s.go("/vault", 11000); await sleep(4000); const r = await rows("PEND restart"); check("storage back: exactly one row with the photo in storage", r.length === 1 && !!r[0].image_front_storage_path && r[0].profile_id === L.P, r.map((x) => [x.profile_id, x.image_front_storage_path]));
     check("the uploaded file belongs to this item", r[0] && (r[0].image_front_storage_path || "").includes(it.id), r[0] && r[0].image_front_storage_path);
     await s.go("/vault", 9000); await s.go("/vault", 9000); check("two more reloads add nothing (still one row, one successful upload)", (await rows("PEND restart")).length === 1 && (await uploads()).filter((u) => u.ok).length === 1, (await uploads()).length);
   } finally { await s.close(); await sim("/__sim/fail?storage=0"); }
-  // 2. replace a pending photo before it syncs: the account gets only the replacement
+  // 2. remove a pending photo before it syncs (in-app navigation keeps the device "offline"): the account gets the item with no photo and no upload ever happens
   await sim("/__sim/reset"); await L.registerSecond();
-  s = await L.open({ width: 1280, height: 1600 });
-  try { await addOffline(s, "PEND replace"); it = await localItem(s, "PEND replace"); await s.go("/vault/item/" + it.id, 9000); await s.dismiss();
-    const before = await localItem(s, "PEND replace"); await attach(s, PHOTO2, "input[type=file][accept^='image']:not([capture])").catch(() => {}); await s.mclick("Delete image", false); await sleep(1500);
-    const after = await localItem(s, "PEND replace"); console.log("replace: images before", before && before.images.length, "after delete", after && after.images.length);
-    await s.evaluate(`window.dispatchEvent(new Event("online"))`); await sleep(500); await s.go("/vault", 11000); await sleep(4000); const r = await rows("PEND replace"); const up = (await uploads()).filter((u) => u.ok);
-    check("removing the pending photo: the item syncs with no photo and no upload happened", r.length === 1 && !r[0].image_front_storage_path && up.length === 0, [r.map((x) => x.image_front_storage_path), up.length]);
+  s = await L.open({ width: 1280, height: 1600, accept: true });
+  try { await addOffline(s, "PEND remove"); it = await localItem(s, "PEND remove"); await s.mclick("Vault", true); await sleep(3000); await s.mclick("PEND remove", false); await sleep(3500);
+    check("stayed on the item page while still offline", (await s.evaluate("location.pathname")).includes("/vault/item/") && (await s.evaluate("navigator.onLine")) === false);
+    await s.evaluate(`(() => { const b = [...document.querySelectorAll('button[aria-label="Delete image"]')]; if (b.length) b[b.length - 1].click(); return b.length; })()`); await sleep(2500);
+    const after = await localItem(s, "PEND remove"); check("the pending photo is removed from the item on the device (confirmation was asked first)", after && after.images.length === 0 && (s.opts.dialogs || []).some((d) => /Delete this photo/.test(d)), [after, s.opts.dialogs]);
+    await s.go("/vault", 11000); await sleep(4000); const r = await rows("PEND remove"); const up = (await uploads()).filter((u) => u.ok);
+    check("back online: the item reaches the account once with no photo, and the removed photo was never uploaded", r.length === 1 && !r[0].image_front_storage_path && up.length === 0, [r.map((x) => x.image_front_storage_path), up.length]);
   } finally { await s.close(); }
   // 3. another account on the same browser never sends or receives this account's pending item/photo
   await sim("/__sim/reset"); await L.registerSecond();

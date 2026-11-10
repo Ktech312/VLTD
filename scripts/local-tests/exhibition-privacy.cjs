@@ -33,6 +33,7 @@ async function visit(opts, token) {
   // Registered users
   r = await visit({ signedIn: false }, "pub_reg"); console.log("Registered Users, signed out:", r.text.slice(r.text.indexOf("Level") + 9, r.text.indexOf("Level") + 220));
   check("Registered Users: a signed-out visitor is asked to sign in and does not see the items", !/Visible Guitar PV1/.test(r.text) && /(sign in|log in|registered)/i.test(r.text), r.text.slice(0, 220));
+  check("Registered Users: the response a SIGNED-OUT visitor receives does not contain the exhibition's item titles (the page hides them behind sign-in; the lookup must too)", !/Visible Guitar PV1/.test(r.got), r.got.slice(0, 160));
   r = await visit({ signedIn: true }, "pub_reg"); check("Registered Users: a signed-in visitor sees the exhibition", /Visible Guitar PV1/.test(r.text), r.text.slice(0, 200));
   // Storage (draft)
   r = await visit({ signedIn: false }, "pub_store"); check("Storage/draft state: nothing is received or shown", !/Visible Guitar/.test(r.got + r.text), r.text.slice(0, 120));

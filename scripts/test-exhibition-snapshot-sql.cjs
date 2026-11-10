@@ -1,0 +1,43 @@
+// Local PostgreSQL (PGlite) check of supabase/migrations/20261108_exhibition_snapshot_refresh.sql (the SQL the owner ran on 2026-11-09 after the text = uuid fix) and its validation file.
+// The first version of that file compared vault_items.profile_id (text) with galleries.profile_id (uuid) and failed in production; this test keeps that mismatch in the schema so it cannot come back unseen.
+//   node scripts/test-exhibition-snapshot-sql.cjs
+const fs = require("node:fs"), path = require("node:path"), assert = require("node:assert/strict");
+const pgDir = process.env.PGLITE_DIR || "C:/Users/EK/AppData/Local/Temp/claude/C--Users-EK-VLTD--claude-worktrees-quizzical-hamilton-a45b28/6a75e8af-40d2-418c-a6bf-53cb4fed3a4e/scratchpad/pglite";
+const { PGlite } = require(path.join(pgDir, "node_modules/@electric-sql/pglite"));
+const root = path.resolve(__dirname, ".."), read = (d, f) => fs.readFileSync(path.join(root, "supabase", d, f), "utf8");
+const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-4222-8222-222222222222";
+let count = 0; const check = async (name, fn) => { await fn(); count++; console.log("PASS " + name); };
+async function main() { const db = new PGlite(); try {
+  await db.exec(`create role anon nologin; create role authenticated nologin; create schema if not exists public;
+    create table public.vault_items(id text primary key, profile_id text, title text, subtitle text, number text, grade text, year text, description text, category text, category_label text, custom_category_label text, subcategory_label text,
+      image_front_url text, image_back_url text, image_front_storage_path text, primary_image_key text, created_at bigint, notes text, purchase_price numeric, is_public boolean);
+    create table public.galleries(id uuid primary key default gen_random_uuid(), profile_id uuid not null, title text, layout jsonb, exhibition_layout jsonb, updated_at timestamptz default now());
+    insert into public.vault_items(id, profile_id, title, grade, image_front_url, category_label, created_at, notes, purchase_price) values
+      ('i1', '${OWNER}', 'Old title', '9.0', '/old.png', 'Cards', 1, 'PRIVATE NOTE', 123.45),
+      ('i2', '${OWNER}', 'Hidden real title', null, '/h.png', 'Cards', 2, 'x', 1),
+      ('i3', '${OWNER}', 'Not in exhibition', null, '/n.png', 'Cards', 3, 'x', 1),
+      ('o1', '${OTHER}', 'Someone else item', null, '/o.png', 'Cards', 4, 'x', 1);
+    insert into public.galleries(id, profile_id, title, layout, exhibition_layout) values
+      ('a0000000-0000-4000-8000-000000000001', '${OWNER}', 'Mine',
+        '{"itemIds":["i1","i2"],"publicItemSnapshots":[{"id":"i1","title":"STALE title","imageFrontUrl":"/stale.png"},{"id":"i2","title":"Hidden Item","hidden":true},{"id":"o1","title":"Someone else item"}]}',
+        '{"itemIds":["i1","i2"],"publicItemSnapshots":[{"id":"i1","title":"STALE title","imageFrontUrl":"/stale.png"},{"id":"i2","title":"Hidden Item","hidden":true}]}'),
+      ('a0000000-0000-4000-8000-000000000002', '${OWNER}', 'Old layout without snapshots', '{"itemIds":["i1"]}', null);`);
+  // the first version of the migration must fail the way production did (kept as a control so the schema above really contains the mismatch)
+  const first = read("migrations", "20261108_exhibition_snapshot_refresh.sql").replace(/owner_profile text/g, "owner_profile uuid").replace(/new\.profile_id::text/g, "new.profile_id").replace(/g\.profile_id::text = new\.profile_id/g, "g.profile_id = new.profile_id").replace(/,text,text\)/g, ",uuid,text)").replace(/jsonb, uuid, text\);\n/, "jsonb, uuid, text);\n");
+  await check("CONTROL: the original text = uuid version fails with 42883 on this schema (as it did in production)", async () => { await assert.rejects(db.exec(first), (e) => e.code === "42883" || /operator does not exist/.test(String(e.message))); });
+  await db.exec("rollback;").catch(() => {});
+  await db.exec(read("migrations", "20261108_exhibition_snapshot_refresh.sql")); await db.exec(read("migrations", "20261108_exhibition_snapshot_refresh.sql"));
+  const gal = async (id) => (await db.query("select layout, exhibition_layout from public.galleries where id = $1", [id])).rows[0];
+  await check("corrected migration (applied twice): stale visible snapshots are refreshed in layout AND exhibition_layout", async () => { const g = await gal("a0000000-0000-4000-8000-000000000001"); for (const l of [g.layout, g.exhibition_layout]) { const s = l.publicItemSnapshots.find((x) => x.id === "i1"); assert.equal(s.title, "Old title"); assert.equal(s.imageFrontUrl, "/old.png"); } });
+  await check("hidden entries stay hidden: no real title or photo appears for a hidden item", async () => { const g = await gal("a0000000-0000-4000-8000-000000000001"); const h = g.layout.publicItemSnapshots.find((x) => x.id === "i2"); assert.equal(h.hidden, true); assert.equal(h.title, "Hidden Item"); assert.ok(!JSON.stringify(g).includes("Hidden real title")); });
+  await check("another owner's item in the layout is not refreshed from the other profile (profile comparison works as text)", async () => { const g = await gal("a0000000-0000-4000-8000-000000000001"); const o = g.layout.publicItemSnapshots.find((x) => x.id === "o1"); assert.equal(o.title, "Someone else item"); assert.ok(!("imageFrontUrl" in o) || o.imageFrontUrl === undefined); });
+  await check("selection and order unchanged; items not in the exhibition are not added; private fields never copied in", async () => { const g = await gal("a0000000-0000-4000-8000-000000000001"); assert.deepEqual(g.layout.itemIds, ["i1", "i2"]); assert.ok(!JSON.stringify(g).includes("Not in exhibition")); assert.ok(!JSON.stringify(g).includes("PRIVATE NOTE") && !JSON.stringify(g).includes("123.45")); });
+  await check("older exhibition layouts without snapshots are left alone", async () => { const g = await gal("a0000000-0000-4000-8000-000000000002"); assert.deepEqual(g.layout, { itemIds: ["i1"] }); assert.equal(g.exhibition_layout, null); });
+  await check("editing the item later refreshes the exhibition without re-saving it (item-edit trigger, profile compared as text)", async () => { await db.query("update public.vault_items set title = 'Edited title', image_front_url = '/new.png' where id = 'i1'"); const g = await gal("a0000000-0000-4000-8000-000000000001"); const s = g.layout.publicItemSnapshots.find((x) => x.id === "i1"); assert.equal(s.title, "Edited title"); assert.equal(s.imageFrontUrl, "/new.png"); assert.equal(g.exhibition_layout.publicItemSnapshots.find((x) => x.id === "i1").title, "Edited title"); });
+  await check("a private-only edit (notes, price) changes nothing in the exhibition", async () => { const before = JSON.stringify(await gal("a0000000-0000-4000-8000-000000000001")); await db.query("update public.vault_items set notes = 'changed', purchase_price = 5 where id = 'i1'"); assert.equal(JSON.stringify(await gal("a0000000-0000-4000-8000-000000000001")), before); });
+  await check("saving the exhibition itself with stale snapshots refreshes them on the way in (gallery save trigger)", async () => { await db.query("update public.galleries set layout = '{\"itemIds\":[\"i1\"],\"publicItemSnapshots\":[{\"id\":\"i1\",\"title\":\"Typed stale\"}]}' where id = 'a0000000-0000-4000-8000-000000000001'"); assert.equal((await gal("a0000000-0000-4000-8000-000000000001")).layout.publicItemSnapshots[0].title, "Edited title"); });
+  await check("a second owner's exhibition is not touched by the first owner's item edit", async () => { await db.query("insert into public.galleries(id, profile_id, layout) values ('a0000000-0000-4000-8000-000000000003', $1, '{\"itemIds\":[\"o1\"],\"publicItemSnapshots\":[{\"id\":\"o1\",\"title\":\"keep\"}]}')", [OTHER]); await db.query("update public.vault_items set title = 'Edited again' where id = 'i1'"); assert.equal((await gal("a0000000-0000-4000-8000-000000000003")).layout.publicItemSnapshots[0].title, "Someone else item"); });
+  await check("validation SQL (read-only) runs and reports both triggers, locked helpers and no stale snapshots", async () => { const r = await db.query(read("validation", "20261108_exhibition_snapshot_checks.sql").replace(/^--.*$/gm, "")); const v = r.rows[0].validation; assert.equal(v.item_edit_trigger_exists, true); assert.equal(v.gallery_save_trigger_exists, true); assert.equal(v.anonymous_cannot_call_helpers, true); assert.equal(v.members_cannot_call_helpers, true); assert.equal(Number(v.stale_visible_snapshots_layout), 0); assert.equal(Number(v.stale_visible_snapshots_exhibition_layout), 0); });
+  console.log(count + "/" + count + " local PostgreSQL checks passed");
+} finally { await db.close(); } }
+main().catch((e) => { console.error(e); process.exitCode = 1; });
