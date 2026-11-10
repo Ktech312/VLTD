@@ -18,7 +18,7 @@ import { loadGalleries } from "@/lib/galleryModel";
 import { loadSaleHistory } from "@/lib/historyModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { loadSales, type SaleRecord as LegacySaleRecord } from "@/lib/salesHistory";
-import { syncSalesFromSupabase } from "@/lib/salesModel";
+import { loadSales as loadLedgerSales, syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
 import { CLOUD_WAIT_MS, LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { itemImageOrPlaceholder } from "@/lib/itemPlaceholder";
@@ -234,7 +234,7 @@ function buildItemEvents(items: VaultItem[]): ActivityEvent[] {
     }));
 }
 
-function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: Map<string, VaultItem>) {
+function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: Map<string, VaultItem>, ledgerProfit: Map<string, number | undefined> = new Map()) {
   const seen = new Set<string>();
   return sales
     .filter((sale) => {
@@ -251,7 +251,12 @@ function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: 
       const priceKnown = typeof sale.salePrice === "number" && Number.isFinite(sale.salePrice);
       const salePrice = priceKnown ? Number(sale.salePrice) : 0;
       const purchasePrice = Number(sale.purchasePrice ?? item?.purchasePrice ?? 0);
-      const profit = salePrice - purchasePrice;
+      // The ledger's recorded profit is the one Sales History and the Home tile use (it already carries fees and the all-in cost). Recomputing here from the purchase price alone
+      // showed a different profit and percentage for the same sale; only a sale with no recorded profit falls back to price minus purchase price.
+      const recordedProfit = ledgerProfit.get(String(sale.id)) ?? (sale as { profit?: unknown }).profit;
+      const profitKnown = typeof recordedProfit === "number" && Number.isFinite(recordedProfit);
+      const profit = profitKnown ? Number(recordedProfit) : salePrice - purchasePrice;
+      const costBasis = profitKnown ? salePrice - profit : purchasePrice;
       return {
         id: `sold-${sale.id}`,
         kind: "sold",
@@ -263,7 +268,7 @@ function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: 
         actionLabel: "View sale",
         item,
         imageUrl: itemImage(item),
-        previousValue: priceKnown ? purchasePrice : undefined,
+        previousValue: priceKnown ? costBasis : undefined,
         newValue: priceKnown ? salePrice : undefined,
         source: "Sales ledger",
         meta: priceKnown ? `${profit >= 0 ? "+" : ""}${formatMoney(profit)} net` : "Profit unknown",
@@ -556,7 +561,7 @@ export default function ActivityPage() {
     return [
       ...buildLoggedEvents(loggedEvents, itemById),
       ...buildItemEvents(items),
-      ...buildSaleEvents(sales, itemById),
+      ...buildSaleEvents(sales, itemById, new Map(loadLedgerSales().map((entry) => [String(entry.id), entry.profit] as [string, number | undefined]))),
       ...buildGalleryEvents(exhibitionEvents),
       ...buildCommentEvents(recentComments),
     ].sort((a, b) => b.timestamp - a.timestamp);
@@ -738,7 +743,7 @@ export default function ActivityPage() {
                 <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
               </div>
 
-              <div className="mt-7 grid grid-cols-[128px_1fr] gap-5">
+              <div className="mt-7 grid grid-cols-[96px_1fr] gap-3 min-[360px]:grid-cols-[128px_1fr] min-[360px]:gap-5">
                 <ActivityThumb event={selected} large />
                 <div className="min-w-0">
                   <h3 className="text-[22px] font-black leading-tight">{selected.title}</h3>
