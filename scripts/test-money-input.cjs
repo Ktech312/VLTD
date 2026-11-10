@@ -12,6 +12,7 @@ const money = load(compile("src/lib/moneyInput.ts"));
 const sellerFees = load(compile("src/lib/sellerFees.ts"));
 const sold = load(compile("src/lib/soldItems.ts"), {
   "@/lib/auth": { getStoredActiveProfileId: () => "p" },
+  "@/lib/salesModel": { loadSales: () => [], removeSaleById: () => undefined },
   "@/lib/sellerFees": sellerFees,
   "@/lib/taxonomy": { resolveCategoryLabel: () => undefined },
   "@/lib/vaultModel": { getPrimaryImageUrl: () => "", loadItems: () => [] },
