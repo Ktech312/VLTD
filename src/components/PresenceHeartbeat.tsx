@@ -13,6 +13,7 @@ export default function PresenceHeartbeat() {
   useEffect(() => {
     initAuthListener();
     let signedIn = false;
+    let cancelled = false; // this effect was cleaned up before the sign-in answer arrived: start no timer
     let timer: ReturnType<typeof setInterval> | null = null;
 
     async function beat() {
@@ -22,6 +23,7 @@ export default function PresenceHeartbeat() {
     }
 
     void getCurrentUser().then(({ data }) => {
+      if (cancelled) return;
       signedIn = Boolean(data.user);
       if (!signedIn) return;
       void beat();
@@ -35,6 +37,7 @@ export default function PresenceHeartbeat() {
     window.addEventListener("focus", onVisible);
 
     return () => {
+      cancelled = true;
       if (timer) clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);

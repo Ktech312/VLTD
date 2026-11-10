@@ -510,6 +510,7 @@ export async function uploadVaultImageToSupabase(params: {
   // A connection that accepts the photo but never answers used to leave every Save button on "Saving..." for as long as the phone kept waiting.
   // After this long the upload is given up on (the caller shows its message and the person can retry; a late finish only leaves an unused file).
   const UPLOAD_TIMEOUT_MS = 45_000;
+  let giveUpTimer: ReturnType<typeof setTimeout> | undefined;
   const uploadResult = await Promise.race([
     supabase.storage.from(VAULT_IMAGES_BUCKET).upload(path, params.file, {
       cacheControl: "3600",
@@ -519,10 +520,10 @@ export async function uploadVaultImageToSupabase(params: {
           ? params.file.type
           : params.file.type || "image/jpeg",
     }),
-    new Promise<{ error: { message: string } }>((resolve) =>
-      setTimeout(() => resolve({ error: { message: "The photo upload took too long (over 45 seconds). Check your connection and try again." } }), UPLOAD_TIMEOUT_MS)
-    ),
-  ]);
+    new Promise<{ error: { message: string } }>((resolve) => {
+      giveUpTimer = setTimeout(() => resolve({ error: { message: "The photo upload took too long (over 45 seconds). Check your connection and try again." } }), UPLOAD_TIMEOUT_MS);
+    }),
+  ]).finally(() => { if (giveUpTimer) clearTimeout(giveUpTimer); });
   const { error } = uploadResult as { error: { message?: string } | null };
 
   if (error) {

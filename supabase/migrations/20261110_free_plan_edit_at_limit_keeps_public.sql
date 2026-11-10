@@ -9,6 +9,7 @@
 --   * A genuinely new exhibition is limited (4 + bonus) and coerced PUBLIC exactly as before.
 --   * Paid profiles are untouched.
 --   * No table, policy, grant or data changes. Safe to run more than once.
+--   * Who may write an exhibition is decided by the table's row-level rules, which this file does not touch: an edit of someone else's exhibition is refused exactly as before.
 --
 -- THIS FILE DOES NOT DECIDE whether free exhibitions may be private. If you decide they may, run 20261109_gallery_upsert_not_a_new_exhibition.sql INSTEAD (it also keeps a
 -- chosen Private/Guest View/Registered Users setting on edit). Do not run both: the one with the later file name wins, and this one is later.
@@ -42,8 +43,9 @@ begin
     new.visibility := 'PUBLIC';
   end if;
 
-  -- An upsert of an exhibition that already exists is an edit, not a new exhibition: it is never counted against the limit.
-  v_is_edit := exists (select 1 from public.galleries g where g.id = new.id);
+  -- An upsert of an exhibition that already exists IN THIS SAME PROFILE is an edit, not a new exhibition: it is never counted against the limit.
+  -- (An id that exists under another profile is not an edit of this profile's exhibition: it is limit-checked like any other new row, and the table's row-level rules still refuse to let anyone write to someone else's exhibition.)
+  v_is_edit := exists (select 1 from public.galleries g where g.id = new.id and g.profile_id = new.profile_id);
   if v_is_edit then
     return new;
   end if;

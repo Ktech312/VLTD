@@ -8,7 +8,7 @@ import {
   addDocument,
   DOCUMENT_ACCEPT,
   removeDocument,
-  listDocuments,
+  listDocumentsChecked,
   getDocumentViewUrl,
   shareDocument,
   type VaultDocument,
@@ -27,28 +27,41 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function refresh() {
-    setDocs(await listDocuments(itemId));
+  // Only the newest list request may update the screen (a slow answer for an earlier item or an earlier tap must not replace a newer one), and a list that
+  // could not be read leaves what is already shown alone instead of replacing it with an empty list.
+  const listSeq = useRef(0);
+  async function refresh(): Promise<VaultDocument[] | null | undefined> {
+    const seq = ++listSeq.current;
+    const fresh = await listDocumentsChecked(itemId);
+    if (seq !== listSeq.current) return undefined; // superseded
+    if (fresh === null) return null; // could not be read: keep what is shown
+    setDocs(fresh);
+    return fresh;
   }
 
   useEffect(() => {
+    setDocs([]); // never show the previous item's documents under another item
     void refresh();
+    return () => { listSeq.current += 1; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setBusy(true);
     setMessage("Uploading...");
+    const picked = Array.from(files); const added: VaultDocument[] = []; let failure: unknown = null; let notTried = 0;
     try {
-      for (const file of Array.from(files)) {
-        await addDocument(itemId, file);
+      for (let i = 0; i < picked.length; i += 1) {
+        try { added.push(await addDocument(itemId, picked[i])); } catch (error) { failure = error; notTried = picked.length - i - 1; break; }
       }
-      await refresh();
-      setMessage("Saved — private, not visible to anyone else.");
-    } catch (error) {
-      // Files added before the one that failed are saved: show them, then say what went wrong.
+      // Files added before the one that failed ARE saved: show them even if the list cannot be re-read right now, then say what went wrong.
+      if (added.length) setDocs((prev) => [...added.filter((a) => !prev.some((p) => p.id === a.id)), ...prev]);
       await refresh().catch(() => undefined);
-      setMessage(error instanceof Error ? error.message : "Failed to upload document.");
+      if (!failure) { setMessage("Saved — private, not visible to anyone else."); return; }
+      const reason = failure instanceof Error ? failure.message : "Failed to upload document.";
+      const saved = added.length === 1 ? `"${added[0].name}" was saved. ` : added.length > 1 ? `${added.length} files were saved. ` : "";
+      setMessage(saved + reason + (notTried > 0 ? ` ${notTried} other file${notTried === 1 ? " was" : "s were"} not added.` : ""));
     } finally {
       setBusy(false);
     }
@@ -82,7 +95,10 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
     setBusy(true);
     try {
       await removeDocument(doc);
-      await refresh();
+      const fresh = await refresh();
+      // The record was deleted without an error: confirm it is really gone before saying so (a refused delete can look like a success), and if the list cannot be re-read take it off the screen by hand.
+      if (fresh && fresh.some((d) => d.id === doc.id)) throw new Error("Couldn't remove that document: it is still on your account. Try again.");
+      if (!fresh) setDocs((prev) => prev.filter((d) => d.id !== doc.id));
       setMessage("Document removed.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Couldn't remove that document. Try again.");

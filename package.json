@@ -49,7 +49,9 @@
     "traffic:measure": "node scripts/traffic/measure.cjs",
     "local:sim": "node scripts/traffic/sim-supabase.cjs",
     "local:test": "node scripts/local-tests/run-all.cjs",
-    "local:guards": "node scripts/local-tests/traffic-guards.cjs"
+    "local:guards": "node scripts/local-tests/traffic-guards.cjs",
+    "local:build": "node scripts/local-tests/guard/guarded-build.cjs",
+    "local:start": "node scripts/local-tests/guard/start-local.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

@@ -28,15 +28,16 @@ const VIEW_URL_TTL_SECONDS = 60 * 10;
 // in this app.
 const SHARE_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
 
-export async function listDocuments(itemId: string): Promise<VaultDocument[]> {
+/** The item's documents, or null when the list could not be read (so a screen keeps what it already shows instead of showing an empty list). */
+export async function listDocumentsChecked(itemId: string): Promise<VaultDocument[] | null> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return [];
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from("vault_documents")
     .select("id, name, storage_path, content_type, added_at")
     .eq("item_id", itemId)
     .order("added_at", { ascending: false });
-  if (error || !data) return [];
+  if (error || !data) return null;
   return data.map((row) => ({
     id: row.id as string,
     name: row.name as string,
@@ -44,6 +45,10 @@ export async function listDocuments(itemId: string): Promise<VaultDocument[]> {
     contentType: (row.content_type as string) || "application/octet-stream",
     addedAt: new Date(row.added_at as string).getTime(),
   }));
+}
+
+export async function listDocuments(itemId: string): Promise<VaultDocument[]> {
+  return (await listDocumentsChecked(itemId)) ?? [];
 }
 
 /** What an attachment may be: certificates, receipts, appraisals, photos and plain text. Anything else (programs, scripts, archives) is refused with a plain message. */

@@ -25,7 +25,7 @@ declare
   v_base_limit constant integer := 4;
 begin
   -- An upsert of an exhibition that already exists is an edit, not a new exhibition.
-  if exists (select 1 from public.galleries g where g.id = new.id) then
+  if exists (select 1 from public.galleries g where g.id = new.id and g.profile_id = new.profile_id) then
     return new;
   end if;
 

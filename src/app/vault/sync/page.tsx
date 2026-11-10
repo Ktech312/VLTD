@@ -111,7 +111,10 @@ export default function VaultSyncPage() {
     window.addEventListener("vltd:vault-updated", refresh);
     window.addEventListener("storage", refresh);
 
-    const timer = window.setInterval(refresh, 15000);
+    // A tab nobody is looking at has nothing to redraw: skip the tick while hidden and look once when the tab is shown again.
+    const timer = window.setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 15000);
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       window.removeEventListener("online", refresh);
@@ -119,6 +122,7 @@ export default function VaultSyncPage() {
       window.removeEventListener("vltd:vault-updated", refresh);
       window.removeEventListener("storage", refresh);
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refresh, refreshTotals]);
 

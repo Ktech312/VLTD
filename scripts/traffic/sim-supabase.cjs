@@ -10,7 +10,7 @@
 //  - /__sim/seed (POST {table: rows}) replaces tables, /__sim/dump?table=x reads one, /__sim/counts reads request counts.
 const http = require("http"); const fs = require("fs"); const path = require("path");
 const PORT = Number(process.env.SIM_PORT || 54321); const U = "11111111-1111-4111-8111-111111111111", P = "22222222-2222-4222-8222-222222222222";
-const N_ITEMS = Number(process.env.SIM_ITEMS || 80); const counts = {}; const started = Date.now(); let failStorage = false; let failMsg = "simulated storage failure"; let failRest = false; let failWrite = false; const uploads = []; let storageDelay = 0; const extraUsers = {}; let missingCols = []; const selects = {}; let seq = 1000;
+const N_ITEMS = Number(process.env.SIM_ITEMS || 80); const counts = {}; const started = Date.now(); let failStorage = false; let failMsg = "simulated storage failure"; let failRest = false; let failWrite = false; let failDocsRead = false; let ignoreDocsDelete = false; let storageAfter = -1; let storageSeen = 0; const uploads = []; let storageDelay = 0; const extraUsers = {}; let missingCols = []; const selects = {}; let seq = 1000;
 const uuid = () => "00000000-0000-4000-8000-" + String(++seq).padStart(12, "0");
 const T = {};
 T.profiles = [{ id: P, user_id: U, display_name: "Sim Collector", username: "sim_collector", profile_type: "personal", primary_focus: "Sports", avatar_emoji: "key", onboarding_completed: true, is_public: false, tier: "FULL", avatar_url: "__preset:key", created_at: "2026-01-01T00:00:00Z" }];
@@ -38,11 +38,11 @@ const srv = http.createServer((req, res) => {
     const send = (code, obj, extra = {}) => { res.writeHead(code, { ...cors, "content-type": "application/json", ...extra }); res.end(obj === undefined ? "" : JSON.stringify(obj)); };
     const prefer = String(req.headers.prefer || ""); const single = /pgrst\.object/.test(req.headers.accept || "");
     const p = url.pathname;
-    if (p === "/__sim/fail") { failStorage = url.searchParams.get("storage") === "1"; if (url.searchParams.has("rest")) failRest = url.searchParams.get("rest") === "1"; if (url.searchParams.has("write")) failWrite = url.searchParams.get("write") === "1"; if (url.searchParams.has("delay")) storageDelay = Number(url.searchParams.get("delay")) || 0; if (url.searchParams.get("msg")) failMsg = url.searchParams.get("msg"); return send(200, { failStorage, failMsg, failRest, failWrite, storageDelay }); }
+    if (p === "/__sim/fail") { failStorage = url.searchParams.get("storage") === "1"; if (url.searchParams.has("rest")) failRest = url.searchParams.get("rest") === "1"; if (url.searchParams.has("write")) failWrite = url.searchParams.get("write") === "1"; if (url.searchParams.has("docsDeleteIgnored")) ignoreDocsDelete = url.searchParams.get("docsDeleteIgnored") === "1"; if (url.searchParams.has("docsRead")) failDocsRead = url.searchParams.get("docsRead") === "1"; if (url.searchParams.has("storageAfter")) { storageAfter = Number(url.searchParams.get("storageAfter")); storageSeen = 0; } if (url.searchParams.has("delay")) storageDelay = Number(url.searchParams.get("delay")) || 0; if (url.searchParams.get("msg")) failMsg = url.searchParams.get("msg"); return send(200, { failStorage, failMsg, failRest, failWrite, storageDelay }); }
     if (p === "/__sim/missing-col") { missingCols = (url.searchParams.get("names") || "").split(",").filter(Boolean); return send(200, { missingCols }); }
     if (p === "/__sim/uploads") return send(200, uploads);
     if (p === "/__sim/selects") return send(200, selects);
-    if (p === "/__sim/reset") { for (const k of Object.keys(T)) delete T[k]; Object.assign(T, JSON.parse(INITIAL)); for (const k of Object.keys(counts)) delete counts[k]; failStorage = false; failRest = false; failWrite = false; storageDelay = 0; for (const k of Object.keys(extraUsers)) delete extraUsers[k]; missingCols = []; for (const k of Object.keys(selects)) delete selects[k]; uploads.length = 0; return send(200, { reset: true }); }
+    if (p === "/__sim/reset") { for (const k of Object.keys(T)) delete T[k]; Object.assign(T, JSON.parse(INITIAL)); for (const k of Object.keys(counts)) delete counts[k]; failStorage = false; failRest = false; failWrite = false; failDocsRead = false; ignoreDocsDelete = false; storageAfter = -1; storageSeen = 0; storageDelay = 0; for (const k of Object.keys(extraUsers)) delete extraUsers[k]; missingCols = []; for (const k of Object.keys(selects)) delete selects[k]; uploads.length = 0; return send(200, { reset: true }); }
     if (p === "/__sim/counts") return send(200, { since: new Date(started).toISOString(), counts });
     if (p === "/__sim/dump") return send(200, rows(url.searchParams.get("table")));
     if (p === "/__sim/seed") { const b = body() || {}; for (const [t, r] of Object.entries(b)) T[t] = r; return send(200, { ok: true }); }
@@ -54,7 +54,7 @@ const srv = http.createServer((req, res) => {
       if (/\/object\/sign\//.test(p) || /\/object\/upload\/sign/.test(p)) return send(200, { signedURL: p.replace("/object/sign/", "/object/public/") + "?token=sim", signedUrl: "http://localhost:" + PORT + p.replace("/object/sign/", "/object/public/") + "?token=sim" });
       if (/\/object\/(public|authenticated)\//.test(p) && req.method === "GET") { res.writeHead(200, { ...cors, "content-type": "image/png" }); return res.end(PNG); }
       if (/\/object\/list\//.test(p)) return send(200, []);
-      if (req.method === "POST" || req.method === "PUT") { uploads.push({ path: p.replace("/storage/v1/object/", ""), bytes: raw.length, user: (() => { try { return JSON.parse(Buffer.from(String(req.headers.authorization || "").replace(/^Bearer /, "").split(".")[1] || "", "base64url").toString()).sub; } catch { return null; } })(), ok: !failStorage }); if (storageDelay) return setTimeout(() => { if (failStorage) return send(400, { statusCode: "403", error: "Unauthorized", message: failMsg }); send(200, { Key: p.replace("/storage/v1/object/", ""), Id: uuid() }); }, storageDelay); if (failStorage) return send(400, { statusCode: "403", error: "Unauthorized", message: failMsg }); return send(200, { Key: p.replace("/storage/v1/object/", ""), Id: uuid() }); }
+      if (req.method === "POST" || req.method === "PUT") { if (storageAfter >= 0) { failStorage = storageSeen >= storageAfter; storageSeen += 1; } uploads.push({ path: p.replace("/storage/v1/object/", ""), bytes: raw.length, user: (() => { try { return JSON.parse(Buffer.from(String(req.headers.authorization || "").replace(/^Bearer /, "").split(".")[1] || "", "base64url").toString()).sub; } catch { return null; } })(), ok: !failStorage }); if (storageDelay) return setTimeout(() => { if (failStorage) return send(400, { statusCode: "403", error: "Unauthorized", message: failMsg }); send(200, { Key: p.replace("/storage/v1/object/", ""), Id: uuid() }); }, storageDelay); if (failStorage) return send(400, { statusCode: "403", error: "Unauthorized", message: failMsg }); return send(200, { Key: p.replace("/storage/v1/object/", ""), Id: uuid() }); }
       if (req.method === "DELETE") return send(200, []);
       return send(200, {});
     }
@@ -74,6 +74,8 @@ const srv = http.createServer((req, res) => {
     if (p.startsWith("/rest/v1/rpc/")) return send(200, p.endsWith("get_launch_access_status") ? [{ capacity: 50, claimed: 16, remaining: 34, is_open: true }] : []);
     const m = /^\/rest\/v1\/([a-z0-9_]+)$/.exec(p); if (!m) return send(200, {});
     if (failRest) return send(503, { message: "simulated outage" });
+    if (ignoreDocsDelete && m[1] === "vault_documents" && req.method === "DELETE") return send(200, []); /* a delete the database silently refuses (no error, no row removed) */
+    if (failDocsRead && m[1] === "vault_documents" && req.method === "GET") return send(503, { message: "simulated documents read failure" });
     if (failWrite && req.method !== "GET" && req.method !== "HEAD") return send(503, { message: "simulated write failure" });
     const table = m[1]; const params = [...url.searchParams.entries()]; const list = rows(table);
     const sel = url.searchParams.get("select"); if (req.method === "GET" && sel) selects[table] = sel;
