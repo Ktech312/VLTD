@@ -1,0 +1,13 @@
+// How many requests does ONE page load really make? Used to describe the proposed live check honestly (a page load is not one request). Counts, per page, what the browser asks of the app (HTML, scripts,
+// styles, fonts, images, API routes) and of the database, with a cold cache (new browser each time: the upper bound) and in one warm session (what one person clicking through four pages would cause).
+//   node scripts/local-tests/measure-page-loads.cjs [route,route,...]     (local build + simulator; nothing leaves the machine)
+const L = require("./lib.cjs"); const { sleep, sim } = L;
+const PAGES = (process.argv[2] ? process.argv[2].split(",") : ["activity", "reports/weekly", "vault/item/sim_item_1", "favorites"]).map((r) => "/" + r.replace(/^\/+/, ""));
+function counter(s) { const c = { app: 0, appByType: {}, db: 0, dbByTable: {}, other: 0, bytes: 0 }; s.c.on((m) => { if (m.method === "Network.requestWillBeSent") { try { const u = new URL(m.params.request.url); if (u.origin === L.BASE) { c.app++; const t = m.params.type || "Other"; c.appByType[t] = (c.appByType[t] || 0) + 1; } else if (u.origin === "http://localhost:54321") { if (m.params.request.method === "OPTIONS") return; c.db++; const k = m.params.request.method + " " + u.pathname.replace("/rest/v1/", "").replace("/storage/v1/", "storage/"); c.dbByTable[k] = (c.dbByTable[k] || 0) + 1; } else if (u.protocol === "http:" || u.protocol === "https:") c.other++; } catch { /* ignore */ } } else if (m.method === "Network.loadingFinished") c.bytes += m.params.encodedDataLength || 0; }); return c; }
+(async () => {
+  const out = { cold: {}, warm: {} };
+  for (const p of PAGES) { await sim("/__sim/reset"); const s = await L.open({ width: 1280, height: 900 }); try { await s.send("Network.setCacheDisabled", { cacheDisabled: true }); const c = counter(s); await s.go(p, 14000); out.cold[p] = c; console.log("COLD ", p.padEnd(26), "app requests", String(c.app).padStart(3), JSON.stringify(c.appByType), "| database", c.db, "| ~" + Math.round(c.bytes / 1024) + " KB"); } finally { await s.close(); } }
+  await sim("/__sim/reset"); const s = await L.open({ width: 1280, height: 900 }); try { const c = counter(s); for (const p of PAGES) { const before = { app: c.app, db: c.db, bytes: c.bytes }; await s.go(p, 14000); out.warm[p] = { app: c.app - before.app, db: c.db - before.db, kb: Math.round((c.bytes - before.bytes) / 1024) }; console.log("WARM ", p.padEnd(26), JSON.stringify(out.warm[p])); } } finally { await s.close(); }
+  require("fs").writeFileSync(require("path").join(process.env.TRAFFIC_OUT || __dirname, "page-load-requests.json"), JSON.stringify(out, null, 1));
+  console.log(JSON.stringify(L.results())); process.exit(0);
+})();
