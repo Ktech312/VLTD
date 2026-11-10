@@ -2,7 +2,7 @@
 // Usage: node scripts/local-tests/run-all.cjs [name-fragment ...]   (needs the local build on :3100 and sim-supabase on :54321; see README.md)
 const { spawnSync } = require("child_process"); const path = require("path");
 const SIM = process.env.SIM_URL || "http://localhost:54321";
-const TESTS = ["traffic-guards", "seasonal-theme", "lounge-post", "lounge-reply-vote-remove", "lounge-remove-own-only", "marketplace", "marketplace-sort", "add-item-photo-refused", "offline-photo-recovery", "frames-and-insights-defaults"];
+const TESTS = ["traffic-guards","seasonal-theme","lounge-post","lounge-reply-vote-remove","lounge-remove-own-only","marketplace","marketplace-sort","add-item-photo-refused","add-item-photo-save-hardening","offline-photo-recovery","pending-photo-recovery","save-failures","documents","exhibition-privacy","business-permissions","financial-consistency","add-item-fields","dialogs-keyboard","outage-states","api-guards","frames-and-insights-defaults"]; // phone-layouts, contrast, automatic-requests and the inspection scripts are run on their own (they take several minutes)
 const only = process.argv.slice(2); const list = only.length ? TESTS.filter((t) => only.some((o) => t.includes(o))) : TESTS; const rows = [];
 (async () => {
   for (const t of list) {

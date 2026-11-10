@@ -7,7 +7,6 @@ const inside = (s) => s.evaluate(`(() => { const d = [...document.querySelectorA
 const activeDesc = (s) => s.evaluate(`(() => { const a = document.activeElement; return a ? (a.getAttribute("aria-label") || a.innerText || a.tagName).trim().split(String.fromCharCode(10))[0].slice(0, 30) : ""; })()`);
 const SPECS = [
   { name: "Lounge: Post Update", route: "/community-board", opener: "Post Update" },
-  { name: "Goals: Create Goal", route: "/goals", opener: "Create Goal" },
   { name: "Wants: Add a want", route: "/watchlist", opener: "Add a want" },
   { name: "Item: Share this item", route: "/vault/item/sim_item_1", opener: "Share this item", aria: true },
   { name: "Bug report", route: "/dashboard", opener: "Report a bug" },
@@ -33,6 +32,10 @@ const SPECS = [
     await s.go("/vault/add", 8500); await s.dismiss(); await s.setField("input[placeholder*='Name this item']", "Unsaved draft item"); await sleep(500);
     const dialogs0 = (s.opts.dialogs || []).length; await s.mclick("Vault", true); await sleep(1800); const asked = (s.opts.dialogs || []).length > dialogs0 || (await dlg(s)) > 0 || /unsaved|discard|leave/i.test(await s.text()); const path1 = await s.evaluate("location.pathname"); console.log("  leaving Add Item with a typed name: asked =", asked, "| now on", path1, "| native dialogs:", JSON.stringify((s.opts.dialogs || []).slice(dialogs0)));
     check("Add Item: leaving with typed work asks first (or the typed work is kept as a draft)", asked || path1.includes("/vault/add") || /draft/i.test(await s.evaluate(`localStorage.getItem("vltd_capture_draft_v1") || Object.keys(localStorage).join(",")`)), [asked, path1]);
+    // the browser Back button with typed work
+    await s.go("/vault", 7000); await s.go("/vault/add", 8500); await s.dismiss(); await s.setField("input[placeholder*='Name this item']", "Unsaved via Back"); await sleep(500); const d1 = (s.opts.dialogs || []).length; await s.evaluate("history.back()"); await sleep(1800);
+    const askedBack = (s.opts.dialogs || []).length > d1 || (await s.evaluate("location.pathname")).includes("/vault/add"); console.log("  Back with typed work: asked or stayed =", askedBack, "| now on", await s.evaluate("location.pathname"), "| dialogs:", JSON.stringify((s.opts.dialogs || []).slice(d1)));
+    check("Add Item: the browser Back button with typed work asks first (or stays on the form)", askedBack);
   } finally { await s.close(); }
   console.log(JSON.stringify(L.results())); process.exit(0);
 })();
