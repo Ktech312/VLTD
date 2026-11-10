@@ -414,12 +414,12 @@ export default function AccountPage() {
               </p>
 
               {error ? (
-                <div className="mt-5 rounded-[14px] border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                <div role="alert" className="mt-5 rounded-[14px] border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {error}
                 </div>
               ) : null}
               {success ? (
-                <div className="mt-5 rounded-[14px] border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                <div role="status" className="mt-5 rounded-[14px] border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
                   {success}
                 </div>
               ) : null}
@@ -695,7 +695,7 @@ export default function AccountPage() {
               <PillButton variant="active" onClick={() => void handleAvatarSave()} disabled={avatarSaving}>
                 {avatarSaving ? "Saving..." : "Save avatar"}
               </PillButton>
-              {avatarSuccess ? <span className="text-sm text-emerald-400">{avatarSuccess}</span> : null}
+              {avatarSuccess ? <span role="status" className="text-sm text-emerald-400">{avatarSuccess}</span> : null}
             </div>
           </div>
         </section>
@@ -865,7 +865,7 @@ export default function AccountPage() {
               {contactSaving ? "Saving..." : "Save contact info"}
             </PillButton>
             {contactSuccess && (
-              <span className="text-sm text-emerald-400">{contactSuccess}</span>
+              <span role="status" className="text-sm text-emerald-400">{contactSuccess}</span>
             )}
           </div>
         </section>
