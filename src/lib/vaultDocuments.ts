@@ -103,11 +103,16 @@ export async function addDocument(itemId: string, file: File): Promise<VaultDocu
   };
 }
 
+/**
+ * Removes the record first, then the file. If the record cannot be removed nothing else happens and this throws, so the screen never says "removed" for a document that is still
+ * there (and the file is never deleted out from under a record that remains). A file that cannot be removed after its record is gone is unreachable without the record and is left for later.
+ */
 export async function removeDocument(doc: VaultDocument) {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Not signed in — the document was not removed.");
+  const { error } = await supabase.from("vault_documents").delete().eq("id", doc.id);
+  if (error) throw new Error("Couldn't remove that document. Check your connection and try again.");
   await supabase.storage.from(BUCKET).remove([doc.storagePath]).catch(() => {});
-  await supabase.from("vault_documents").delete().eq("id", doc.id);
 }
 
 /** Short-lived link for viewing your own document inside the app. */

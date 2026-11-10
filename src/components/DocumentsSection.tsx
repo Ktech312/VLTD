@@ -46,6 +46,8 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
       await refresh();
       setMessage("Saved — private, not visible to anyone else.");
     } catch (error) {
+      // Files added before the one that failed are saved: show them, then say what went wrong.
+      await refresh().catch(() => undefined);
       setMessage(error instanceof Error ? error.message : "Failed to upload document.");
     } finally {
       setBusy(false);
@@ -82,6 +84,8 @@ export default function DocumentsSection({ itemId }: { itemId: string }) {
       await removeDocument(doc);
       await refresh();
       setMessage("Document removed.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Couldn't remove that document. Try again.");
     } finally {
       setBusy(false);
     }
