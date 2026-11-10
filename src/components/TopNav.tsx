@@ -185,10 +185,14 @@ function TopNavInner() {
       if (!cancelled) setUnreadDmCount(count);
     }
     void refresh();
-    const interval = setInterval(refresh, 30000);
+    // A tab nobody is looking at does not need the unread count: skip the timer while hidden and look once when the tab comes back.
+    const interval = setInterval(() => { if (document.visibilityState === "visible") void refresh(); }, 30000);
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [activeProfileId]);
 
