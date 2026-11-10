@@ -5,7 +5,8 @@ const L = require("./lib.cjs"); const { sleep, check, sim, seed } = L; const fs 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vltd-docrec-")); const mk = (name, bytes) => { const f = path.join(tmp, name); fs.writeFileSync(f, bytes); return f; };
 const A = mk("receipt.pdf", Buffer.from("%PDF-1.4\n%%EOF\n")), B = mk("appraisal.pdf", Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF\n"));
 const ITEM = "sim_item_3"; const recs = async () => (await L.dump("vault_documents")).filter((d) => d.item_id === ITEM);
-const msg = (s) => s.evaluate(`(() => { const b = [...document.querySelectorAll("button")].find((x) => (x.innerText || "").trim() === "Upload file"); if (!b) return ""; const n = b.parentElement && b.parentElement.nextElementSibling; return n && n.tagName === "DIV" ? n.innerText.trim() : ""; })()`);
+const rawMsg = (s) => s.evaluate(`(() => { const b = [...document.querySelectorAll("button")].find((x) => (x.innerText || "").trim() === "Upload file"); if (!b) return ""; const n = b.parentElement && b.parentElement.nextElementSibling; return n && n.tagName === "DIV" ? n.innerText.trim() : ""; })()`);
+const msg = async (s) => { let t = ""; for (let i = 0; i < 40; i++) { t = await rawMsg(s); if (t && !/^Working/.test(t)) return t; await sleep(500); } return t; }; /* wait for the busy label to clear */
 const listed = (s) => s.evaluate(`JSON.stringify([...document.querySelectorAll("button[title='View document'] span.truncate")].map((e) => e.innerText.trim()))`).then(JSON.parse);
 async function pick(s, files) { const doc = await s.send("DOM.getDocument", { depth: 0 }); const n = await s.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector: "input[type=file][accept*='.pdf']" }); await s.send("DOM.setFileInputFiles", { nodeId: n.nodeId, files: Array.isArray(files) ? files : [files] }); await sleep(3000); }
 (async () => {

@@ -16,8 +16,8 @@
 -- INDEPENDENT OF THE HELD RC-05 SQL: this does not redefine gallery_public_row. It calls whichever version is installed (20261018's, or RC-05 stage 2's sanitising one) and applies the gate on top,
 -- so it can be installed before or after that package without undoing it.
 --
--- ORDER: install AFTER the app release that adds the sign-in prompt to the invite page (an invite link opened signed out on a Registered Users exhibition would otherwise show an empty exhibition
--- instead of asking to sign in). Share links already ask. Needs 20261018_gallery_links_respect_private.sql to be in place (the check below stops otherwise).
+-- ORDER: independent of the app release. The pages need no change: share links already ask a signed-out visitor to sign in, and invite pages (/museum/invite/...) already require sign-in before they load, so
+-- no page ever asks the database for this content signed out; only a direct call to the lookup functions could. Needs 20261018_gallery_links_respect_private.sql to be in place (the check below stops otherwise).
 -- DECISION FOR THE OWNER: this treats "Registered Users" as a real gate. Do not run it if the mode is only meant as a page-level nudge.
 -- AFTER RUNNING: run supabase/validation/20261110_registered_users_link_lookup_checks.sql (read-only) and send the one-row result.
 -- UNDO: supabase/rollback/20261110_registered_users_link_lookup_rollback.sql

@@ -18,8 +18,6 @@ import {
   type GalleryPublicItemSnapshot,
 } from "@/lib/galleryModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getCurrentUser } from "@/lib/auth";
-import { PillButton } from "@/components/ui/PillButton";
 import { type VaultItem } from "@/lib/vaultModel";
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
@@ -80,7 +78,6 @@ type PageState =
   | { status: "loading" }
   | { status: "invalid" }
   | { status: "expired" }
-  | { status: "signin"; title: string }
   | { status: "ready"; gallery: Gallery; items: VaultItem[]; permissions: GalleryInvitePermissions };
 
 export default function InviteGalleryPage() {
@@ -117,18 +114,6 @@ export default function InviteGalleryPage() {
       if (typeof inviteToken.expiresAt === "number" && inviteToken.expiresAt < Date.now()) {
         setPageState({ status: "expired" });
         return;
-      }
-
-      // "Registered Users" exhibitions are for signed-in people, on an invite link as on a share link: signed out, the visitor is asked to sign in first
-      // (the database also withholds the items and photos from a signed-out caller of this lookup, so there would be nothing to show).
-      if (gallery.guestViewMode === "guest") {
-        let signedIn = false;
-        try { signedIn = !!(await getCurrentUser())?.data?.user; } catch { /* treated as signed out */ }
-        if (cancelled) return;
-        if (!signedIn) {
-          setPageState({ status: "signin", title: gallery.title });
-          return;
-        }
       }
 
       const permissions: GalleryInvitePermissions = inviteToken.permissions ?? {};
@@ -267,25 +252,6 @@ export default function InviteGalleryPage() {
             <p className="mt-3 text-sm text-[color:var(--muted)]">
               This invite link has expired. Ask the owner for a new link.
             </p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (pageState.status === "signin") {
-    return (
-      <main className={shellClass}>
-        <div className="mx-auto flex max-w-2xl items-center justify-center px-4">
-          <div className="w-full rounded-[14px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">INVITE LINK</div>
-            <h1 className="mt-3 text-2xl font-semibold">{pageState.title}</h1>
-            <p className="mt-3 text-sm text-[color:var(--muted)]">
-              Owner only allows registered users to access this exhibition. Sign in to continue.
-            </p>
-            <div className="mt-6 flex justify-center">
-              <PillButton variant="active" href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`} className="font-black">Create Free Account</PillButton>
-            </div>
           </div>
         </div>
       </main>
