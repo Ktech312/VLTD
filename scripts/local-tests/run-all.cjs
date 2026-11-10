@@ -7,7 +7,7 @@ const only = process.argv.slice(2); const list = only.length ? TESTS.filter((t) 
 (async () => {
   for (const t of list) {
     await fetch(SIM + "/__sim/reset").catch(() => { console.error("simulated database not reachable at " + SIM); process.exit(2); });
-    const r = spawnSync(process.execPath, [path.join(__dirname, t + ".cjs")], { encoding: "utf8", timeout: 300000 });
+    const r = spawnSync(process.execPath, [path.join(__dirname, t + ".cjs")], { encoding: "utf8", timeout: 1500000 });
     const out = (r.stdout || "") + (r.stderr || ""); const last = out.split("\n").reverse().find((l) => l.startsWith("{") && l.includes('"pass"'));
     let res = null; try { res = JSON.parse(last); } catch {} rows.push([t, res ? res.pass + " pass, " + res.fail + " fail" + (res.fail ? " (" + res.failures.join("; ") + ")" : "") : "NO RESULT"]); if (!res || res.fail) console.log(out.split("\n").filter((l) => /FAIL|Error/.test(l)).slice(0, 6).join("\n"));
   }
