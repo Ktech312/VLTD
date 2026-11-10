@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { registerCloudSaveRetry, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
 import { captureIdentity } from "@/lib/sessionGuard";
 import { asRemoved, idNamespaceOf, isRemoved, needsRemovalRecord, restoredFromRemoved } from "@/lib/wantsCore";
 
@@ -202,13 +203,21 @@ function flagExtrasInCloud(id: string) {
   saveWishlist(items.map((w) => (w.id === id ? { ...w, extrasInCloud: true } : w)));
 }
 
+// A want saved here but not yet accepted by the account says so in the shared status pill ("Saved on this device — not in your account yet"), like items,
+// exhibitions and goals. The outbox itself (markUp / markDel) already kept it and re-sent it; only the telling was missing.
+let wantsRetryHooked = false;
+function outboxEmpty(): boolean { const p = readPending(); return p.up.length === 0 && p.del.length === 0; }
+function reportWants(ok: boolean) { if (ok && outboxEmpty()) reportSaved("wants"); else if (!ok) reportPending("wants"); }
+
 async function pushWish(item: WishlistItem): Promise<boolean> {
   markUp(item.id);
+  if (typeof window !== "undefined" && !wantsRetryHooked) { wantsRetryHooked = true; registerCloudSaveRetry(() => syncWishlistFromSupabase()); }
   try {
     const pid = activeProfileId();
     if (!pid) return false;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return false;
+    reportSaving("wants");
     const { extrasInCloud: _local, ...clean } = item; // eslint-disable-line @typescript-eslint/no-unused-vars
     const tiers = [
       { ...wishRow(clean, pid), ...catalogFields(clean), ...extraFields(clean) },
@@ -220,12 +229,15 @@ async function pushWish(item: WishlistItem): Promise<boolean> {
       if (!res.error) {
         clearUp(item.id);
         if (i === 0) flagExtrasInCloud(item.id);
+        reportWants(true);
         return true;
       }
-      if (!isMissingColumn(res.error.message)) return false;
+      if (!isMissingColumn(res.error.message)) { reportWants(false); return false; }
     }
+    reportWants(false);
     return false;
   } catch {
+    reportWants(false);
     return false;
   }
 }
@@ -237,9 +249,10 @@ async function deleteWishRow(id: string) {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
     const { error } = await supabase.from("wishlist").delete().eq("id", id).eq("profile_id", pid);
-    if (!error) clearDel(id);
+    if (!error) { clearDel(id); reportWants(true); } else reportWants(false);
   } catch {
     /* stays in the outbox and is retried */
+    reportWants(false);
   }
 }
 
