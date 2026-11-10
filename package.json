@@ -48,7 +48,8 @@
     "traffic:sim": "node scripts/traffic/fake-supabase.cjs",
     "traffic:measure": "node scripts/traffic/measure.cjs",
     "local:sim": "node scripts/traffic/sim-supabase.cjs",
-    "local:test": "node scripts/local-tests/run-all.cjs"
+    "local:test": "node scripts/local-tests/run-all.cjs",
+    "local:guards": "node scripts/local-tests/traffic-guards.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
