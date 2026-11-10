@@ -8,8 +8,8 @@ import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { buildSoldItems, soldStats } from "@/lib/soldItems";
 import { REVIEW_GAP_SHORT, reviewGaps } from "@/lib/vaultReview";
-import { activeItems, describeGainExclusions, effectiveMarketValue, hasRecordedCost, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
-import { hasReportCondition, recordedWeeklySalePrice, weeklyMoney, weeklySaleDetail } from "@/lib/weeklyReportFacts";
+import { activeItems, describeGainExclusions, effectiveMarketValue, hasExplicitValue, hasRecordedCost, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
+import { hasReportCondition, recordedWeeklySalePrice, weeklyMoney, weeklySaleDetail, weeklySignedMoney } from "@/lib/weeklyReportFacts";
 
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -166,7 +166,7 @@ export default function WeeklyVaultReportPage() {
     const totalValue = ownedSummary.totalValue;
     const totalCost = ownedSummary.totalCost;
     const valueAdded = newItems.reduce((sum, item) => sum + itemValue(item), 0);
-    const newWithValue = newItems.filter((item) => itemValue(item) > 0).length;
+    const newWithValue = newItems.filter((item) => hasExplicitValue(item)).length;
     const costAdded = newItems.reduce((sum, item) => sum + itemCost(item), 0);
     const pricedSales = soldItems.filter((item) => recordedWeeklySalePrice(item) !== null);
     const soldValue = pricedSales.reduce((sum, item) => sum + recordedWeeklySalePrice(item)!, 0);
@@ -260,8 +260,8 @@ export default function WeeklyVaultReportPage() {
           <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`${report.ownedCount} items you own. Purchase cost ${report.recordedCostCount ? weeklyMoney(report.totalCost) : "not recorded"}`} />
           <StatCard
             label="Unrealized change"
-            value={report.unrealized.eligibleCount > 0 ? (report.unrealizedGain >= 0 ? "+" : "") + formatPrice(report.unrealizedGain) : "—"}
-            helper={`On ${report.unrealized.eligibleCount} of ${report.unrealized.totalCount} items, cost basis ${formatPrice(report.unrealized.costBasis)}${describeGainExclusions(report.unrealized) ? `. Not counted: ${describeGainExclusions(report.unrealized)}` : ""}. Sales profit ${report.realizedGain >= 0 ? "+" : ""}${formatPrice(report.realizedGain)} after estimated fees`}
+            value={report.unrealized.eligibleCount > 0 ? weeklySignedMoney(report.unrealizedGain) : "—"}
+            helper={`On ${report.unrealized.eligibleCount} of ${report.unrealized.totalCount} items, cost basis ${formatPrice(report.unrealized.costBasis)}${describeGainExclusions(report.unrealized) ? `. Not counted: ${describeGainExclusions(report.unrealized)}` : ""}. Sales profit ${weeklySignedMoney(report.realizedGain)} after estimated fees`}
           />
           <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} estimated value of items added (${report.newWithValue} of ${report.newItems.length} have a value). Not a change in value`} />
           <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${report.pricedSaleCount ? `${weeklyMoney(report.soldValue)} sold proceeds` : "No sale prices recorded"}${report.salesWithoutPrice ? ` · ${report.salesWithoutPrice} without a recorded sale price` : ""}`} />
