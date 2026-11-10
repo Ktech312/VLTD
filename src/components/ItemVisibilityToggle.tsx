@@ -148,7 +148,7 @@ export default function ItemVisibilityToggle({
           className="vltd-keep-color"
           style={{ filter: `drop-shadow(0 0 3px ${showing ? NEON_GREEN : NEON_RED}) drop-shadow(0 1px 2px rgba(0,0,0,0.6))` }}
         />
-        {showLabel ? <span>{label}</span> : null}
+        {showLabel ? <span className="vltd-visibility-label" data-state={showing ? "shown" : "hidden"}>{label}</span> : null}
       </button>
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
       {confirmNames && typeof document !== "undefined"

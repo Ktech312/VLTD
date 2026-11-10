@@ -476,3 +476,10 @@
 /* Accent colour used as TEXT (for example the active tab label): the theme's own accent on dark pages, a darker mix of it on light pages so small text reaches 4.5:1. */
 :root { --theme-gold-text: var(--theme-gold); }
 .theme-light { --theme-gold-text: color-mix(in srgb, var(--theme-gold) 70%, #000); }
+
+/* Visibility toggle label ("Public" / "Private" / "Shown in exhibit" / "Hidden in exhibit"). The neon red/green is kept exactly on the icon (the owner's pairing);
+   the WORDS use a shade that can be read: neon green on a light theme measured 1.3:1 and the neon red 3.6-4.0:1 (4.5:1 is the minimum for text this small).
+   The repeated class only raises the selector's weight above the light/dark text-colour rules that apply to every span. */
+.theme-light.theme-light.theme-light.theme-light.theme-light.theme-light span.vltd-visibility-label[data-state="shown"] { color: #0b6b00 !important; }
+.theme-light.theme-light.theme-light.theme-light.theme-light.theme-light span.vltd-visibility-label[data-state="hidden"] { color: #c4001f !important; }
+.theme-dark.theme-dark.theme-dark.theme-dark.theme-dark.theme-dark span.vltd-visibility-label[data-state="hidden"] { color: #ff5c75 !important; }
