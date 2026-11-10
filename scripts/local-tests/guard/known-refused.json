@@ -1,0 +1,3 @@
+{
+  "vltd.app": "The public item page (/share/<id>) shows its share-card image from the site's own public address (https://vltd.app/api/og?...). The test browser refuses it, so the card is blank locally; nothing is fetched. Listed so the run still passes but the host stays visible in the summary."
+}
