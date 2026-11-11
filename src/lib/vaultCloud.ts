@@ -510,6 +510,11 @@ function rememberUnfinishedUpload(path: string) {
   if (!userId) return;
   writeTimedOutUploads([...readTimedOutUploads().filter((e) => e.path !== path), { path, userId, at: Date.now() }]);
 }
+/** True when the storage itself answered the request (a refusal carries an HTTP status); false for a failure with no answer (connection lost, request cut off). */
+function storageServerAnswered(error: unknown): boolean {
+  const e = error as { status?: unknown; statusCode?: unknown } | null | undefined;
+  return Boolean(e) && (typeof e!.status === "number" || e!.statusCode !== undefined);
+}
 export function forgetTimedOutUpload(path: string) {
   writeTimedOutUploads(readTimedOutUploads().filter((e) => e.path !== path));
 }
@@ -569,12 +574,15 @@ export async function uploadVaultImageToSupabase(params: {
       if (late && !(late as { error?: unknown }).error) {
         const { error: removeError } = await supabase.storage.from(VAULT_IMAGES_BUCKET).remove([path]);
         if (!removeError) forgetTimedOutUpload(path);
-      } else {
-        forgetTimedOutUpload(path); // the late answer was a refusal: nothing was stored
+      } else if (storageServerAnswered((late as { error?: unknown }).error)) {
+        forgetTimedOutUpload(path); // the storage answered with a refusal: nothing was stored
       }
     }).catch(() => { /* the written-down path is retried by a later visit */ });
   } else {
-    forgetTimedOutUpload(path); // finished in time (stored and handed to the caller, or refused): nothing left to clean up
+    const answered = (uploadResult as { error?: unknown } | null)?.error;
+    // Finished in time (stored and handed to the caller) or REFUSED BY THE STORAGE: nothing left to clean up. A failure with no answer from the storage (connection cut, page going away)
+    // keeps the path written down, because the file may still have arrived.
+    if (!answered || storageServerAnswered(answered)) forgetTimedOutUpload(path);
   }
   const { error } = uploadResult as { error: { message?: string } | null };
 
