@@ -558,7 +558,8 @@ export async function uploadVaultImageToSupabase(params: {
       }),
     ]);
   } catch (thrown) {
-    forgetTimedOutUpload(path); // the request itself failed: no file was stored
+    // The request itself failed or was cut off (page closed, connection lost). The storage may or may not have received the whole file, so the path stays written down:
+    // a later visit removes it if it exists (removing a file that does not exist is harmless) and only if no item refers to it.
     throw thrown;
   } finally {
     if (giveUpTimer) clearTimeout(giveUpTimer);
