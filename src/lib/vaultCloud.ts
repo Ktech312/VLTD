@@ -515,6 +515,31 @@ function storageServerAnswered(error: unknown): boolean {
   const e = error as { status?: unknown; statusCode?: unknown } | null | undefined;
   return Boolean(e) && (typeof e!.status === "number" || e!.statusCode !== undefined);
 }
+/**
+ * Asks the ACCOUNT (not this device) whether any of the person's item or exhibition records refers to a storage file: item front/back photo columns, the primary photo key, the photo list,
+ * and the exhibition snapshots. true = a record refers to it (never remove); false = every question was answered and none does; null = it could not be checked (any question failed or
+ * there is no connection): the caller must keep the file and try again later. Matching is deliberately generous (a path that merely appears inside a longer text counts as a reference).
+ */
+export async function accountReferencesStoragePath(path: string): Promise<boolean | null> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase || !path) return null;
+  try {
+    const asked = await Promise.all([
+      supabase.from("vault_items").select("id").eq("image_front_storage_path", path).limit(1),
+      supabase.from("vault_items").select("id").eq("primary_image_key", path).limit(1),
+      supabase.from("vault_items").select("id").filter("images_json", "cs", JSON.stringify([{ storageKey: path }])).limit(1),
+      supabase.from("vault_items").select("id").ilike("image_front_url", "*" + path + "*").limit(1),
+      supabase.from("vault_items").select("id").ilike("image_back_url", "*" + path + "*").limit(1),
+      supabase.from("galleries").select("id").filter("layout", "cs", JSON.stringify({ publicItemSnapshots: [{ imageFrontStoragePath: path }] })).limit(1),
+      supabase.from("galleries").select("id").filter("exhibition_layout", "cs", JSON.stringify({ publicItemSnapshots: [{ imageFrontStoragePath: path }] })).limit(1),
+    ]);
+    if (asked.some((r) => r.error || !Array.isArray(r.data))) return null;
+    return asked.some((r) => (r.data as unknown[]).length > 0);
+  } catch {
+    return null;
+  }
+}
+
 export function forgetTimedOutUpload(path: string) {
   writeTimedOutUploads(readTimedOutUploads().filter((e) => e.path !== path));
 }
@@ -572,6 +597,10 @@ export async function uploadVaultImageToSupabase(params: {
   if (gaveUp) {
     void Promise.resolve(uploadPromise).then(async (late) => {
       if (late && !(late as { error?: unknown }).error) {
+        // Remove the late file only after the ACCOUNT confirms no record refers to it; if that cannot be checked the file stays and its path stays written down for a later visit.
+        const referenced = await accountReferencesStoragePath(path);
+        if (referenced === true) { forgetTimedOutUpload(path); return; }
+        if (referenced === null) return;
         const { error: removeError } = await supabase.storage.from(VAULT_IMAGES_BUCKET).remove([path]);
         if (!removeError) forgetTimedOutUpload(path);
       } else if (storageServerAnswered((late as { error?: unknown }).error)) {
