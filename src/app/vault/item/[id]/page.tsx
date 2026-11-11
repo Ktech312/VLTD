@@ -859,6 +859,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     try {
       let nextItem = { ...item };
       let imageIndex = getOrderedImages(nextItem).length;
+      // A photo that could not reach the account stays on this device only; the message must say so (it used to be replaced by "Images saved.").
+      let keptOnDeviceOnly = false;
 
       for (const file of files) {
         try {
@@ -882,6 +884,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             await saveImageBlobToIndexedDb(durableBlob, storageKey);
             const localUrl = URL.createObjectURL(durableBlob);
             nextItem = appendImage(nextItem, localUrl, storageKey, { localOnly: true });
+            keptOnDeviceOnly = true;
           }
         } catch (uploadError) {
           const durableBlob = await prepareImageBlob(file).catch(() => file);
@@ -889,10 +892,11 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           await saveImageBlobToIndexedDb(durableBlob, storageKey);
           const localUrl = URL.createObjectURL(durableBlob);
           nextItem = appendImage(nextItem, localUrl, storageKey, { localOnly: true });
+          keptOnDeviceOnly = true;
           setMediaMessage(
             uploadError instanceof Error
-              ? `${uploadError.message} Saved locally on this device.`
-              : "Cloud upload failed. Saved locally on this device."
+              ? `${uploadError.message} The photo is on this device only — not in your account yet.`
+              : "Cloud upload failed. The photo is on this device only — not in your account yet."
           );
         }
         imageIndex += 1;
@@ -900,14 +904,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
       try {
         await persist(nextItem);
-        if (!mediaMessage) setMediaMessage("Images saved.");
+        setMediaMessage(keptOnDeviceOnly ? "The photo is on this device only — not in your account yet. We will keep trying." : "Images saved.");
       } catch (persistError) {
         saveItem(nextItem);
         setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
         setMediaMessage(
           persistError instanceof Error
-            ? `${persistError.message} Local fallback kept the images on this device.`
-            : "Cloud save failed. Local fallback kept the images on this device."
+            ? `${persistError.message} The photos are on this device only — not in your account yet.`
+            : "Cloud save failed. The photos are on this device only — not in your account yet."
         );
       }
 
@@ -1017,8 +1021,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         };
         setMediaMessage(
           uploadError instanceof Error
-            ? `${uploadError.message} Edited photo saved locally on this device.`
-            : "Cloud upload failed. Edited photo saved locally on this device."
+            ? `${uploadError.message} The edited photo is on this device only — not in your account yet.`
+            : "Cloud upload failed. The edited photo is on this device only — not in your account yet."
         );
       }
 
@@ -1045,7 +1049,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         }
       }
 
-      setMediaMessage("Edited photo saved.");
+      setMediaMessage(replacement.localOnly ? "The edited photo is on this device only — not in your account yet. We will keep trying." : "Edited photo saved.");
     } finally {
       setUploading(false);
     }

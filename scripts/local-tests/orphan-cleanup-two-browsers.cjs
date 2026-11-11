@@ -17,7 +17,7 @@ const base = (id, extra) => ({ id, profile_id: P, title: "Two-browser item " + i
     // browser 2 saves four records that refer to files (one per kind of reference); browser 1 has not downloaded them
     await seed({ vault_items: [...(await L.dump("vault_items")), base("two_front", { image_front_storage_path: PATH.front }), base("two_list", { images_json: [{ id: "i", storageKey: PATH.list, url: "x", order: 0 }] }), base("two_back", { image_back_url: "http://localhost:54321/storage/v1/object/public/vault-images/" + PATH.back })],
       galleries: [...(await L.dump("galleries")), { id: "00000000-0000-4000-8000-0000000077aa", profile_id: P, title: "Two-browser exhibition", visibility: "LOCKED", state: "ACTIVE", public_token: "pub_two", layout: { itemIds: [], publicItemSnapshots: [{ id: "x", imageFrontStoragePath: PATH.gallery }] }, exhibition_layout: { itemIds: [], publicItemSnapshots: [] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] });
-    await b2.go("/vault", 10000); const t2 = await b2.text(); check("setup: browser 2 shows the records it saved to the account", /Two-browser item two_front/.test(t2), t2.slice(0, 120));
+    await b2.go("/vault", 10000); await b2.setField("[aria-label='Search the vault']", "Two-browser item two_front"); await sleep(2500); const t2 = await b2.text(); check("setup: browser 2 shows the records it saved to the account", /Two-browser item two_front/.test(t2), t2.slice(0, 120));
     await setList(b1, [PATH.front, PATH.list, PATH.back, PATH.gallery, PATH.free]);
     check("setup: browser 1 does not know those records on its own device", true, 0);
     await b1.go("/dashboard", 9000); await sleep(30000); // the cleanup runs 20 s after the page loads
