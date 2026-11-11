@@ -1592,6 +1592,48 @@ export async function refreshGalleriesFromSupabase(force = true) {
   await hydrateLocalGalleriesFromSupabase(force);
 }
 
+/**
+ * The repeating refresh of an OPEN exhibition page: downloads only that exhibition (its row and its invite links) instead of every exhibition the account owns, and merges it
+ * with the device copy by the same rule as the full download (the newer of the two wins; a local edit not yet saved is never overwritten). It writes (and announces a change)
+ * only when the exhibition really differs. It never removes anything and never adds an exhibition to the device: when this device has no copy yet, or the answer is not that
+ * exhibition of the same profile, it does nothing (the page's first load already does the full download once).
+ */
+export async function refreshOneGalleryFromSupabase(galleryId: string): Promise<void> {
+  if (typeof window === "undefined" || !galleryId) return;
+  const startedAs = storedSessionUserId();
+  if (!startedAs) return;
+  if (supabaseHydrationInFlight && supabaseHydrationFor === startedAs) { await supabaseHydrationInFlight; return; }
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+  const existing = readStoredGallerySnapshot().find((gallery) => gallery.id === galleryId);
+  if (!existing) return;
+  try {
+    const { data, error } = await supabase.from("galleries").select("*").eq("id", galleryId).maybeSingle();
+    if (!stillSignedInAs(startedAs) || error || !data) return;
+    const remote = normalizeSupabaseGallery(data);
+    if (!remote || remote.id !== galleryId) return;
+    if (!remote.profile_id || !existing.profile_id || String(remote.profile_id) !== String(existing.profile_id)) return;
+    try {
+      const { data: inviteRows, error: inviteError } = await supabase.from("gallery_invites").select("*").eq("gallery_id", galleryId);
+      if (!inviteError && Array.isArray(inviteRows)) {
+        const tokens = inviteRows.map((row) => inviteTokenFromRow(row)).filter(Boolean) as GalleryInviteToken[];
+        if (tokens.length > 0) remote.share = { ...remote.share, inviteTokens: tokens };
+      }
+    } catch {
+      /* the invite list stays as it was */
+    }
+    if (!stillSignedInAs(startedAs)) return;
+    const current = readStoredGallerySnapshot();
+    const local = current.find((gallery) => gallery.id === galleryId);
+    if (!local) return;
+    const merged = local.updatedAt >= remote.updatedAt ? withPreservedSlotLayout(local, remote) : withPreservedSlotLayout(remote, local);
+    if (JSON.stringify(slimGalleryForLocalCache(merged)) === JSON.stringify(slimGalleryForLocalCache(local))) return;
+    writeLocalCache(current.map((gallery) => (gallery.id === galleryId ? merged : gallery)), true);
+  } catch (error) {
+    console.error("Failed to refresh the open exhibition:", error);
+  }
+}
+
 const DELETED_GALLERIES_KEY = "vltd_deleted_gallery_ids_v1";
 
 function readDeletedGalleryIds(): Set<string> {

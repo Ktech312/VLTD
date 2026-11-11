@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { getCurrentUser, getStoredActiveProfileId, initAuthListener } from "@/lib/auth";
 import { touchPresence } from "@/lib/presence";
+import { sweepTimedOutUploads } from "@/lib/vaultOrphanSweep";
 
 const HEARTBEAT_MS = 60 * 1000;
 
@@ -27,6 +28,8 @@ export default function PresenceHeartbeat() {
       signedIn = Boolean(data.user);
       if (!signedIn) return;
       void beat();
+      // Once per visit: remove files left by uploads that were given up on (does nothing, and asks for nothing, when none are written down).
+      window.setTimeout(() => { if (!cancelled) void sweepTimedOutUploads().catch(() => undefined); }, 20 * 1000);
       timer = setInterval(() => void beat(), HEARTBEAT_MS);
     });
 

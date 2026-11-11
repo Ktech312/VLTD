@@ -1,4 +1,5 @@
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 import { clearSpecsDeviceOnly, markSpecsDeviceOnly } from "@/lib/specsDeviceOnly";
@@ -489,6 +490,30 @@ export async function fetchVaultItemsFromSupabase(profileId?: string) {
   return rows.map(rowToItem);
 }
 
+// ── Files that an upload may have left behind (given up on, or the page went away before the answer) ────────────────────────
+// Paths are unique per attempt and were never handed to any caller, so nothing can refer to them. They are listed per signed-in person on this device only.
+const TIMED_OUT_UPLOADS_KEY = "vltd_timed_out_uploads_v1";
+export type TimedOutUpload = { path: string; userId: string; at: number };
+export function readTimedOutUploads(): TimedOutUpload[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(TIMED_OUT_UPLOADS_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed.filter((e) => e && typeof e.path === "string" && typeof e.userId === "string" && typeof e.at === "number") as TimedOutUpload[]) : [];
+  } catch { return []; }
+}
+function writeTimedOutUploads(list: TimedOutUpload[]) {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(TIMED_OUT_UPLOADS_KEY, JSON.stringify(list.slice(-50))); } catch { /* storage full or blocked: the file simply stays unlisted */ }
+}
+function rememberUnfinishedUpload(path: string) {
+  const userId = storedSessionUserId();
+  if (!userId) return;
+  writeTimedOutUploads([...readTimedOutUploads().filter((e) => e.path !== path), { path, userId, at: Date.now() }]);
+}
+export function forgetTimedOutUpload(path: string) {
+  writeTimedOutUploads(readTimedOutUploads().filter((e) => e.path !== path));
+}
+
 export async function uploadVaultImageToSupabase(params: {
   itemId: string;
   file: File | Blob;
@@ -508,22 +533,48 @@ export async function uploadVaultImageToSupabase(params: {
     .slice(2)}.${ext}`;
 
   // A connection that accepts the photo but never answers used to leave every Save button on "Saving..." for as long as the phone kept waiting.
-  // After this long the upload is given up on (the caller shows its message and the person can retry; a late finish only leaves an unused file).
+  // After this long the upload is given up on (the caller shows its message and the person can retry). The file a LATE finish leaves behind is never referenced by anything
+  // (this function threw, so nobody was given its path): it is removed as soon as the late answer arrives. The path is written down on this device BEFORE the upload starts and
+  // forgotten as soon as the outcome is known, so if this page is gone before the answer (closed, reloaded, phone locked) a later visit can still remove the leftover
+  // (vaultOrphanSweep.ts, which never removes a path that any item on the device refers to, and only ever looks at paths older than the 45-second limit).
   const UPLOAD_TIMEOUT_MS = 45_000;
   let giveUpTimer: ReturnType<typeof setTimeout> | undefined;
-  const uploadResult = await Promise.race([
-    supabase.storage.from(VAULT_IMAGES_BUCKET).upload(path, params.file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType:
-        params.file instanceof File
-          ? params.file.type
-          : params.file.type || "image/jpeg",
-    }),
-    new Promise<{ error: { message: string } }>((resolve) => {
-      giveUpTimer = setTimeout(() => resolve({ error: { message: "The photo upload took too long (over 45 seconds). Check your connection and try again." } }), UPLOAD_TIMEOUT_MS);
-    }),
-  ]).finally(() => { if (giveUpTimer) clearTimeout(giveUpTimer); });
+  let gaveUp = false;
+  rememberUnfinishedUpload(path);
+  const uploadPromise = supabase.storage.from(VAULT_IMAGES_BUCKET).upload(path, params.file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType:
+      params.file instanceof File
+        ? params.file.type
+        : params.file.type || "image/jpeg",
+  });
+  let uploadResult: unknown;
+  try {
+    uploadResult = await Promise.race([
+      uploadPromise,
+      new Promise<{ error: { message: string } }>((resolve) => {
+        giveUpTimer = setTimeout(() => { gaveUp = true; resolve({ error: { message: "The photo upload took too long (over 45 seconds). Check your connection and try again." } }); }, UPLOAD_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (thrown) {
+    forgetTimedOutUpload(path); // the request itself failed: no file was stored
+    throw thrown;
+  } finally {
+    if (giveUpTimer) clearTimeout(giveUpTimer);
+  }
+  if (gaveUp) {
+    void Promise.resolve(uploadPromise).then(async (late) => {
+      if (late && !(late as { error?: unknown }).error) {
+        const { error: removeError } = await supabase.storage.from(VAULT_IMAGES_BUCKET).remove([path]);
+        if (!removeError) forgetTimedOutUpload(path);
+      } else {
+        forgetTimedOutUpload(path); // the late answer was a refusal: nothing was stored
+      }
+    }).catch(() => { /* the written-down path is retried by a later visit */ });
+  } else {
+    forgetTimedOutUpload(path); // finished in time (stored and handed to the caller, or refused): nothing left to clean up
+  }
   const { error } = uploadResult as { error: { message?: string } | null };
 
   if (error) {

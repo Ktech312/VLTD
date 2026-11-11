@@ -13,6 +13,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import {
   loadGalleries,
   refreshGalleriesFromSupabase,
+  refreshOneGalleryFromSupabase,
   saveGalleriesLocally,
   type Gallery,
   type GalleryPublicItemSnapshot,
@@ -295,19 +296,21 @@ export default function GalleryPage() {
   useEffect(() => {
     if (!id) return;
 
+    // Only the open exhibition is re-read (its row and its invite links), not every exhibition of the account.
+    const openId = id;
     function onWindowFocus() {
-      void refreshGalleriesFromSupabase(true);
+      void refreshOneGalleryFromSupabase(openId);
     }
 
     function onVisibilityChange() {
       if (document.visibilityState === "visible") {
-        void refreshGalleriesFromSupabase(true);
+        void refreshOneGalleryFromSupabase(openId);
       }
     }
 
     const intervalId = window.setInterval(() => {
       if (document.visibilityState === "visible") {
-        void refreshGalleriesFromSupabase(true);
+        void refreshOneGalleryFromSupabase(openId);
       }
     }, 15000);
 

@@ -4,7 +4,7 @@
 const L = require("./lib.cjs"); const { sleep, check, sim, seed, P } = L;
 const GID = "00000000-0000-4000-8000-0000000099aa";
 const gal = (title) => ({ id: GID, profile_id: P, title, visibility: "LOCKED", state: "ACTIVE", public_token: "pub_sim_poll", layout: { itemIds: [], publicItemSnapshots: [] }, exhibition_layout: { itemIds: [], publicItemSnapshots: [] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
-function counter(s) { const c = { unread: 0, presence: 0, galleries: 0, all: 0, marks: [] }; s.c.on((m) => { if (m.method !== "Network.requestWillBeSent") return; try { const u = new URL(m.params.request.url); if (u.origin !== "http://localhost:54321" || m.params.request.method === "OPTIONS") return; c.all++; if (/\/rest\/v1\/conversations$/.test(u.pathname)) c.unread++; else if (/touch_presence/.test(u.pathname)) c.presence++; else if (/\/rest\/v1\/galleries$/.test(u.pathname)) c.galleries++; } catch { /* ignore */ } }); c.reset = () => { c.unread = 0; c.presence = 0; c.galleries = 0; c.all = 0; }; return c; }
+function counter(s) { const c = { unread: 0, presence: 0, galleries: 0, galleryRows: 0, galleryLists: 0, members: 0, invites: 0, all: 0, marks: [] }; s.c.on((m) => { if (m.method !== "Network.requestWillBeSent") return; try { const u = new URL(m.params.request.url); if (u.origin !== "http://localhost:54321" || m.params.request.method === "OPTIONS") return; c.all++; if (/\/rest\/v1\/conversations$/.test(u.pathname)) c.unread++; else if (/touch_presence/.test(u.pathname)) c.presence++; else if (/\/rest\/v1\/galleries$/.test(u.pathname)) c.galleries++; } catch { /* ignore */ } }); c.reset = () => { c.unread = 0; c.presence = 0; c.galleries = 0; c.galleryRows = 0; c.galleryLists = 0; c.members = 0; c.invites = 0; c.all = 0; }; return c; }
 const setVis = (s, v) => s.evaluate(`(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "${v}" }); Object.defineProperty(document, "hidden", { configurable: true, get: () => ${v === "hidden"} }); document.dispatchEvent(new Event("visibilitychange")); return true; })()`);
 (async () => {
   await sim("/__sim/reset"); await seed({ galleries: [gal("Poll test exhibition")] });
@@ -34,13 +34,13 @@ const setVis = (s, v) => s.evaluate(`(() => { Object.defineProperty(document, "v
   await sim("/__sim/reset"); await seed({ galleries: [gal("Poll test exhibition")] });
   s = await L.open({ width: 1280, height: 900 });
   try { await s.go("/museum/" + GID, 9000); await s.dismiss(); const c = counter(s); c.reset(); await sleep(46000);
-    console.log("exhibition page, visible, 46 s: exhibition reads", c.galleries, "| all requests", c.all);
-    check("exhibition page visible: it re-reads the account's exhibitions about every 15 s (2-5 reads in 46 s) - recorded for the owner's decision", c.galleries >= 2 && c.galleries <= 5, { galleries: c.galleries, all: c.all });
+    console.log("exhibition page, visible, 46 s: one-exhibition reads", c.galleryRows, "| whole-account exhibition lists", c.galleryLists, "| membership reads", c.members, "| invite reads", c.invites, "| all requests", c.all);
+    check("exhibition page visible: it re-reads ONLY the open exhibition about every 15 s (2-5 single-exhibition reads and its invite list in 46 s; no whole-account list, no membership read)", c.galleryRows >= 2 && c.galleryRows <= 5 && c.galleryLists === 0 && c.members === 0 && c.invites >= 2 && c.invites <= 5, { rows: c.galleryRows, lists: c.galleryLists, members: c.members, invites: c.invites });
     // what it updates: a change made elsewhere (another device or a team member) appears without a reload
     await seed({ galleries: [gal("Poll test exhibition CHANGED ELSEWHERE")] }); let seen = false; for (let i = 0; i < 24 && !seen; i++) { await sleep(1000); seen = /CHANGED ELSEWHERE/.test(await s.text()); }
     check("what the refresh is for: a title changed on another device shows on this open page within about 20 s, without a reload", seen, (await s.text()).slice(0, 120));
     await setVis(s, "hidden"); await sleep(500); c.reset(); await sleep(36000); check("exhibition page hidden: no reads", c.all === 0, { all: c.all });
-    await setVis(s, "visible"); await sleep(1000); const afterShow = c.galleries; check("exhibition page shown again: refreshes at once (at least one read)", afterShow >= 1, { afterShow });
+    await setVis(s, "visible"); await sleep(1000); const afterShow = c.galleryRows; check("exhibition page shown again: refreshes at once (at least one read)", afterShow >= 1, { afterShow });
   } finally { await s.close(); }
   console.log(JSON.stringify(L.results())); process.exit(0);
 })();
