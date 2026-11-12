@@ -493,7 +493,12 @@ export async function fetchVaultItemsFromSupabase(profileId?: string) {
 // ── Files that an upload may have left behind (given up on, or the page went away before the answer) ────────────────────────
 // Paths are unique per attempt and were never handed to any caller, so nothing can refer to them. They are listed per signed-in person on this device only.
 const TIMED_OUT_UPLOADS_KEY = "vltd_timed_out_uploads_v1";
-export type TimedOutUpload = { path: string; userId: string; at: number };
+/**
+ * state "abandoned": this function already told its caller the upload FAILED (by throwing), so the path exists only here and in this list and no code can ever attach it to an item or an
+ * exhibition: such a file can be removed automatically (once the account confirms no record refers to it). state "unfinished" (or missing): the outcome is not known (for example the page went
+ * away mid-upload), so the caller may have received the path: NEVER removed automatically.
+ */
+export type TimedOutUpload = { path: string; userId: string; at: number; state?: "unfinished" | "abandoned" };
 export function readTimedOutUploads(): TimedOutUpload[] {
   if (typeof window === "undefined") return [];
   try {
@@ -508,7 +513,10 @@ function writeTimedOutUploads(list: TimedOutUpload[]) {
 function rememberUnfinishedUpload(path: string) {
   const userId = storedSessionUserId();
   if (!userId) return;
-  writeTimedOutUploads([...readTimedOutUploads().filter((e) => e.path !== path), { path, userId, at: Date.now() }]);
+  writeTimedOutUploads([...readTimedOutUploads().filter((e) => e.path !== path), { path, userId, at: Date.now(), state: "unfinished" }]);
+}
+function markUploadAbandoned(path: string) {
+  writeTimedOutUploads(readTimedOutUploads().map((e) => (e.path === path ? { ...e, state: "abandoned" as const } : e)));
 }
 /** True when the storage itself answered the request (a refusal carries an HTTP status); false for a failure with no answer (connection lost, request cut off). */
 function storageServerAnswered(error: unknown): boolean {
@@ -588,19 +596,24 @@ export async function uploadVaultImageToSupabase(params: {
       }),
     ]);
   } catch (thrown) {
-    // The request itself failed or was cut off (page closed, connection lost). The storage may or may not have received the whole file, so the path stays written down:
-    // a later visit removes it if it exists (removing a file that does not exist is harmless) and only if no item refers to it.
+    // The request itself failed or was cut off (connection lost). The storage may or may not have received the whole file. The caller is told it FAILED (thrown), so the path is abandoned:
+    // it stays written down and can be removed later (if it exists) once the account confirms no record refers to it.
+    markUploadAbandoned(path);
     throw thrown;
   } finally {
     if (giveUpTimer) clearTimeout(giveUpTimer);
   }
   if (gaveUp) {
+    markUploadAbandoned(path); // the caller is about to be told it failed: from now on nothing can ever refer to this path
     void Promise.resolve(uploadPromise).then(async (late) => {
       if (late && !(late as { error?: unknown }).error) {
         // Remove the late file only after the ACCOUNT confirms no record refers to it; if that cannot be checked the file stays and its path stays written down for a later visit.
         const referenced = await accountReferencesStoragePath(path);
         if (referenced === true) { forgetTimedOutUpload(path); return; }
         if (referenced === null) return;
+        const again = await accountReferencesStoragePath(path); // asked again immediately before removing
+        if (again === true) { forgetTimedOutUpload(path); return; }
+        if (again === null) return;
         const { error: removeError } = await supabase.storage.from(VAULT_IMAGES_BUCKET).remove([path]);
         if (!removeError) forgetTimedOutUpload(path);
       } else if (storageServerAnswered((late as { error?: unknown }).error)) {
@@ -612,6 +625,7 @@ export async function uploadVaultImageToSupabase(params: {
     // Finished in time (stored and handed to the caller) or REFUSED BY THE STORAGE: nothing left to clean up. A failure with no answer from the storage (connection cut, page going away)
     // keeps the path written down, because the file may still have arrived.
     if (!answered || storageServerAnswered(answered)) forgetTimedOutUpload(path);
+    else markUploadAbandoned(path); // no answer from the storage: the caller is told it failed; the file may still have arrived
   }
   const { error } = uploadResult as { error: { message?: string } | null };
 

@@ -4,6 +4,7 @@
 //  B. leaving the page (in-app navigation) while the upload is still waiting - nothing is saved when the late answer arrives.
 //  C. reloading the page while the upload is waiting - nothing is saved, no half item.
 //  D. giving up after the timeout message (cancel = leave the page) - nothing is saved.
+//  F. limit fired, then the page went away before the late answer: marked abandoned, removed by a later visit after the account is asked.
 //  E. the leftover file: removed right away when the late answer arrives while the page is open (A); removed on a later visit when the page was gone (C, with the written-down path made old);
 //     NEVER a file that an item refers to (E).
 // Takes about 6 minutes (real 45-second waits). Run on its own: node scripts/local-tests/upload-timeout.cjs
@@ -12,7 +13,8 @@ const PHOTO = path.join(__dirname, "../../public/collectibles/guitar.png");
 const mine = async (t) => (await L.dump("vault_items")).filter((r) => (r.title || "").startsWith(t));
 const uploads = () => sim("/__sim/uploads");
 const deletes = () => sim("/__sim/deletes");
-const unfinished = (s) => s.evaluate(`JSON.parse(localStorage.getItem("vltd_timed_out_uploads_v1") || "[]")`);
+const unfinishedFull = (s) => s.evaluate(`JSON.parse(localStorage.getItem("vltd_timed_out_uploads_v1") || "[]")`);
+const unfinished = unfinishedFull;
 const visible = (s) => s.evaluate(`JSON.stringify([...document.querySelectorAll("[role=alert],[role=status]")].filter((e) => e.getBoundingClientRect().height > 0).map((e) => e.innerText.trim()))`).then(JSON.parse);
 const saveLabel = (s) => s.evaluate(`[...document.querySelectorAll("button")].map((b) => b.innerText.trim()).find((t) => /^(Save|Saving)/.test(t)) || ""`);
 async function prepare(s, title) {
@@ -57,19 +59,29 @@ const LATE = 52000;
     const t = await s.text(); check("C: the reloaded form is clean (no half item, no 'saved on this device' notice for it)", !t.includes("LATE C item") && !/not in your account yet/i.test(t), t.slice(0, 160));
     // the page went away before any answer: the path is still written down; the file really arrived at the storage (late); a later visit must remove it, and only it
     const ups = await uploads(); const listed = await unfinished(s);
-    check("C: the page was gone before the answer, so the upload's path is still written down on this device and the file did arrive at the storage", ups.length === 1 && listed.length === 1 && String(ups[0].path).endsWith(listed[0].path), { ups: ups.map((u) => u.path), listed });
+    check("C: the page was gone before the answer, so the upload's path is still written down on this device as UNFINISHED and the file did arrive at the storage", ups.length === 1 && listed.length === 1 && String(ups[0].path).endsWith(listed[0].path) && listed.every((e) => e.state === "unfinished" || e.state === "abandoned"), { ups: ups.map((u) => u.path), listed });
     await s.evaluate(`(() => { const l = JSON.parse(localStorage.getItem("vltd_timed_out_uploads_v1") || "[]"); for (const e of l) e.at = Date.now() - 10 * 60 * 1000; localStorage.setItem("vltd_timed_out_uploads_v1", JSON.stringify(l)); return true; })()`);
     await s.go("/dashboard", 8000); await sleep(30000); const dels = await deletes();
-    check("C: a later visit removed exactly that leftover file and cleared the list", dels.length === 1 && dels[0].endsWith(listed[0].path) && (await unfinished(s)).length === 0, { dels, left: await unfinished(s) });
+    const st = listed[0] && listed[0].state; console.log("C: written-down state at the later visit:", st);
+    check("C: a later visit follows the rule for that state: 'abandoned' (the page told its caller the upload failed) = removed after the account confirms; 'unfinished' (outcome unknown) = never removed automatically and kept listed", st === "abandoned" ? (dels.length === 1 && dels[0].endsWith(listed[0].path) && (await unfinished(s)).length === 0) : (st === "unfinished" && dels.length === 0 && (await unfinished(s)).length === 1), { st, dels, left: await unfinished(s) });
   } finally { await s.close(); await sim("/__sim/fail?delay=0"); }
   // ---- E: a written-down path that an item refers to is NEVER removed
   await sim("/__sim/reset"); await L.seed({ vault_items: [...(await L.dump("vault_items")), { id: "sim_keep_ref", profile_id: L.P, title: "Item that uses a file", universe: "MISC", category: "Collectors Choice", status: "COLLECTION", created_at: 1790000000000, image_front_url: "/collectibles/guitar.png", image_front_storage_path: "items/sim_keep_ref/keep-me.jpg", primary_image_key: "items/sim_keep_ref/keep-me.jpg" }] });
   s = await L.open({ width: 1280, height: 900 });
   try { await s.go("/vault", 9000); await s.dismiss();
-    await s.evaluate(`localStorage.setItem("vltd_timed_out_uploads_v1", JSON.stringify([{ path: "items/sim_keep_ref/keep-me.jpg", userId: "${L.U}", at: Date.now() - 10 * 60 * 1000 }, { path: "items/sim_gone/leftover.jpg", userId: "${L.U}", at: Date.now() - 10 * 60 * 1000 }, { path: "items/sim_other/not-mine.jpg", userId: "99999999-9999-4999-8999-999999999999", at: Date.now() - 10 * 60 * 1000 }])); true`);
+    await s.evaluate(`localStorage.setItem("vltd_timed_out_uploads_v1", JSON.stringify([{ path: "items/sim_keep_ref/keep-me.jpg", state: "abandoned", userId: "${L.U}", at: Date.now() - 10 * 60 * 1000 }, { path: "items/sim_gone/leftover.jpg", state: "abandoned", userId: "${L.U}", at: Date.now() - 10 * 60 * 1000 }, { path: "items/sim_unknown/unknown-outcome.jpg", state: "unfinished", userId: "${L.U}", at: Date.now() - 10 * 60 * 1000 }, { path: "items/sim_other/not-mine.jpg", userId: "99999999-9999-4999-8999-999999999999", at: Date.now() - 10 * 60 * 1000 }])); true`);
     await s.go("/dashboard", 8000); await sleep(30000); const dels = (await deletes()).join(" "); const left = await unfinished(s);
-    check("E: the file an item refers to is never removed (it is only taken off the list); the unreferenced leftover is removed; another person's entry is left alone", !dels.includes("keep-me.jpg") && dels.includes("items/sim_gone/leftover.jpg") && !dels.includes("not-mine.jpg") && left.length === 1 && left[0].path === "items/sim_other/not-mine.jpg", { dels: await deletes(), left });
+    check("E: the file an item refers to is never removed (it is only taken off the list); the unreferenced abandoned leftover is removed; an unknown-outcome entry is never removed; another person's entry is left alone", !dels.includes("keep-me.jpg") && dels.includes("items/sim_gone/leftover.jpg") && !dels.includes("not-mine.jpg") && !dels.includes("unknown-outcome.jpg") && left.length === 2 && left.some((e) => e.path === "items/sim_other/not-mine.jpg") && left.some((e) => e.path === "items/sim_unknown/unknown-outcome.jpg"), { dels: await deletes(), left });
   } finally { await s.close(); }
+  // ---- F: the 45 s limit fired (caller told it failed = abandoned), then the page went away BEFORE the late answer: a later visit may remove the file, after the account agrees
+  await sim("/__sim/reset"); s = await L.open({ width: 1280, height: 1500 });
+  try { await prepare(s, "LATE F item"); await sim("/__sim/fail?delay=" + LATE); await s.mclick("Save", true); await sleep(48000); // 45 s limit has fired; the late answer comes at 52 s
+    await s.go("/vault/add", 3000); const listedF = await unfinished(s); await sleep(14000);
+    check("F: after the limit the path is marked abandoned on this device (the page had told its caller the upload failed)", listedF.length === 1 && listedF[0].state === "abandoned", listedF);
+    await s.evaluate(`(() => { const l = JSON.parse(localStorage.getItem("vltd_timed_out_uploads_v1") || "[]"); for (const e of l) e.at = Date.now() - 10 * 60 * 1000; localStorage.setItem("vltd_timed_out_uploads_v1", JSON.stringify(l)); return true; })()`);
+    await s.go("/dashboard", 8000); await sleep(30000); const delsF = await deletes();
+    check("F: a later visit removed exactly that leftover (after asking the account) and cleared the list; no item exists", delsF.length === 1 && delsF[0].endsWith(listedF[0].path) && (await unfinished(s)).length === 0 && (await mine("LATE F")).length === 0, { delsF, left: await unfinished(s) });
+  } finally { await s.close(); await sim("/__sim/fail?delay=0"); }
   // ---- D: give up after the message
   await sim("/__sim/reset"); s = await L.open({ width: 1280, height: 1500 });
   try { await prepare(s, "LATE D item"); await sim("/__sim/fail?delay=" + LATE); await s.mclick("Save", true); await sleep(49000);

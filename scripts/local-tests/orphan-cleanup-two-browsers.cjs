@@ -4,8 +4,9 @@
 // own device copy does not know them. Every file that either browser's records refer to must survive; only the truly unreferenced file is removed; an unreachable account defers everything.
 const L = require("./lib.cjs"); const { sleep, check, sim, seed, P, U } = L;
 const KEY = "vltd_timed_out_uploads_v1"; const OLD = () => Date.now() - 10 * 60 * 1000;
-const PATH = { front: "items/sim_two/front-ref.jpg", list: "items/sim_two/list-ref.jpg", back: "items/sim_two/back-ref.jpg", gallery: "items/sim_two/gallery-ref.jpg", device: "items/sim_two/device-only-ref.jpg", free: "items/sim_two/unreferenced.jpg", free2: "items/sim_two/unreferenced-after-outage.jpg" };
-const setList = (s, paths) => s.evaluate(`localStorage.setItem(${JSON.stringify(KEY)}, JSON.stringify(${JSON.stringify(paths)}.map((p) => ({ path: p, userId: ${JSON.stringify(U)}, at: ${OLD()} })))); true`);
+const PATH = { front: "items/sim_two/front-ref.jpg", list: "items/sim_two/list-ref.jpg", back: "items/sim_two/back-ref.jpg", gallery: "items/sim_two/gallery-ref.jpg", device: "items/sim_two/device-only-ref.jpg", otherProfile: "items/sim_two/other-profile-ref.jpg", unfinished: "items/sim_two/unfinished-leftover.jpg", free: "items/sim_two/unreferenced.jpg", free2: "items/sim_two/unreferenced-after-outage.jpg" };
+// entries: a path (= abandoned: the upload had already been reported as failed) or { path, state } (state "unfinished" = outcome unknown)
+const setList = (s, entries) => s.evaluate(`localStorage.setItem(${JSON.stringify(KEY)}, JSON.stringify(${JSON.stringify(entries)}.map((e) => ({ path: e.path || e, state: e.state || "abandoned", userId: ${JSON.stringify(U)}, at: ${OLD()} })))); true`);
 const list = (s) => s.evaluate(`JSON.parse(localStorage.getItem(${JSON.stringify(KEY)}) || "[]").map((e) => e.path)`);
 const deleted = async () => (await sim("/__sim/deletes")).map((d) => d.replace(/^vault-images\//, ""));
 const base = (id, extra) => ({ id, profile_id: P, title: "Two-browser item " + id, universe: "MISC", category: "Collectors Choice", status: "COLLECTION", created_at: 1790000000000, ...extra });
@@ -15,16 +16,16 @@ const base = (id, extra) => ({ id, profile_id: P, title: "Two-browser item " + i
   try {
     await b1.go("/dashboard", 9000); await b1.dismiss(); await b2.go("/dashboard", 9000); await b2.dismiss();
     // browser 2 saves four records that refer to files (one per kind of reference); browser 1 has not downloaded them
-    await seed({ vault_items: [...(await L.dump("vault_items")), base("two_front", { image_front_storage_path: PATH.front }), base("two_list", { images_json: [{ id: "i", storageKey: PATH.list, url: "x", order: 0 }] }), base("two_back", { image_back_url: "http://localhost:54321/storage/v1/object/public/vault-images/" + PATH.back })],
+    await seed({ vault_items: [...(await L.dump("vault_items")), base("two_front", { image_front_storage_path: PATH.front }), base("two_list", { images_json: [{ id: "i", storageKey: PATH.list, url: "x", order: 0 }] }), base("two_other_profile", { profile_id: "77777777-7777-4777-8777-777777777777", image_front_storage_path: PATH.otherProfile }), base("two_back", { image_back_url: "http://localhost:54321/storage/v1/object/public/vault-images/" + PATH.back })],
       galleries: [...(await L.dump("galleries")), { id: "00000000-0000-4000-8000-0000000077aa", profile_id: P, title: "Two-browser exhibition", visibility: "LOCKED", state: "ACTIVE", public_token: "pub_two", layout: { itemIds: [], publicItemSnapshots: [{ id: "x", imageFrontStoragePath: PATH.gallery }] }, exhibition_layout: { itemIds: [], publicItemSnapshots: [] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] });
     await b2.go("/vault", 10000); await b2.setField("[aria-label='Search the vault']", "Two-browser item two_front"); await sleep(2500); const t2 = await b2.text(); check("setup: browser 2 shows the records it saved to the account", /Two-browser item two_front/.test(t2), t2.slice(0, 120));
-    await setList(b1, [PATH.front, PATH.list, PATH.back, PATH.gallery, PATH.free]);
+    await setList(b1, [PATH.front, PATH.list, PATH.back, PATH.gallery, PATH.otherProfile, PATH.free, { path: PATH.unfinished, state: "unfinished" }]);
     check("setup: browser 1 does not know those records on its own device", true, 0);
     await b1.go("/dashboard", 9000); await sleep(30000); // the cleanup runs 20 s after the page loads
     let dels = await deleted(); let left = await list(b1);
-    check("a file referenced by the OTHER browser's item (front photo, photo list entry, back photo) or exhibition snapshot is NOT removed", ![PATH.front, PATH.list, PATH.back, PATH.gallery].some((p) => dels.includes(p)), dels);
-    check("only the genuinely unreferenced leftover is removed", dels.length === 1 && dels[0] === PATH.free, dels);
-    check("the referenced paths are taken off the list (nothing will ever try them again) and the removed one too", left.length === 0, left);
+    check("a file referenced by the OTHER browser's item (front photo, photo list entry, back photo), by an item in ANOTHER PROFILE of the account, or by an exhibition snapshot is NOT removed", ![PATH.front, PATH.list, PATH.back, PATH.gallery, PATH.otherProfile].some((p) => dels.includes(p)), dels);
+    check("only the genuinely unreferenced, abandoned leftover is removed; a path whose outcome is unknown ('unfinished') is NEVER removed automatically", dels.length === 1 && dels[0] === PATH.free && !dels.includes(PATH.unfinished), dels);
+    check("the referenced paths and the removed one are off the list; the unfinished one stays listed (tracked by the report, not deleted)", left.length === 1 && left[0] === PATH.unfinished, left);
     // a photo referenced only on THIS device (saved there, not yet in the account) is protected by the device check
     await sim("/__sim/fail?write=1"); await b1.go("/vault/add", 9000); await b1.dismiss();
     const path = require("path"); const doc = await b1.send("DOM.getDocument", { depth: 0 }); const multi = await b1.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector: "input[type=file][multiple]" });
