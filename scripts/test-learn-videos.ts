@@ -6,6 +6,17 @@ import { learnVideoPreview } from "../src/lib/learnVideoSelection";
 async function main() {
   const id = "Abc_123-xYz"; // Synthetic ID; never used for a provider request.
   assert.equal(new Set(LEARN_VIDEOS.map(video => video.id)).size, LEARN_VIDEOS.length);
+  // Catalog metadata is complete and well-formed (public metadata only: no links or video ids live here).
+  for (const video of LEARN_VIDEOS) {
+    assert.match(video.id, /^[a-z0-9]+(-[a-z0-9]+)*$/, `bad catalog key ${video.id}`);
+    assert.ok(video.title.trim().length > 3 && video.description.trim().length > 10, `thin metadata for ${video.id}`);
+    assert.match(video.duration, /^[0-9]{1,2}:[0-9]{2}$/, `bad duration for ${video.id}`);
+    assert.ok(["Desktop", "Phone", "Desktop + phone"].includes(video.device), `bad device for ${video.id}`);
+    assert.ok(["Walkthroughs", "Quick tips", "About VLTD"].includes(video.collection), `bad collection for ${video.id}`);
+    assert.ok(video.access === "public" || video.access === "account", `bad access for ${video.id}`);
+    assert.equal(Boolean(video.portrait), video.device === "Phone", `portrait flag must match the Phone format for ${video.id}`);
+  }
+  assert.ok(!LEARN_VIDEOS.some(video => /(^|-)(bz3|bz4|ex7|s10)(-|$)/.test(video.id)), "held replacement videos must not be in the catalog");
   const readyPreview = learnVideoPreview(LEARN_VIDEOS, { "add-item-combined": true, "add-item-desktop": true, "add-item-promo-1": true });
   assert.deepEqual(readyPreview.map(video => video.id), ["add-item-combined", "add-item-desktop"], "Unavailable preferred guides must not displace uploaded videos");
   assert.deepEqual(learnVideoPreview(LEARN_VIDEOS, { "add-item-promo-1": true }).map(video => video.id), ["add-item-promo-1"], "One uploaded video must not be padded with an unavailable guide");
