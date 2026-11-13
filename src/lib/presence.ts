@@ -15,25 +15,8 @@ export async function touchPresence(profileId: string): Promise<void> {
   }
 }
 
-/** Best-effort fetch of a profile's last_seen_at. Returns null on any error
- *  (e.g. before the presence migration is run) so callers never break. */
-export async function fetchLastSeen(profileId?: string | null): Promise<string | null> {
-  const id = String(profileId ?? "").trim();
-  if (!id) return null;
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return null;
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("last_seen_at")
-      .eq("id", id)
-      .maybeSingle();
-    if (error) return null;
-    return (data?.last_seen_at as string | null) ?? null;
-  } catch {
-    return null;
-  }
-}
+// What a VISITOR may see of someone's online status is decided by the owner's switch (off by default) and read through get_public_online_status: see src/lib/onlineStatus.ts.
+// Nothing here reads another profile's last_seen_at directly.
 
 /** True if a last_seen timestamp is recent enough to count as online. */
 export function isOnline(lastSeenAt?: string | null): boolean {

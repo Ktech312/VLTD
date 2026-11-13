@@ -83,6 +83,13 @@ const srv = http.createServer((req, res) => {
       let out = []; if (g && (member || (["PUBLIC", "INVITE"].includes(g.visibility) && g.state === "ACTIVE"))) { const r = { ...g }; if (!member) { delete r.analytics_unique_view_keys; if (r.alias_enabled) r.profile_id = null; } out = [r]; }
       return single ? (out.length ? send(200, out[0]) : send(406, { code: "PGRST116", message: "no rows" })) : send(200, out);
     }
+    if (p.endsWith("/rpc/get_public_online_status") && missingCols.includes("rpc:get_public_online_status")) return send(404, { code: "PGRST202", message: "Could not find the function public.get_public_online_status in the schema cache" });
+    if (p.endsWith("/rpc/get_public_online_status")) {
+      // SIMULATION of the real function (20261112_online_status_off_by_default.sql): visible only when the owner switched it on AND the profile is public and set up.
+      const pid = (body() || {}).p_profile_id; const pr = (T.profiles || []).find((x) => x.id === pid);
+      const on = !!pr && pr.show_online_status === true && pr.is_public !== false && pr.onboarding_completed !== false;
+      return send(200, [{ visible: on, last_seen_at: on ? (pr.last_seen_at || null) : null }]);
+    }
     if (p.startsWith("/rest/v1/rpc/")) return send(200, p.endsWith("get_launch_access_status") ? [{ capacity: 50, claimed: 16, remaining: 34, is_open: true }] : []);
     const m = /^\/rest\/v1\/([a-z0-9_]+)$/.exec(p); if (!m) return send(200, {});
     if (failRest) return send(503, { message: "simulated outage" });

@@ -10,6 +10,7 @@ import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
+import OnlineStatusSetting from "@/components/account/OnlineStatusSetting";
 
 import { getOnboardingStatus, isSharedProfile, updateProfile } from "@/lib/auth";
 import { USERNAME_TAKEN_MESSAGE, isUsernameTakenError } from "@/lib/friendlyError";
@@ -740,6 +741,8 @@ export default function AccountPage() {
           </div>
         </section>
         ) : null}
+
+        {section === "preferences" ? <OnlineStatusSetting /> : null}
 
         {section === "data" ? (
         <section className="mt-6 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
